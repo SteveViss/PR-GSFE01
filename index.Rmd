@@ -17,11 +17,12 @@ output:
 class: title-slide, middle
 
 <img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"></img>
+<img src="assets/img/UdeS_blanc.png" width="350px" ></img>
 
 # Handling Spatial and Spatio-temporal data Using R
 
 .instructors[
-  GSFE01 - Guillaume Blanchet & Steve Vissault
+  GSFE01 - F. Guillaume Blanchet & Steve Vissault
 ]
 
 

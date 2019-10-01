@@ -2,7 +2,7 @@
 # Class GSFE01
 ## PR Statistics
 
-Guillaume Blanchet & Steve Vissault
+F. Guillaume Blanchet & Steve Vissault
 
 ## How to get a pdf version
 
