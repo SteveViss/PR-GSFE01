@@ -1,0 +1,204 @@
+---
+title: "GSFE01"
+author: "Guillaume Blanchet & Steve Vissault"
+date: "2018/02/16"
+output:
+  xaringan::moon_reader:
+    css: [default, pr.css, pr-fonts.css, "hygge"]
+    lib_dir: assets
+    seal: false
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      beforeInit: "macros.js"
+---
+
+class: title-slide, middle
+
+<img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"></img>
+<img src="assets/img/UdeS_blanc.png" width="350px" ></img>
+
+# Basics of spatial and spatiotemporal data
+
+.instructors[
+  GSFE01 - F. Guillaume Blanchet & Steve Vissault
+]
+
+
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+# Mathematical formalisms
+Spatial coordinate of sample $i$ (out of $m$)
+
+$$\mathbf{s}_i$$
+
+Time when sample $j$ were gathered (out of $T$)
+
+$$t_j$$
+A value associated to the sampled (observed) data
+
+$$Z(\mathbf{s}_i, t_j)$$
+A value associated to the sampled data if only spatial data is available
+
+$$Z(\mathbf{s}_i)$$
+The vector of value associated to the sampled data across all samples gathered at time $t_j$
+
+$$\mathbf{Z}_{t_j}$$
+
+---
+
+# Spatial Mean
+
+If we want to focus only on spatial information of a spatiotemporal data, we can average over time
+
+$$\widehat{\mu}_{z,s}(\mathbf{s}_i) \equiv \frac{1}{T}\sum_{j = 1}^TZ(\mathbf{s}_i, t_j)$$
+The previous equation focuses only on a single sample. It can be generalized to be applied to multiple samples
+
+$$\widehat{\boldsymbol\mu}_{z,s}=\begin{bmatrix}
+\widehat{\mu}_{z,s}(\mathbf{s}_1)\\
+\vdots\\
+\widehat{\mu}_{z,s}(\mathbf{s}_m)
+\end{bmatrix}=\begin{bmatrix}
+\frac{1}{T}\sum_{j = 1}^TZ(\mathbf{s}_1, t_j)\\
+\vdots\\
+\frac{1}{T}\sum_{j = 1}^TZ(\mathbf{s}_m, t_j)
+\end{bmatrix}=\frac{1}{T}\sum_{j = 1}^T\mathbf{Z}_{t_j}$$
+
+---
+
+# Spatial Mean 
+
+Example
+
+---
+
+# Spatial Covariance
+
+Studying the covariance in spatial data is useful because it gives us insight about how different samples behave similarly across space and/or through time
+
+For a pair of samples
+$$\widehat{C}_z^{(\tau)}(\mathbf{s}_i,\mathbf{s}_k) \equiv \frac{1}{T-\tau}\sum_{j = \tau + 1}^T \left(Z(\mathbf{s}_i, t_j) - \widehat{\mu}_{z,s}(\mathbf{s}_i)\right)\left(Z(\mathbf{s}_k, t_j - \tau) - \widehat{\mu}_{z,s}(\mathbf{s}_k)\right)$$
+where $\tau$ are time lag ranging from $0, 1, \dots,T$. Note that this equation calculates the covariance values associated to a single time lag.
+
+This equation can be generalized to account for all pairs of spatial samples for a single time lag
+
+$$\widehat{\mathbf{C}}_z^{(\tau)} \equiv \frac{1}{T-\tau}\sum_{j = \tau + 1}^T \left(\mathbf{Z}_{t_j} - \widehat{\boldsymbol{\mu}}_{z,s}\right)\left(\mathbf{Z}_{t_j-\tau} - \widehat{\boldsymbol{\mu}}_{z,s}\right)^\top$$
+where $\top$ is the transpose of a matrix.
+
+---
+
+# Spatial Covariance
+ 
+Example
+
+
+---
+
+# Inverse distance weighting
+
+The first way that comes to mind when one want to account for spatial and spatiotemporal data is to give
+
+- More weights to the nearest samples (and less weight to the distant samples)
+- More weights to the samples more recently gathered (and less weight to the sample gathered a long time ago)
+
+This is the underlying idea behind *inverse distance weighting*.
+
+
+---
+
+# Inverse distance weighting
+
+## How it works
+
+### Step 1 - structure of the data
+
+Suppose we gathered a spatiotemporal data where for each time $t_j$ we have $m_j$ spatial observation
+
+$$\begin{bmatrix}
+Z(\mathbf{s}_{1_1}, t_1) & \dots & Z(\mathbf{s}_{i_1}, t_1) & \dots & Z(\mathbf{s}_{m_1}, t_1)\\
+\vdots & & \vdots & & \vdots\\
+Z(\mathbf{s}_{1_j}, t_j) & \dots & Z(\mathbf{s}_{i_j}, t_j) & \dots & Z(\mathbf{s}_{m_j}, t_j)\\
+\vdots &  & \vdots & & \vdots\\
+Z(\mathbf{s}_{1_T}, t_T) & \dots & Z(\mathbf{s}_{i_T}, t_T) & \dots & Z(\mathbf{s}_{m_T}, t_T)\\
+\end{bmatrix}$$
+
+- The analysis can be performed only in space
+- The analysis does not require that the same number of temporal data be gathered across all spatial samples
+
+---
+
+# Inverse distance weighting
+
+## How it works
+
+### Step 2 - General formulation of inverse distance weighting
+
+Let's say we want to estimate what a variable's value at spatial location $\mathbf{s}_\alpha$ for time $t_\alpha$. Using inverse distance weighting we would use the following equation
+
+$$\widehat{Z}(\mathbf{s}_\alpha, t_\alpha) = \sum_{j=1}^T\sum_{i=1}^mw_{ij}(\mathbf{s}_\alpha, t_\alpha)Z(\mathbf{s}_{ij}, t_j)$$
+where $w_{ij}$ is a weight.
+
+#### Asumption
+- The coordinates $\mathbf{s}_\alpha$ is within the sampling region
+- The time point $t_\alpha$ is between the earliest and latest time point when data was gathered
+
+---
+
+# Inverse distance weighting
+
+## How it works
+
+### Step 3 - Calculating weights
+
+In the equation presented in the previous slide, the weight $w_{ij}$ can be defined as
+
+$$w_{ij}(\mathbf{s}_\alpha, t_\alpha) \equiv \frac{\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\alpha)}{\sum_{k=1}^T\sum_{l=1}^{m_k}\widetilde{w}_{lk}(\mathbf{s}_\alpha, t_\alpha)}$$
+
+where
+
+$$\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\alpha) \equiv \frac{1}{\text{Distance}\left((\mathbf{s}_{ij}, t_j), (\mathbf{s}_\alpha, t_\alpha)\right)^c}$$
+
+where $c$ is a power coefficient that ranges from 0 to $+\infty$ that controls for smoothing
+
+---
+
+# Inverse distance weighting
+
+## Particularities
+
+- The math may look complicated but inverse distance weighting is essentially a weighted average with more weights given to nearby data
+- Inverse distance weighting is an *exact* method. That is, if one wants to estimate a value at a location where a variable was sampled the exact same value will be estimated.
+  - This can be problematic if there is some uncertainty in the measured variable
+- To account for measurement uncertainty we can modify the equation for $\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\alpha)$ to
+$$\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\alpha) \equiv \frac{1}{\left(\text{Distance}\left((\mathbf{s}_{ij}, t_j), (\mathbf{s}_\alpha, t_\alpha)\right)+ b \right)^c}$$
+where $b > 0$.
+
+---
+
+# Inverse distance weighting
+
+## Particularities
+
+- Increasing the smoothing parameter $c$ will increase the smoothing in the estimation
+  - Usually it is $c = 2$ but it does not have to be the case
+  - A good practice is to estimate $c$ using, e.g., cross-validation (see following slides)
+  - The value of $c$ will change depending on the sampled data
+- Any distance can be used
+  - Usually, Euclidean distance is used
+  - Euclidean distance should not be used when time is considered because space and time have a different basis. Other distances have been proposed in the litterature (spatiotemporal Euclidean distance)
+  $$d_\text{SPTEucl} = \sqrt{(x_1 - x_2)^2 + (y_1 - y_2)^2 + \gamma^2(t_1 - t_2)}$$
+where $\gamma$ weight the importance is time in the analysis.
+
+---
+
+# Inverse distance weighting
+
+## Finding smoothing parameter $c$
+
+
