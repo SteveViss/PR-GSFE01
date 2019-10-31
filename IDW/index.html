@@ -96,6 +96,14 @@ Example
 
 
 ---
+class: inverse, center, middle
+
+# Inverse distance weighting
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+
+---
 
 # Inverse distance weighting
 
@@ -109,11 +117,9 @@ This is the underlying idea behind *inverse distance weighting*.
 
 ---
 
-# Inverse distance weighting
+# How it works
 
-## How it works
-
-### Step 1 - structure of the data
+## Step 1 - structure of the data
 
 Suppose we gathered a spatiotemporal data where for each time `\(t_j\)` we have `\(m_j\)` spatial observation
 
@@ -130,28 +136,24 @@ Z(\mathbf{s}_{1_T}, t_T) &amp; \dots &amp; Z(\mathbf{s}_{i_T}, t_T) &amp; \dots 
 
 ---
 
-# Inverse distance weighting
+# How it works
 
-## How it works
-
-### Step 2 - General formulation of inverse distance weighting
+## Step 2 - General formulation of inverse distance weighting
 
 Let's say we want to estimate what a variable's value at spatial location `\(\mathbf{s}_\alpha\)` for time `\(t_\alpha\)`. Using inverse distance weighting we would use the following equation
 
 `$$\widehat{Z}(\mathbf{s}_\alpha, t_\alpha) = \sum_{j=1}^T\sum_{i=1}^mw_{ij}(\mathbf{s}_\alpha, t_\alpha)Z(\mathbf{s}_{ij}, t_j)$$`
 where `\(w_{ij}\)` is a weight.
 
-#### Asumption
+### Asumption
 - The coordinates `\(\mathbf{s}_\alpha\)` is within the sampling region
 - The time point `\(t_\alpha\)` is between the earliest and latest time point when data was gathered
 
 ---
 
-# Inverse distance weighting
+# How it works
 
-## How it works
-
-### Step 3 - Calculating weights
+## Step 3 - Calculating weights
 
 In the equation presented in the previous slide, the weight `\(w_{ij}\)` can be defined as
 
@@ -165,9 +167,7 @@ where `\(c\)` is a power coefficient that ranges from 0 to `\(+\infty\)` that co
 
 ---
 
-# Inverse distance weighting
-
-## Particularities
+# Particularities
 
 - The math may look complicated but inverse distance weighting is essentially a weighted average with more weights given to nearby data
 - Inverse distance weighting is an *exact* method. That is, if one wants to estimate a value at a location where a variable was sampled the exact same value will be estimated.
@@ -178,9 +178,7 @@ where `\(b &gt; 0\)`.
 
 ---
 
-# Inverse distance weighting
-
-## Particularities
+# Particularities
 
 - Increasing the smoothing parameter `\(c\)` will increase the smoothing in the estimation
   - Usually it is `\(c = 2\)` but it does not have to be the case
@@ -194,9 +192,146 @@ where `\(\gamma\)` weight the importance is time in the analysis.
 
 ---
 
-# Inverse distance weighting
+# Finding smoothing parameter `\(c\)`
 
-## Finding smoothing parameter `\(c\)`
+## Cross-validation
+
+There are different variants of cross-validation. All variant involve splitting the dataset into *training* and *validation* datasets. 
+
+.full-width[.content-box-green[**Training data** 
+
+This data is used to *fit* the model to the data]]
+
+.full-width[.content-box-green[**Validation data** 
+
+This data is used to *evaluate the quality* of the model]]
+
+---
+
+# Finding smoothing parameter `\(c\)`
+
+## `\(K\)`-fold cross-validation
+
+### Step 1
+
+Randomly split the data into `\(K\)` roughly equal-size group (or components or folds)
+
+### Step 2
+
+Hold out one group (the `\(k^\text{th}\)` group) and *train* the model on the remaining data. Usually, using 5 or 10 groups works well.
+
+The resulting model can be defined as `\(\widehat{Z}^{(-k)}_i\)` for `\(i = 1, \dots, m_k\)` where `\(m_k\)` is the number of samples in the `\(k^\text{th}\)` group.
+
+---
+
+# Finding smoothing parameter `\(c\)`
+
+## `\(K\)`-fold cross-validation
+
+### Step 3
+
+Use a metric to evaluate the quality of the model
+
+**Mean squared prediction error**
+`$$\text{MSPE} = \frac{1}{m_k}\sum_{i=1}^{m_k}\left(Z_i-\widehat{Z}^{(-k)}_i\right)^2$$`
+
+**Sum of squared prediction error**
+`$$\text{SSPE} = \sum_{i=1}^{m_k}\left(Z_i-\widehat{Z}^{(-k)}_i\right)^2$$`
+---
+
+# Finding smoothing parameter `\(c\)`
+
+## `\(K\)`-fold cross-validation
+
+### Step 4
+
+Repeat steps 2 and 3 by holding out another group until all groups have been considered.
+
+### Step 5
+
+Evaluate the quality of the cross valiation using a `\(K\)`-fold cross-validation score 
+
+`$$\text{CV}_{(K)} = \frac{1}{K} \sum_{k=1}^K \text{MSPE}_k$$`
+The cross-validation score is particularly useful if there is an interest in comparing different model formulation.
+
+---
+
+# Finding smoothing parameter `\(c\)`
+
+## Leave one out cross-validation
+
+Follows the same procedure as the `\(K\)`-fold cross-validation except that only a single sample is held out for validation.
+
+### Properties of cross-validation
+
+- Leave one out cross-validation is known to have a *low bias* but a *high variance*
+- `\(K\)`-fold cross-validation with `\(K=5\)` or `\(K=10\)` groups has been shown to be a good compromise between *bias* and *variance*
+- Leave one out cross-validation is computationally intensive because a model needs to be constructed for each data sampled. That being said, parallel computing can be used to speed up the calculations
+
+
+
+---
+class: inverse, center, middle
+
+# Kernel predictor
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+# Spatiotemporal kernel predictor
+
+Inverse distance weighting is a particular case of kernel predictor.
+
+Specifically, `\(\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\alpha)\)` can be defined as 
+
+
+`$$\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\alpha) = f\left((\mathbf{s}_{ij}, t_j),(\mathbf{s}_\alpha, t_\alpha), \theta\right)$$`
+where `\(f\left((\mathbf{s}_{ij}, t_j),(\mathbf{s}_\alpha, t_\alpha), \theta\right)\)` is a *kernel function*.
+
+This kernel function:
+- Quantifies the similarities between two locations
+- Varies in accordance to the distance between `\((\mathbf{s}_{ij}, t_j)\)` and `\((\mathbf{s}_\alpha, t_\alpha)\)`
+- Depends on the *bandwitch* parameter `\(\theta\)`, which controls the kernel's width
+
+The *bandwitch* parameter `\(\theta\)`:
+- Defines the number of samples that is used to make the estimation
+
+---
+
+# Spatiotemporal kernel predictor
+
+## The Gaussian radial basis kernel
+
+`$$f\left((\mathbf{s}_{ij}, t_j),(\mathbf{s}_\alpha, t_\alpha), \theta\right) \equiv \exp\left(-\frac {1}{\theta}\text{Distance}\left((\mathbf{s}_{ij}, t_j),(\mathbf{s}_\alpha, t_\alpha)\right)^2\right)$$`
+
+As for inverse distance weighting, choosing the right `\(\theta\)` can be done through cross validation.
+
+There exist a number of other kernels:
+- Tricude
+- Bisquare
+- Epanechnikov
+- ...
+
+---
+
+# Spatiotemporal kernel predictor
+
+## Compact and non-compact support
+
+Kernels can be organized into two general groups.
+
+### Compact support kernels
+
+Kernels that gives a value of 0 after a specific distance threshold
+
+### Non-compact support kernels
+
+Kernels that do not gives a value of 0 after a specific distance threshold
+
+Inverse distance weighting and Gaussian radial basis kernel are *non-compact* support kernels.
+
+---
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
