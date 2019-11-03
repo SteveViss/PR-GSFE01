@@ -1,0 +1,226 @@
+---
+title: "GSFE01"
+author: "Guillaume Blanchet & Steve Vissault"
+date: "2018/02/16"
+output:
+  xaringan::moon_reader:
+    css: [default, pr.css, pr-fonts.css, "hygge"]
+    lib_dir: assets
+    seal: false
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      beforeInit: "macros.js"
+---
+
+class: title-slide, middle
+
+<img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"></img>
+<img src="assets/img/UdeS_blanc.png" width="350px" ></img>
+
+# Trend surface estimation
+
+.instructors[
+  GSFE01 - F. Guillaume Blanchet & Steve Vissault
+]
+
+
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+# Trend surface estimation
+
+Trend surface estimation (or analysis) is a fancy wording used to describe a special type of **regression analysis** where a set of spatiotemporal explanatory variables are used to account for *all* the spatiotemporal structure.
+
+## Properties
+
+- Straightforward to implement (uses regression functions available broadly)
+- Accounts for model error (usually assumed to be independent)
+- Can be used to calculate predition-error variance
+
+---
+
+# Theory
+
+Let's assume that we gathered samples at specific times period for all spatial locations considered
+
+$$\begin{bmatrix}
+Z(\mathbf{s}_{1_1}, t_1) & \dots & Z(\mathbf{s}_{i_1}, t_1) & \dots & Z(\mathbf{s}_{m_1}, t_1)\\
+\vdots & & \vdots & & \vdots\\
+Z(\mathbf{s}_{1_j}, t_j) & \dots & Z(\mathbf{s}_{i_j}, t_j) & \dots & Z(\mathbf{s}_{m_j}, t_j)\\
+\vdots &  & \vdots & & \vdots\\
+Z(\mathbf{s}_{1_T}, t_T) & \dots & Z(\mathbf{s}_{i_T}, t_T) & \dots & Z(\mathbf{s}_{m_T}, t_T)\\
+\end{bmatrix}$$
+
+---
+
+# Theory
+
+Based on the structure of the data previously mentionned, we can write our trend surface model
+
+.small[$$Z(\mathbf{s}_i, t_j) = \beta_0 + \beta_1X_1(\mathbf{s}_i, t_j) + \dots + \beta_kX_k(\mathbf{s}_i, t_j) + \dots + \beta_pX_p(\mathbf{s}_i, t_j) + \varepsilon(\mathbf{s}_i, t_j)$$]
+
+where 
+- $\beta_0$ is the model intercept
+- $\beta_k$ is a regression coefficient associated to explanatory variable $X_k(\mathbf{s}_i, t_j)$
+- $X_k(\mathbf{s}_i, t_j)$ is an explanatory variable gathered at location $\mathbf{s}_i$ at time $t_j$
+- $\varepsilon(\mathbf{s}_i, t_j) \sim N(0, \sigma^2)$
+- $\sigma^2$ is the variance
+
+---
+
+# Properties of explanatory variables
+
+In a spatiotemporal context, explanatory variables can have different characteristics
+- Represent spatial variations but be temporally invariant (e.g. elevation)
+- Represent temporal variations but be spatially invariant (e.g. seasonality)
+- Represent spatial *and* temporal variations (e.g. humidity)
+- Be a purely spatial or temporal construction (e.g. Moran's eigenvector maps)
+- Be a purely temporal construction (e.g. Asymmetric eigenvector maps)
+
+---
+
+# Basis functions
+
+.footnotesize[
+Basis functions rely on the idea that a complex curve (or surface) can be decomposed into a *linear combination* of some .red[elemental] (or basis) functions.
+
+This results in a model that looks like
+
+$$Z(\mathbf{s}_i, t_j) = \alpha_1\phi_1(\mathbf{s}_i, t_j) + \dots + \alpha_l\phi_l(\mathbf{s}_i, t_j) + \dots + \alpha_r\phi_r(\mathbf{s}_i, t_j) + \varepsilon(\mathbf{s}_i, t_j)$$
+
+where
+- $\phi_l(\mathbf{s})$ is the $l^\text{th}$ spatial basis function
+- $\alpha_l$ is an estimated parameter associated to $\phi_l(\mathbf{s})$
+
+When we use basis functions we assume that
+- Basis function are known (as they would for other explanatory variables)
+- Parameters need to be estimated (they are not known)
+
+Basis function can be
+
+**Local** : They can span only a section of the surveyed area
+
+**Gloal** : They can span the full survey area
+]
+---
+
+# Example of trend surface analysis
+
+```{r, echo = FALSE, fig.align='center', fig.width=12}
+par(mfrow = c(2,2))
+# Local basis function
+plot(0, 0, 
+     xlim = c(0, 100),
+     ylim = c(0,0.14),
+     type = "n", 
+     xaxt = "n",
+     yaxt = "n",
+     xlab = "",
+     ylab = "",
+     cex.lab = 2,
+     main = "Local basis functions", cex.main = 2.5)
+
+mtext("s", side = 1, cex = 2, line = 1)
+mtext(expression(phi(s)), side = 2, cex = 2, line = 1)
+
+Mean <- seq(0, 100, length = 10)
+for(i in 1:10){
+  x <- seq(Mean[i]-15,Mean[i] + 15,length = 200)
+  y <- dnorm(x, mean = Mean[i], sd = 3)
+  lines(x, y, type = "l", col = rainbow(10)[i], lwd = 3)
+}
+
+# Local model
+set.seed(4)
+param <- rnorm(10)
+
+Y <- matrix(NA, ncol = 10, nrow = 200)
+for(i in 1:10){
+  x <- seq(0,100,length = 200)
+  Y[,i] <- dnorm(x, mean = Mean[i], sd = 3)
+}
+
+YmodelBasis <- Y %*% diag(param)
+Ymodel <- rowSums(YmodelBasis)
+
+plot(0, 0, 
+     xlim = c(0, 100),
+     ylim = range(Ymodel,YmodelBasis),
+     type = "n", 
+     xaxt = "n",
+     yaxt = "n",
+     xlab = "",
+     ylab = "",
+     cex.lab = 2,
+     cex.main = 2.5)
+
+mtext("s", side = 1, cex = 2, line = 1)
+mtext(expression(Z(s)), side = 2, cex = 2, line = 1)
+
+for(i in 1:10){
+  lines(seq(0,100, length.out = 200), YmodelBasis[,i], lty = 2)
+}
+lines(seq(0,100, length.out = 200), Ymodel, lwd = 3, col = "blue")
+
+
+# Global basis function
+x <- seq(-pi,pi, length = 200)
+plot(0, 0, 
+     xlim = range(x),
+     ylim = c(-1,1),
+     type = "n", 
+     xaxt = "n",
+    yaxt = "n",
+     xlab = "",
+     ylab = "",
+     cex.lab = 2,
+     main = "Global basis functions", cex.main = 2.5)
+
+mtext("s", side = 1, cex = 2, line = 1)
+mtext(expression(phi(s)), side = 2, cex = 2, line = 1)
+
+#x <- c(seq(-pi/2,pi/2, length = 200), seq(pi/2,-pi/2, length = 200))
+
+lines(x, sin(x), type = "l", col = rainbow(10)[1], lwd = 3)
+lines(x, cos(x), type = "l", col = rainbow(10)[2], lwd = 3)
+
+lines(x, sin(x*2), type = "l", col = rainbow(10)[5], lwd = 3)
+lines(x, cos(x*2), type = "l", col = rainbow(10)[7], lwd = 3)
+
+# Global model
+set.seed(42)
+param <- rnorm(4)
+
+x <- seq(-pi,pi, length = 200)
+Y <- cbind(sin(x), cos(x), sin(x*2), cos(x*2))
+
+YmodelBasis <- Y %*% diag(param)
+Ymodel <- rowSums(YmodelBasis)
+
+plot(0, 0, 
+     xlim = range(x),
+     ylim = range(Ymodel,YmodelBasis),
+     type = "n", 
+     xaxt = "n",
+     yaxt = "n",
+     xlab = "",
+     ylab = "",
+     cex.lab = 2,
+     cex.main = 2.5)
+
+mtext("s", side = 1, cex = 2, line = 1)
+mtext(expression(Z(s)), side = 2, cex = 2, line = 1)
+
+for(i in 1:4){
+  lines(x, YmodelBasis[,i], lty = 2)
+}
+lines(x, Ymodel, lwd = 3, col = "blue")
+```
+
+**Note**: For illustration purposes let's assume that there are no error in the model. In other words, $\varepsilon(\mathbf{s}) = 0$
