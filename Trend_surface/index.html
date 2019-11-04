@@ -30,6 +30,14 @@ class: title-slide, middle
 
 
 
+class: inverse, center, middle
+
+# Trend surface analysis
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
 # Trend surface estimation
 
 Trend surface estimation (or analysis) is a fancy wording used to describe a special type of **regression analysis** where a set of spatiotemporal explanatory variables are used to account for *all* the spatiotemporal structure.
@@ -84,7 +92,7 @@ In a spatiotemporal context, explanatory variables can have different characteri
 
 # Basis functions
 
-.footnotesize[
+
 Basis functions rely on the idea that a complex curve (or surface) can be decomposed into a *linear combination* of some .red[elemental] (or basis) functions.
 
 This results in a model that looks like
@@ -95,6 +103,10 @@ where
 - `\(\phi_l(\mathbf{s})\)` is the `\(l^\text{th}\)` spatial basis function
 - `\(\alpha_l\)` is an estimated parameter associated to `\(\phi_l(\mathbf{s})\)`
 
+---
+
+# Basis functions
+
 When we use basis functions we assume that
 - Basis function are known (as they would for other explanatory variables)
 - Parameters need to be estimated (they are not known)
@@ -104,7 +116,7 @@ Basis function can be
 **Local** : They can span only a section of the surveyed area
 
 **Gloal** : They can span the full survey area
-]
+
 ---
 
 # Example of trend surface analysis
@@ -112,6 +124,354 @@ Basis function can be
 &lt;img src="index_files/figure-html/unnamed-chunk-1-1.png" style="display: block; margin: auto;" /&gt;
 
 **Note**: For illustration purposes let's assume that there are no error in the model. In other words, `\(\varepsilon(\mathbf{s}) = 0\)`
+
+---
+
+# Estimating trend surface models
+
+Because trend surface models are regressions, they are estimated using the same approaches as regression.
+
+A usual way used to estimate the parameters ( `\(\beta_0,\dots,\beta_p\)` ) is to use *ordinary least squares*, where the goal is to minimize the model's residual's sums of squares (RSS)
+
+`$$\text{RSS} = \sum_{j=1}^T\sum_{i=1}^m \left(Z(\mathbf{s}_i, t_j) - \widehat{Z}(\mathbf{s}_i, t_j)\right)^2$$`
+
+where `\(\widehat{Z}(\mathbf{s}_i, t_j)\)` is the model fitted values.
+
+---
+
+# Estimating trend surface models
+
+## Modelled variance
+
+Using RSS, we can also calculate an estimate of the variance parameter
+
+`$$\widehat\sigma^2_\varepsilon = \frac{\text{RSS}}{mT-p-1}.$$`
+Recall that
+- `\(m\)` is the number of spatial locations sampled
+- `\(T\)` is the number of temporal period sampled
+- `\(p\)` is the number of explanatory variables
+
+## Feature of trend surface models
+
+- Can be used to make prediction (when the covariates are available)
+- Uncertainty can be obtained for these predictions
+  - Which can be used to calculate, e.g., confidence intervals
+
+---
+
+# Different types of models
+
+In the previous slides, we assumed that the error follows a Gaussian distribution.
+
+Using **generalized linear models**, trend surface models can be applied to many other data type as long as we are careful about the link function to use. 
+.small[
+|Data | Link name | Link function `\((\mathbf{X}\boldsymbol\beta = g(\mu))\)` |
+| :----: |  :----: | :----: |
+| Gaussian | Identity | `\(\mathbf{X}\boldsymbol\beta = \mu\)` |
+| Poisson | Log | `\(\mathbf{X}\boldsymbol\beta = \ln(\mu)\)` |
+| Negative binomial | Log | `\(\mathbf{X}\boldsymbol\beta = \ln(\mu)\)` |
+| Presence-absence | Logit | `\(\mathbf{X}\boldsymbol\beta = \ln\left(\frac{\mu}{1-\mu}\right)\)` |
+| Presence-absence | Probit | `\(\mathbf{X}\boldsymbol\beta = \Phi^{-1}(\mu)\)` &lt;br&gt; .footnotesize[(inverse Gaussian cumulative density function)] |
+| Exponential | Negative inverse | `\(\mathbf{X}\boldsymbol\beta = -\mu^{-1}\)` |
+| Gamma | Negative inverse | `\(\mathbf{X}\boldsymbol\beta = -\mu^{-1}\)` |
+]
+
+---
+class: inverse, center, middle
+
+# Model diagnostics
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+# Model diagnostics
+
+Model diagnostics are tests or statistics used to verify assumptions of a model.
+
+In regression analysis model diagnostics to check for:
+- Homogeneity of variance
+- Normality
+- Presence of outliers
+- ...
+
+In this course we will be mainly concern about **dependence error**.
+
+.full-width[.content-box-green[**Dependence error**
+
+Samples are not independent among each other.]]
+
+---
+
+# Checking for temporal dependence
+.small[
+The *Durbin-Watson statistics* can be defined as follow:
+
+`$$d=\frac{\sum_{t=2}^T\left(\widehat{\varepsilon}_t - \widehat{\varepsilon}_{t-1}\right)^2}{\sum_{t=1}^T\widehat{\varepsilon}_t^2}$$`
+where `\(\widehat{\varepsilon}_t = Z_t - \widehat{Z}_t\)`, which represents the  model's residuals.
+
+In words, `\(d\)`, the Durbin-Watson test measures the degree of autocorrelations in a time serie.
+]
+
+## Properties of the Durbin-Watson test
+.small[
+- If `\(d\)` is small (close to 0), there is evidence of positive autocorrelation (serial dependence) in the time series
+  - A general "rule of thumb" is that a value smaller than 1 represent strong positive serial dependence
+- As `\(d\)` gets larger, it suggest no positive serial dependence.
+- The value of `\(d\)` ranges theoretically from 0 to 4
+]
+
+
+---
+
+# Checking for spatial dependence
+.footnotesize[
+The *Moran's `\(I\)` statistics* can be defined as follow:
+
+`$$I=\frac{m\sum_{i=1}^m\sum_{j=1}^mw_{ij}\left(Z_i - \overline{Z}\right)\left(Z_j - \overline{Z}\right)}{\left(\sum_{i=1}^m\sum_{j=1}^mw_{ij}\right)\left(\sum_{i=1}^m\left(Z_i - \overline{Z}\right)^2\right)}$$`
+
+where 
+- `\(Z_i\)` is the spatial data (it could also be the residuals)
+- `\(\overline Z\)` is the mean of the data (or of the residuals) across the full sampling area 
+- `\(w_{ij}\)` is the strength of the relation between samples `\(i\)` and `\(j\)`
+  - `\(w_{ii}\)` needs to be 0 for all samples
+
+In words, Moran's `\(I\)`, is a weighted form of Pearson's correlation.
+]
+
+## Properties of Moran's `\(I\)`
+.footnotesize[
+- If `\(I\)` is positive, it suggest there is positive spatial autocorrelation
+- If `\(I\)` is negative, it suggest there is negative spatial autocorrelation
+- As `\(I\)` is close to 0, it suggest there no spatial autocorrelation
+- The value of `\(I\)` ranges theoretically from -1 to 1
+]
+
+---
+
+# Checking for space-time dependence
+
+.footnotesize[
+The *space-time index* (STI) is a type of Moran's `\(I\)` statistics for spatiotemporal data. It can be defined as follow:
+
+`$$\text{STI}=\frac{m(T-1)\sum_{t=2}^T\sum_{i=1}^m\sum_{j=1}^mw_{i,j,t-1}\left(Z_i(\mathbf{s}_i,t) - \overline{Z}(\mathbf{s},t)\right)\left(Z_j(\mathbf{s}_i,t) - \overline{Z}(\mathbf{s},t)\right)}{\left(\sum_{t=2}^T\sum_{i=1}^m\sum_{j=1}^mw_{i,j,t-1}\right)\left(\sum_{t=1}^T\sum_{i=1}^m\left(Z_i(\mathbf{s}_i,t) - \overline{Z}(\mathbf{s},t)\right)^2\right)}$$`
+
+where 
+- `\(Z_i(\mathbf{s}_i,t)\)` is the spatiotemporal data (it could also be the residuals)
+- `\(\overline{Z}(\mathbf{s},t)\)` is the mean of the data (or of the residuals) across the full data
+- `\(w_{i,j,t-1}\)` is the strength of the relation between samples `\(i\)` and `\(j\)` at time `\(t-1\)`
+]
+
+## Properties of the space-time index (STI)
+.footnotesize[
+It has similar properties as Moran's `\(I\)`
+
+- If `\(STI\)` is positive, it suggest there is positive spatial autocorrelation
+- If `\(STI\)` is negative, it suggest there is negative spatial autocorrelation
+- As `\(STI\)` is close to 0, it suggest there no spatial autocorrelation
+- The value of `\(STI\)` ranges theoretically from -1 to 1
+]
+
+---
+class: inverse, center, middle
+
+# Testing these statistics
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+# Parametric tests
+
+Parametric testing has many constraints and generally supposes that several conditions are fulfilled for the test to be valid.
+
+## Conditions 
+
+* Observations must be independent from one another.
+
+This means that autocorrelated data violate this principle, their error terms being correlated across observations
+
+* The data most follow some well-known theoretical distribution, most often the normal distribution.
+
+---
+
+# Parametric tests
+
+When the conditions of a given test are fulfilled, an auxiliary variable constructed from one or several parameters estimated from the data (for instance an `\(F\)` or `\(t\)`-statistic) has a known behaviour under the null hypothesis ( `\(H_0\)` ). 
+
+
+It thus becomes possible to ascertain whether the observed value of that statistic is likely or not to occur if `\(H_0\)` should be rejected or not.
+
+If the observed value is as extreme or more extreme than the value of the reference statistic for a pre-established probability level (usually `\(\alpha\)` = 0.05), then `\(H_0\)` is rejected. If not, `\(H_0\)` is not rejected.
+
+---
+
+# Parametric tests
+## Decision in statistical testing
+### Two-tailed test
+
+![](index_files/figure-html/unnamed-chunk-2-1.png)&lt;!-- --&gt;
+
+---
+
+# Parametric tests
+## Decision in statistical testing
+### One-tailed test (right)
+
+![](index_files/figure-html/unnamed-chunk-3-1.png)&lt;!-- --&gt;
+
+---
+
+# Parametric tests
+## Decision in statistical testing
+### One-tailed test (left)
+
+![](index_files/figure-html/unnamed-chunk-4-1.png)&lt;!-- --&gt;
+
+---
+
+# Permutation test
+
+Parametric tests are rarely usable with ecological data, mainly because ecological data rarely follow the normal distribution, on which many statistical techniques are based on. 
+
+Even data transformations often do not manage to normalize the data. 
+
+In these conditions, another, very elegant but computationally more intensive approach is available: **testing by random permutations**.
+
+---
+
+# Principal of permutation testing
+
+1. If no theoretical reference distribution is available, then generate a reference distribution under `\(H_0\)` from the data themselves. This is achieved by permuting the data randomly in a scheme that ensures `\(H_0\)` to be true, and recomputing the test statistic. 
+
+2. Repeat the procedure a large number of times. 
+
+3. Compare the statistic calculated with the observed data with the set of test statistics obtained by permutations. 
+
+If the observed value is as extreme or more extreme than, say, the 5% most extreme values obtained under permutations, then it is considered too extreme for `\(H_0\)` to be true and thus `\(H_0\)` is rejected.
+
+
+---
+
+# Principal of permutation testing
+## Example using the Pearson's correlation ( `\(r\)` )
+
+.small[
+|Var. 1|Var. 2|Perm. 1|Perm. 2|Perm. 3|
+|:-:|:-:|:-:|:-:|:-:|
+| 1 | 4 | 4 | 10 | 11 |
+| 3 | 5 | 5 | 8 | 8 |
+| 2 | 3 | 8 | 4 | 14 |
+| 4 | 6 | 10 | 6 | 5 |
+| 3 | 8 | 11 | 3 | 3 |
+| 6 | 7 | 9 | 7 | 10 |
+| 7 | 9 | 3 | 5 | 6 |
+| 5 | 10 | 14 | 14 | 9 |
+| 8 | 11 | 7 | 9 | 7 |
+| 9 | 14 | 6 | 11 | 4 |
+| **Pearson's `\(r\)`** | **0.890** | -0.081 | 0.288 | -0474 |
+]
+
+---
+
+# Principal of permutation testing
+## Interpretation of a permutation test
+
+Since the columns "Perm.1", "Perm.2", "Perm.3" present randomly permuted values of "Var. 2", the relationship between "Var.1" and "Perm.1" should not present any relationship. 
+
+As such, the permuted iterations of "Var.2" present realisations of `\(H_0\)`, the null hypothesis of the test: there is no linear relationship between the two variables.
+
+If we construct many (e.g. 99, 999 or 9999) random permutations of "Var.2", we can build a distribution from which to compare the observed statistics (calculated on non-permuted data).
+
+---
+
+# Principal of permutation testing
+## Interpretation of a permutation test
+
+![](index_files/figure-html/unnamed-chunk-5-1.png)&lt;!-- --&gt;
+
+---
+
+# Principal of permutation testing
+## Calculation permutation-based statistic
+
+### Two-tailed test
+
+`\(H_0\)` is rejected at `\(\alpha = 0.05\)` when
+`$$P = \dfrac{\sum(\text{perm}\leq -|\text{observation}|)+\sum(\text{perm} \ge |\text{observation}|)}{n_\text{perm}+1}$$`
+
+### one-tailed (right) test 
+
+`\(H_0\)` is rejected at `\(\alpha = 0.05\)` when
+`$$P = \dfrac{\sum(\text{perm} \ge |\text{observation}|)}{n_\text{perm}+1}$$`
+
+---
+
+# Principal of permutation testing
+## Continuing the example of the Pearson's correlation ( `\(r\)` )
+### Illustration of two-tailed test results
+
+&lt;img src="index_files/figure-html/unnamed-chunk-6-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Principal of permutation testing
+## Continuing the example of the Pearson's correlation ( `\(r\)` )
+### Illustration of one-tailed test, right tail results
+
+&lt;img src="index_files/figure-html/unnamed-chunk-7-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Principal of permutation testing
+## Continuing the example of the Pearson's correlation ( `\(r\)` )
+### Illustration of one-tailed test, right tail results
+
+&lt;img src="index_files/figure-html/unnamed-chunk-8-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Permutation testing
+## Word of caution
+
+Permutation tests are elegant, but they do not solve all problems related to statistical testing.
+
+.small[
+- Beyond simple cases like the one use in this lecture, other problems may require different and more complicated permutation schemes than the simple random scheme applied here. 
+
+    - For example, the tests of the main factors of an ANOVA, where the permutations for one factor must be limited within the levels of factor B, and vice versa, need special permutation procedure.
+
+- Permutation tests do solve several, but not all, distributional problems. In particular, **they do not solve distributional problems linked to the hypothesis being tested**. 
+    
+    - For example, permutational ANOVA does not require normality, but it still does require homogeneity of variances.
+]
+---
+
+# Permutation testing
+## Word of caution
+
+.small[
+- Permutation tests by themselves **do not** solve the problem of independence of observations. This problem has still to be addressed by special solutions, differing from case to case, and often related to the correction of degrees of freedom.
+  
+  - This is different from our goal where the statistics is used to tests for independence of observations.
+
+- Although many statistics can be tested directly by permutations (e.g. Pearson's `\(r\)` as above), it is generally advised to use a pivotal statistic whenever possible (for the `\(r\)` it would be a Student `\(t\)` statistic). A pivotal statistic has a distribution under the null hypothesis which remains the same for any value of the measured effect.
+
+- **It is not the statistic itself which determines if a test is parametric or not**, it is the reference to a theoretical distribution (which requires assumptions about the parameters of the statistical population from which the data have been extracted) or to permutations.
+]
+---
+
+# Using these different tests
+
+In a regression model such as the one discussed so far, we assume that the samples are independent. Said differently, the **model residuals** should not present any spatial or temporal or spatiotemporal correlations.
+
+As such, these tests are usually used to check for structure in a model's residuals.
+
+Say our test shows that there is autocorrelation in the model's residuals, what can we do about it ? 
+
+.Large[.red[Build a more complex model!]]
+
+Proposing solutions to this problem is what this course is about!
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
