@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>GSFE01</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Guillaume Blanchet &amp; Steve Vissault" />
+    <link href="assets/remark-css/default.css" rel="stylesheet" />
+    <link href="assets/remark-css/hygge.css" rel="stylesheet" />
+    <link rel="stylesheet" href="pr.css" type="text/css" />
+    <link rel="stylesheet" href="pr-fonts.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+class: title-slide, middle
+
+&lt;img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"&gt;&lt;/img&gt;
+&lt;img src="assets/img/UdeS_blanc.png" width="250px" &gt;&lt;/img&gt;
+
+# Handling Spatial and Spatio-temporal data Using R
+
+.instructors[
+  GSFE01 - F. Guillaume Blanchet &amp; Steve Vissault
+]
+
+
+
+
+---
+class: middle, clear
+
+# Objectives
+
+1. Brief overview of basics R instructions (30 minutes)
+2. Handle spatial data in R (2 hours)
+3. Manipulate and explore spatio-temporal data in R (2 hours)
+
+---
+class: inverse, center, middle
+
+# Review basics R instructions
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+# R basics
+
+## Object assignation
+
+Code in the black area
+
+
+```r
+x &lt;- 3 
+x
+```
+
+Output starting with `##`
+
+
+```
+## [1] 3
+```
+
+`x` is an object whichin we assign (`&lt;-`) a numerical value of `3`
+
+---
+
+# R basics
+
+R can be used as a calculator
+
+
+```r
+1.2 + -0.654 * 32
+```
+
+```
+## [1] -19.728
+```
+
+Values stored in the R environment (through objects) can be reused 
+
+
+```r
+y &lt;- x + -0.654 * 32
+y
+```
+
+```
+## [1] -17.928
+```
+
+---
+
+# R basics
+
+### Logical operators
+
+```
+x == y # equal
+x != y # not equal
+x &lt; y # smaller than
+x &gt;= y # greater than or equal
+```
+
+### Example
+
+
+```r
+x == y
+```
+
+```
+## [1] FALSE
+```
+
+```r
+# Return logical values TRUE / FALSE
+```
+
+---
+
+# R basics
+
+### Vectors declaration
+
+
+```r
+x &lt;- c("a", "b", "c")
+x
+```
+
+```
+## [1] "a" "b" "c"
+```
+
+```r
+# Other way with numerical values
+1:3
+```
+
+```
+## [1] 1 2 3
+```
+--
+
+### Can we mixed type of values (ex. numeric with text)?
+
+```r
+x &lt;- c("a",1,2)
+```
+
+--
+
+Yes, but the entire vector will be convert as string vector
+
+---
+
+# R basics
+
+### Accessing specific positions in vector
+
+
+```r
+x &lt;- c("a", "b", "c")
+x[1]
+```
+
+```
+## [1] "a"
+```
+
+```r
+x[c(2,1)]
+```
+
+```
+## [1] "b" "a"
+```
+
+---
+
+# R basics
+
+### Assigning ot removing items in the array
+
+
+```r
+x[1] &lt;- "z"
+x
+```
+
+```
+## [1] "z" "b" "c"
+```
+
+```r
+x[-c(2,1)]
+```
+
+```
+## [1] "c"
+```
+
+---
+
+# R basics
+
+### Vector algebra
+
+
+```r
+3 * c(11,22,33)
+```
+
+```
+## [1] 33 66 99
+```
+
+---
+
+# R basics
+
+### Matrix declaration
+
+
+```r
+m &lt;- matrix(20:23,nrow=2,ncol=2)
+m
+```
+
+```
+##      [,1] [,2]
+## [1,]   20   22
+## [2,]   21   23
+```
+
+--
+
+### Can we mixed type of values (ex. numeric with text)?
+
+
+```r
+matrix(c("a","b","c", 1),nrow=2,ncol=2)
+```
+
+```
+##      [,1] [,2]
+## [1,] "a"  "c" 
+## [2,] "b"  "1"
+```
+
+--
+
+Yes, but the entire matrix will be coerce into string matrix. 
+
+---
+
+# R basics
+
+### Accessing specific positions in matrix
+
+
+```r
+m[1,]
+m[,2]
+m[1,2]
+```
+
+```
+## [1] 20 22
+## [1] 22 23
+## [1] 22
+```
+
+---
+
+# R basics
+
+### Matrix algebra
+
+
+```r
+m &lt;- matrix(c(1,1,1,1),nrow=2,ncol=2)
+3 * m
+```
+
+```
+##      [,1] [,2]
+## [1,]    3    3
+## [2,]    3    3
+```
+
+---
+
+# R basics
+
+### Wrap up on object types
+
+&lt;img src="https://qcbsrworkshops.github.io/workshop01/workshop01-en/images/matrix.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# R basics
+
+### Functions
+
+
+```r
+Add &lt;- function(x, y) {
+  return(x + y)
+}
+
+Add(10, 3)
+```
+
+```
+## [1] 13
+```
+
+---
+class: clear, middle
+
+# R galaxy
+
+R contains a **plethora of packages**. Each package is a set of functions. 
+
+&lt;img src="./assets/img/CRAN.png" width="80%" style="display: block; margin: auto;" /&gt;
+
+From https://www.rdocumentation.org/trends
+
+---
+class: clear, middle
+
+# Interact with the R galaxy
+
+
+```r
+# Install distant packages
+install.packages("vegan")
+# Then access to a specific function
+vegan::decostand()
+# Or load the entire package
+library(vegan)
+```
+
+
+---
+class: clear, middle
+
+# Navigate in the galaxy
+
+https://www.rdocumentation.org/
+
+If you need help
+
+
+```r
+?plot # Search within your loaded packages
+??raster # Search among packages (loaded and unloaded)
+```
+
+---
+class: clear, middle, center
+
+# R galaxy
+
+
+&lt;img src="./assets/img/cloud-packages.png" width="65%" style="display: block; margin: auto;" /&gt;
+
+---
+class: clear, middle, center
+
+# Spatial subgalaxy
+
+
+&lt;img src="./assets/img/cloud-packages-zoomin.png" width="65%" style="display: block; margin: auto;" /&gt;
+
+
+---
+class: inverse, center, middle
+
+
+# Spatial data
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+
+
+---
+
+# What's coming next?
+
+1. Vector data
+2. Rasters 
+3. Coordinate Reference System (CRS) / Projections
+4. Spatial operations
+5. Export and import geographical objects
+6. Visualisation (optionnal)
+
+---
+class: inverse, center, middle
+
+
+# Vector
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+
+---
+class: inverse, center, middle
+
+
+# Coordinate Reference System (CRS)
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+# Coordinate Reference System (CRS) 
+
+Projections are defined as coordinate reference system (CRS)
+
+### Geographic (or unprojected) CRS
+
+&lt;img src="./assets/img/projection1.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+### Projected CRS
+
+&lt;img src="./assets/img/projection2.png" width="60%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Coordinate Reference System (CRS)
+
+### Geographic (or unprojected) CRS
+
+- Latitude and longitude, i.e. angles measured from the Earth’s center to a point on the Earth’s surface
+- 3-D representation of Earth (sphere or ellipsoid)
+- Distance in geographic CRSs are therefore measured in degrees, not meters
+- Lon/Lat locate any points on Earth’s surface, but are not uniform units of measure
+
+### Projected CRS
+
+- Uses Cartesian coordinates, Easting and Northing (x and y) typically in meters
+- 2-D representation of Earth
+- All projected CRSs are based on a geographic CRS
+- Different mathematical formulas (i.e. projections) can transform the 3-D globe to a 2-D map
+
+---
+
+# Coordinate Reference System (CRS) 
+
+
+- Each CRS has a spatial reference ID called SRID or EPSG
+- In R, the notation used to describe the CRS is proj4string
+from the PROJ.4 library. It looks like this:
+
+`+init=epsg:4326 +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs`
+
+When you know the EPSG/SRID of the projection, the `proj4string` can be found using the functions:
+
+- `rgdal::CRS("+init=epsg:4326")`
+- `sp::CRS("+init=epsg:4326")`
+- `sf::st_crs(4326)`
+
+---
+
+# Coordinate Reference System (CRS)
+
+To search for a specific CRS, have a look at [spatialreference.org](https://spatialreference.org/)
+
+exemple: https://spatialreference.org/ref/epsg/4326/
+
+[Overview of Coordinate Reference Systems (CRS)](https://www.nceas.ucsb.edu/~frazier/RSpatialGuides/OverviewCoordinateReferenceSystems.pdf)
+
+
+
+
+---
+class: inverse, center, middle
+
+
+# Spatio-temporal data
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="macros.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "monokai",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
