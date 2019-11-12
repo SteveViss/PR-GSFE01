@@ -677,6 +677,7 @@ Permutation tests are elegant, but they do not solve all problems related to sta
 
 - **It is not the statistic itself which determines if a test is parametric or not**, it is the reference to a theoretical distribution (which requires assumptions about the parameters of the statistical population from which the data have been extracted) or to permutations.
 ]
+
 ---
 
 # Using these different tests
