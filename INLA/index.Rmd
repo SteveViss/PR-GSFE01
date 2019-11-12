@@ -1,0 +1,747 @@
+---
+title: "GSFE01"
+author: "Guillaume Blanchet & Steve Vissault"
+date: "2018/02/16"
+output:
+  xaringan::moon_reader:
+    css: [default, pr.css, pr-fonts.css, "hygge"]
+    lib_dir: assets
+    seal: false
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      beforeInit: "macros.js"
+---
+
+class: title-slide, middle
+
+<img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"></img>
+<img src="assets/img/UdeS_blanc.png" width="350px" ></img>
+
+# Integrated nested Laplace Approximation (INLA)
+
+.instructors[
+  GSFE01 - F. Guillaume Blanchet & Steve Vissault
+]
+
+
+---
+class: inverse, center, middle
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+
+# Bayesian inference
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+
+# Frequentist
+
+So far, all the techniques we used the frequentist paradigm when inferring results from data.
+
+Frequentists want to find the best model parameter(s) for the data at hand
+
+.Large[$$\text{Likelihood}\hspace{1.5cm}P(\text{Data}|\text{Model})$$]
+
+They are interested in **maximizing** the .blue[Likelihood]
+
+They need **data**
+
+## Estimating model parameters
+
+- Minimizing the sums of squares
+- Simulated annealing
+- Nelder-Mead Simplex
+- ...
+
+---
+
+# Bayesian
+
+Bayesians want to find how good the model parameter(s) are given some data
+
+.Large[$$\text{Posterior}\hspace{1.5cm}P(\text{Model}|\text{Data})$$]
+
+They are interested in the .orange[posterior] distribution
+
+They need **data** and **prior** information
+
+The general framework used in Bayesian modelling is 
+
+$$\underbrace{P(\text{Model}|\text{Data})}_\text{Posterior}\propto \underbrace{P(\text{Data}|\text{Model})}_\text{Likelihood}\underbrace{P(\text{Model})}_\text{Prior}$$
+
+### Estimating model parameters
+
+- Markov Chain Monte Carlo
+- INLA
+- ...
+
+---
+
+# Our way of thinking is Bayesian
+
+
+[![IMAGE ALT TEXT HERE](assets/img/FantasticBeastClip.png)](https://www.youtube.com/watch?v=g5G7PE_sKGg?t=37)
+
+
+---
+
+# INLA
+
+INLA is an efficient way to estimate Bayesian model parameters.
+
+To understand how INLA works, we need to learn about:
+- Latent Gaussian models
+- Laplace approximations
+
+To understand how to use INLA for spatial and spatiotemporal models, we need to also learn about:
+- Gaussian Markov Random Fields
+- Stochastic partial differential equation
+
+So... A lot of rather complex mathematics is ahead of us...
+
+Let's jump in !
+
+---
+class: inverse, center, middle
+
+
+# Latent Gaussian models
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+
+# Conceptual representation
+
+Latent Gaussian models are a form of hierarchical model with three levels 
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/LGM.svg")
+```
+
+---
+
+# How it works
+
+## Using multiple regression as an example
+
+A special case of a latent Gaussian model is multiple regression, which is commonly presented as follow:
+
+$$y_i = \beta_jX_{ij} + \varepsilon_i$$
+where
+- $y_i$ is the value of a response variable sampled at site $i$ out of $n$
+- $X_{ij}$ is the value of the $j^\text{th}$ explanatory variable out of $p$ sampled at site $i$
+- $\beta_j$ is the regression parameter associated to the $j^\text{th}$ explanatory variable
+- $\varepsilon_i$ is the model error at site $i$. This is assumed to follow a Gaussian distribution
+
+---
+
+# How it works
+
+## Using multiple regression as an example
+
+### Likelihood model
+
+The likelihood function for our multiple regression (assuming a Gaussian error) can be written as
+
+$$\mathbf{y} | \mathbf{X}, \boldsymbol{\beta},\sigma^2 \sim \prod_{i=1}^n \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(y_i - \beta X_i)^2}{2\sigma^2}}$$
+
+where
+- $y_i$ is the value of a response variable sampled at site $i$
+- $\mathbf{X}_{i}$ are the values of all explanatory variables sampled at site $i$
+- $\boldsymbol{\beta}$ is a vector of regression parameters for all explanatory variables
+- $\sigma^2$ is the variance of the Gaussian distribution underlying the model
+
+---
+
+# How it works
+
+## Using multiple regression as an example
+
+### Latent field
+
+In our multiple regression, the latent field is 
+
+$$\mathbf{X}, \boldsymbol{\beta}|\boldsymbol{\theta} \sim N(0,\mathbf{\Sigma}(\boldsymbol{\theta}))$$
+where
+- $\mathbf{\Sigma}$ is a covariance matrix
+- $\boldsymbol{\theta}$ is a hyperparameter that influence the structure of the covariance matrix $\mathbf{\Sigma}$. This could be a spatial/temporal constraint.
+
+This is a key to Latent Gaussian field. That is for a model to be a **Latent Gaussian model** it is .red[essential] that
+
+$$\beta\sim N(0,\mathbf{\Sigma}(\boldsymbol{\theta}))$$
+
+---
+
+# How it works
+
+## Using multiple regression as an example
+
+### Hyperparameters
+
+.small[
+The hyperparameters are parameters unrelated to the Gaussian distribution from which the regression parameters are derived. As was seen in the conceptual representation of the latent Gaussian model, there are two types of hyperparameters
+
+- Hyperparameters associated to the likelihood
+  - Variance ( $\sigma^2$ in our multiple regression)
+  - Overdispersion (e.g. Negative binomial model)
+  - Scale (e.g. Gamma model)
+  - ...
+- Hyperparameters associated to the Latent field
+  - Variance constraints
+  - Spatial/temporal correlation
+  - Autoregressive coefficients
+  - ...
+]
+
+---
+
+# .footnotesize[General aspects of latent Gaussian models]
+
+.small[
+Latent Gaussian models are not limited to multiple regression model, they are a framework that emcompasses 
+- Generalized linear models
+- Generalized linear mixed models
+- Generalized additive models
+- Generalized additive mixed models
+- Spatial and temporal correlated effect
+- Latent variable models
+
+In this respect, in `INLA` the multiple regression we wrote as 
+
+$$y_i = \beta_jX_{ij} + \varepsilon_i$$
+
+is presented as
+
+$$y_i = \mathbf{A}\mathbf{X}_i + \varepsilon_i$$
+where  $\mathbf{A}$ is general notation that represents an *observation matrix* which includes a sets of parameters used to model $\mathbf{y}$.
+]
+
+---
+
+# Estimating latent Gaussian model
+
+.small[
+We will discuss three ways to estimate latent Gaussian model
+1. Gaussian approximation
+2. Laplace approximation
+3. Simplified Laplace approximation
+
+INLA is designed to estimate a *latent Gaussian model* to learn about its:
+- Parameters
+  - Regression coefficients
+- Hyperparameters
+  - Correlation in an autoregressive model
+  - Variance of a random effect
+
+Simplified Laplace approximation is the default estimation procedure in INLA, which can be understood through a brief overview of
+- Gaussian approximation 
+- Laplace approximation
+]
+
+---
+
+# Gaussian approximation
+
+## Using multiple regression as an example
+
+In a Gaussian approximation we assume that 
+$$\mathbf{X}, \boldsymbol{\beta}_j|\boldsymbol{\theta}_k, \mathbf{y} \sim N(\mu_j(\boldsymbol{\theta}),\sigma_j^2(\boldsymbol{\theta}))$$
+where
+- the mean $\mu_j(\boldsymbol{\theta})$
+- the marginal variance $\sigma_j^2(\boldsymbol{\theta})$
+are estimated through a careful use of the Gaussian Markov random field
+
+--
+
+This approach is very fast (Yééé !) 
+
+--
+
+But... the assumptions are too strong and often results in poor estimation (Bouh !) 
+
+---
+
+# Laplace approximation
+
+## Using multiple regression as an example
+
+Let's suppose that the distribution of $\boldsymbol{\beta}_j$ looks like 
+
+```{r, echo = FALSE, fig.align='center', fig.width=12, fig.height=4}
+x <- seq(-10,25, length.out = 500)
+y <- dgamma(x, 5,1)
+plot(x,y, type = "n",
+     axes = FALSE,
+     xlab = "", ylab = "")
+abline(h = 0, col = "lightgrey", lwd = 5)
+lines(x,y, lwd = 5)
+```
+
+A Laplace approximation can estimate the distribution of any unimodal variable (probability density function) using a Gaussian distribution. 
+
+In other words, Laplace approximation can be conceptually understood as a "weighted" Gaussian approximation.
+
+---
+
+# Laplace approximation
+
+## Using multiple regression as an example
+
+.small[If we look at the probability distribution of a Gaussian distribution]
+.pull-left[
+```{r, echo = FALSE, fig.align='center', fig.width=6, fig.height=3}
+x <- seq(-10,10, length.out = 500)
+y <- dnorm(x, 0,2)
+plot(x,y, type = "n",
+     axes = FALSE,
+     xlab = "", ylab = "")
+abline(h = 0, col = "lightgrey", lwd = 5)
+lines(x,y, lwd = 5, col = "orange")
+```
+]
+.pull-right[
+$$\frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(y - \mu)^2}{2\sigma^2}}$$
+]
+
+.small[
+There are two parameters associated to the Gaussian distribution
+- $\mu$ :  The **mean** of the Gaussian distribution
+- $\sigma^2$ :  The **variance** of the Gaussian distribution
+
+The Laplace approximation's is designed to finds the best **mean** and **variance** values of a Gaussian distribution to fit a the distribution associated to $\boldsymbol\beta_j$.
+]
+
+---
+
+# Laplace approximation
+
+## Using multiple regression as an example
+
+Visually, The difference between the true $\boldsymbol\beta_j$ and its Laplace approximation looks like
+```{r, echo = FALSE, fig.align='center', fig.width=12, fig.height=4}
+x <- seq(-10,25, length.out = 500)
+y <- dgamma(x, 5,1)
+LALog <- (log(1/24) + 4 * log(4) -4) - ((x - 4)^2 / (2 * 1/(4/(4^2))))
+par(mar = c(5,5,0.5,0.5))
+plot(x,y, type = "n",
+     axes = FALSE,
+     xlab = "", ylab = expression(italic(beta[j])),
+     cex.lab = 2)
+abline(h = 0,col = "lightgrey", lwd = 5)
+
+axis(2, las =2)
+lines(x,y, lwd = 5)
+lines(x, exp(LALog), lwd = 5, col = "orange")
+legend("topright",
+       lty = 1,
+       lwd = 5, 
+       legend = c(expression(italic(beta[j])), "Laplace approximation"),
+       col = c("black", "orange"),
+       cex = 1.4)
+```
+**Advantage** : More precise than a Gaussian approximation (it handles skewness much better)
+
+**Disadvantage**: Slow (Bouh!)
+
+---
+# Simplified Laplace approximation
+
+*Simplified Laplace approximation* was proposed by Rue et al. (2009) and is designed to use the best out of Gaussian approximation and Laplace approximation. 
+
+Specifically, *simplified Laplace approximation* is
+- Computationally fast
+- Precise
+
+In other words, *simplified Laplace approximation* has one major advantage over *Laplace approximation*; It is .Large[**much**] faster with minimal lost in the approximation.
+
+---
+
+# Generalities about INLA
+
+Integrated Nested Laplace Approximation (INLA) has a number of interesting properties:
+- It is to be used within a Bayesian framework
+  - This means that **priors** need to be chosen and a likelihood needs to be calculated
+- The type of models estimated are **all** variant of a **latent Gaussian model**
+  - This is a very broad group of modelss
+- INLA is a parameter (and hyperparameter) estimation procedure (nothing more, nothing less)
+- It is an approximation, so it is not perfect... However, it does works most of the time
+- Compare to classic estimation approaches it is *blisteringly* fast
+
+---
+
+# How fast is INLA compared to other approaches
+
+---
+
+---
+
+---
+# .footnotesize[Linking INLA and latent Gaussian models]
+
+The goal of INLA is to estimate a *latent Gaussian model*, specifically, to learn about its:
+- Parameters
+  - Regression coefficients
+- Hyperparameters
+  - Correlation in an autoregressive model
+  - Variance of a random effect
+
+Using the multiple regression example, what we want to do is solve
+
+$$\begin{align}
+p(\beta_j, \mathbf{X} | \mathbf{y}) &= \int p(\beta_j, \mathbf{X}, \boldsymbol{\theta} | \mathbf{y}) d\boldsymbol{\theta}\\
+&= \int p(\beta_j, \mathbf{X} | \boldsymbol{\theta},\mathbf{y}) p(\boldsymbol{\theta} | \mathbf{y}) d\boldsymbol{\theta}
+\end{align}$$
+
+and
+
+$$p(\theta_k | \mathbf{y}) = \int p(\mathbf{\theta}|\mathbf{y}) d\mathbf{\theta}_{-k}$$
+
+---
+
+---
+
+---
+
+---
+
+---
+
+---
+
+---
+
+---
+
+---
+
+---
+
+---
+class: inverse, center, middle
+
+# Laplace Approximation
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+
+# Generality
+
+.small[
+Suppose we have a variable distributed as in the figure below
+```{r, echo = FALSE, fig.align='center', fig.width=12, fig.height=4}
+x <- seq(-10,25, length.out = 500)
+y <- dgamma(x, 5,1)
+plot(x,y, type = "n",
+     axes = FALSE,
+     xlab = "", ylab = "")
+abline(h = 0, col = "lightgrey", lwd = 5)
+lines(x,y, lwd = 5)
+```
+
+The equation associated to the distribution of this variable is
+
+$$\frac{1}{24} x^{4} e^{-x}$$
+
+A Laplace approximation can estimate the distribution of any unimodal variable (probability density function) using a Gaussian distribution. 
+]
+
+---
+
+# Theory
+
+If we look at the probability distribution of a Gaussian distribution
+.pull-left[
+```{r, echo = FALSE, fig.align='center', fig.width=6, fig.height=3.5}
+x <- seq(-10,10, length.out = 500)
+y <- dnorm(x, 0,2)
+plot(x,y, type = "n",
+     axes = FALSE,
+     xlab = "", ylab = "")
+abline(h = 0, col = "lightgrey", lwd = 5)
+lines(x,y, lwd = 5, col = "orange")
+```
+]
+.pull-right[
+$$\frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(y - \mu)^2}{2\sigma^2}}$$
+]
+
+.small[
+There are two parameters associated to the Gaussian distribution
+- $\mu$ :  The **mean** of the Gaussian distribution
+- $\sigma^2$ :  The **variance** of the Gaussian distribution
+
+The Laplace approximation's goal is to finds the best **mean** and **variance** values of a Gaussian distribution to fit a unimodal function.
+]
+
+---
+
+# Theory
+
+For various technical reasons it is much more practical to use a **log scale** to estimate the mean and the variance of the Gaussian distribution to use as approximation.
+
+## Approximating the **mean**
+
+The peak (or mode) of the log transformed variable's distribution is a good approximation of the **mean** of the Gaussian distribution. 
+
+### Trick
+
+Within the Laplace approximation technique, when the first derivative of a log transformed variable's distribution is exactly 0, we found the peak.
+
+
+---
+
+# Theory
+
+## Approximating the **mean**
+
+### With our variable...
+
+.footnotesize[
+First derivative of log transformed variable's distribution
+$$\begin{align}
+\log(f(x))' &= \log\left(\frac{1}{24} x^{4} e^{-x}\right)'\\
+&= \left(\log\left(\frac{1}{24}\right) + 4\log(x) -x\right)'\\
+&= 0 + \frac{4}{x} -1\\
+\end{align}$$
+
+So, if we define
+
+$$\frac{4}{x} -1 = 0$$
+and solve for $x$ we find the **mean**, which is 
+$$x = 4$$
+]
+
+
+---
+
+# Theory
+
+## Approximating the **variance**
+
+With a bit of manipulations, we can find that the **variance** can be approximated as
+
+$$-\frac{1}{\log(f(a))''}$$
+where $a$ is the peak of the variable's distribution
+
+---
+
+# Theory
+
+## Approximating the **variance**
+
+### With our variable...
+.footnotesize[
+Second derivative
+
+$$\begin{align}
+\log(f(x))'' &= \log\left(\frac{1}{24} x^{4} e^{-x}\right)'' = \left(\log\left(\frac{1}{24}\right) + 4\log(x) -x\right)''\\
+&= \left(0 + \frac{4}{x} -1\right)'= -\frac{4}{x^2}\\
+\end{align}$$
+
+Using the previous derivation we can 
+$$\begin{align}
+-\frac{1}{\log(f(a))''} &= -\frac{1}{\left(-\frac{4}{a^2}\right)}= \frac{a^2}{4}\\
+&= \frac{4^2}{4} = 4\\
+\end{align}$$
+]
+
+---
+
+# Visualisation
+
+```{r, echo = FALSE, fig.align='center', fig.width=12, fig.height=4}
+x <- seq(-10,25, length.out = 500)
+y <- dgamma(x, 5,1)
+LALog <- (log(1/24) + 4 * log(4) -4) - ((x - 4)^2 / (2 * 1/(4/(4^2))))
+par(mar = c(5,5,0.5,0.5))
+plot(x,y, type = "n",
+     axes = FALSE,
+     xlab = "x", ylab = "f(x)",
+     cex.lab = 2)
+abline(h = 0,col = "lightgrey", lwd = 5)
+
+axis(2, las =2)
+lines(x,y, lwd = 5)
+lines(x, exp(LALog), lwd = 5, col = "orange")
+legend("topright",
+       lty = 1,
+       lwd = 5, 
+       legend = c("f(x)", "Laplace approximation"),
+       col = c("black", "orange"),
+       cex = 1.4)
+```
+
+---
+class: inverse, center, middle
+
+# Integrated Nested Laplace Approximation
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+
+# The INLA approach
+
+Using the different pieces we previously learned, we now have all we need to know to learn about INLA.
+
+It is important to know that the goal of INLA is to estimate a *latent Gaussian model*, specifically, to learn about its:
+- Parameters
+  - Regression coefficients
+- Hyperparameters
+  - Correlation in an autoregressive model
+  - Variance of a random effect
+
+---
+
+
+$$\begin{align}
+p(\mathbf{\theta} | \mathbf{y}) &\approx \frac{p(\mathbf{y|x,\theta}) p(\mathbf{x|\theta})p(\mathbf{\theta})} {\tilde{p}(\mathbf{x|\theta,y})} \bigg|_{x={x^*}(\theta)}  = \tilde{p}(\mathbf{\theta|y}) 
+\end{align}$$
+
+
+---
+
+---
+
+---
+
+---
+
+
+---
+class: inverse, center, middle
+
+
+# Gaussian Markov Random Field
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF0.svg")
+```
+
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF1.svg")
+```
+
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF2.svg")
+```
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF3.svg")
+```
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF4.svg")
+```
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF5.svg")
+```
+
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF6.svg")
+```
+
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF7.svg")
+```
+
+## Property of Gaussian Markov Random Field
+- A stochastic process relying on the Gaussian distribution
+- A memoryless process that depends only on the present to decide the next outcome, not the events that occured in the past
+
+---
+
+# .scriptsize[Mathematics of Gaussian Markov Random Field]
+.small[
+A Gaussian Markov random field $\mathbf{y}$ is defined as
+
+$$\mathbf{y}\sim N(\mathbf{\mu}, \mathbf{\Sigma})$$
+which satisfies 
+$$p(y_i | \{y_j: i\ne j\}) = p(y_i | \{y_j: j \in \mathcal{N}_i\})$$
+where $\mathcal{N}$ is the neigbourhood around sample $i$
+]
+
+## A trick about Gaussian Markov random field
+
+.small[
+When defining a Gaussian Markov random field above, we relied on the covariance matrix $\mathbf{\Sigma}$. 
+
+Another way to present Gaussian Markov random field is to rely on precision.
+
+Precision is the inverse of covariance. This can be formalized as
+$$\mathbf{\Sigma} = \mathbf{Q}^{-1}$$
+]
+
+---
+
+# Why should we use $\mathbf{Q}$ and not $\mathbf{\Sigma}$? 
+
+What has been known for a while is that when $y_i$ and $y_j$ are uncorrelated, their covariance is 0. Mathematically, this can be written as 
+
+$$y_i \perp y_j \Leftrightarrow \mathbf{\Sigma}_{ij} = 0$$
+
+What Rue et al. (2009) showed is that conditional on $\mathbf{y}_{-ij}$ (a shorthand for $y_j : i\ne j$), when $y_i$ and $y_j$ are uncorrelated, their precision is 0. Mathematically, this can be written as 
+
+$$y_i \perp y_j | \mathbf{y}_{-ij} \Leftrightarrow \mathbf{Q}_{ij} = 0$$
+This discovery by Rue et al. (2009) is especially useful because the resulting precision matrix $\mathbf{Q}$ becomes a **sparse matrix**, making it much easier to invert (a necessary procedure when estimating models).
+
+*Note*: Computationally, inverting a matrix is challenging especially when the matrix is large and dense. However, the more zeros a matrix has the easier it gets to invert. 
+
+
