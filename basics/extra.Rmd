@@ -1,0 +1,69 @@
+
+---
+class: inverse, center, middle
+
+# List
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+
+---
+
+# List
+
+A list store collections of objects (single value, vector or matrix).
+
+```{r}
+l <- list(
+  v = c(1,2,3,4),
+  m = matrix(c(1,1,1,1),nrow=2,ncol=2)
+)
+```
+```{r}
+l
+```
+
+---
+
+# List
+
+```{r}
+l <- list(
+  v = c(1,2,3,4),
+  m = matrix(c(1,1,1,1),nrow=2,ncol=2)
+)
+```
+```{r results="hold"}
+l$v
+#equivalent: l[['v']]
+```
+
+---
+
+# List
+
+```{r}
+l <- list(
+  v = c(1,2,3,4),
+  m = matrix(c(1,1,1,1),nrow=2,ncol=2)
+)
+```
+```{r results="hold"}
+l$m 
+#equivalent: l[['m']]
+```
+
+---
+
+# List
+
+```{r}
+l <- list(
+  v = c(1,2,3,4),
+  m = matrix(c(1,1,1,1),nrow=2,ncol=2)
+)
+```
+
+```{r}
+l$v[2]
+```
