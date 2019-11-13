@@ -91,6 +91,14 @@ $$\underbrace{P(\text{Model}|\text{Data})}_\text{Posterior}\propto \underbrace{P
 
 
 ---
+class: inverse, center, middle
+
+
+# Integrated Nested Laplace Approximation
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
 
 # INLA
 
@@ -98,7 +106,6 @@ INLA is an efficient way to estimate Bayesian model parameters.
 
 To understand how INLA works, we need to learn about:
 - Latent Gaussian models
-- Laplace approximations
 
 To understand how to use INLA for spatial and spatiotemporal models, we need to also learn about:
 - Gaussian Markov Random Fields
@@ -285,7 +292,7 @@ abline(h = 0, col = "lightgrey", lwd = 5)
 lines(x,y, lwd = 5)
 ```
 
-A Laplace approximation can estimate the distribution of any unimodal variable (probability density function) using a Gaussian distribution. 
+A Laplace approximation can estimate the distribution of any unimodal distribution through a clever use of Gaussian approximation. 
 
 In other words, Laplace approximation can be conceptually understood as a "weighted" Gaussian approximation.
 
@@ -325,7 +332,7 @@ The Laplace approximation's is designed to finds the best **mean** and **varianc
 
 ## Using multiple regression as an example
 
-Visually, The difference between the true $\boldsymbol\beta_j$ and its Laplace approximation looks like
+Visually, The difference between the $\boldsymbol\beta_j$ and its Laplace approximation looks like
 ```{r, echo = FALSE, fig.align='center', fig.width=12, fig.height=4}
 x <- seq(-10,25, length.out = 500)
 y <- dgamma(x, 5,1)
@@ -357,15 +364,16 @@ legend("topright",
 *Simplified Laplace approximation* was proposed by Rue et al. (2009) and is designed to use the best out of Gaussian approximation and Laplace approximation. 
 
 Specifically, *simplified Laplace approximation* is
-- Computationally fast
-- Precise
+- Computationally .Large[very] fast
+- Almost as precise as Laplace approximation
 
-In other words, *simplified Laplace approximation* has one major advantage over *Laplace approximation*; It is .Large[**much**] faster with minimal lost in the approximation.
+The theoretical developpement underlying simplified Laplace approximation is beyond the scope of this course, in essence it includes a series of smart tricks. 
+
 
 ---
 
 # Generalities about INLA
-
+.small[
 Integrated Nested Laplace Approximation (INLA) has a number of interesting properties:
 - It is to be used within a Bayesian framework
   - This means that **priors** need to be chosen and a likelihood needs to be calculated
@@ -375,15 +383,302 @@ Integrated Nested Laplace Approximation (INLA) has a number of interesting prope
 - It is an approximation, so it is not perfect... However, it does works most of the time
 - Compare to classic estimation approaches it is *blisteringly* fast
 
----
+The last few slides present a very (!) general overview of the theory behind INLA.
 
-# How fast is INLA compared to other approaches
-
----
-
----
+If you want to know more about how INLA works, take a look at [http://www.r-inla.org](http://www.r-inla.org)
+]
 
 ---
+
+# How fast is INLA ?
+
+The most commonly used approach to estimate Bayesian models is Markov Chain Monte Carlo (MCMC).
+
+JAGS is the most commonly used software to implement various types of Bayesian models. 
+
+Let's compare JAGS and INLA to estimate the parameters and hyperparameter of a linear model
+$$y = \alpha + \beta x$$
+where $\beta \sim N(0,\sigma^2)$
+
+In this model the parameters to estimate are 
+- $\alpha$
+- $\beta$
+- $\sigma^2$
+
+---
+
+# How fast is INLA ?
+
+## Data Simulation 
+```{r}
+N <- 500
+x <- rnorm(N, mean=6,sd=2)
+y <- rnorm(N, mean=x,sd=1) 
+dat <- list(x=x,y=y,N=N)
+```
+---
+
+# How fast is INLA ?
+
+### JAGS code
+.footnotesize[
+```{r, message = FALSE, warning = FALSE, results = FALSE}
+library(rjags)
+
+cat('model{ 
+  for(i in 1:N) {
+    y[i] ~ dnorm(mu[i],tau)
+    mu[i] <- alpha + beta*x[i] 
+  }
+  alpha  ~ dnorm(0,0.001)
+  beta  ~ dnorm(0,0.001) 
+  tau ~ dgamma(0.01,0.01) 
+}', file = "JAGSmodel.txt")
+JAGSmodel <- jags.model(file = "JAGSmodel.txt", data=dat,
+                        n.chains=3, n.adapt = 5000)
+params <- c("alpha","beta","tau","mu") 
+```
+
+```{r, eval = FALSE}
+system.time(
+resJAGS <- coda.samples(JAGSmodel, params, n.iter=50000 )
+)
+```
+]
+
+---
+
+# How fast is INLA ?
+
+### INLA code
+```{r, message=FALSE}
+library(INLA)
+
+system.time(
+resINLA <- inla(y~x,
+            family = "gaussian",
+            data = dat)
+)
+```
+
+---
+
+# How fast is INLA ?
+## Do the results match
+
+```{r, echo = FALSE, fig.width=12, eval = FALSE}
+par(mfrow = c(1,2), mar = c(2,3,4,1))
+
+plot(resINLA$marginals.fixed$`(Intercept)`,
+     type = "n", xlab = "", ylab = "",
+     main = expression(alpha), las = 1, cex.main = 4)
+hist(resJAGS[[1]][,1], breaks = 100,
+     freq = FALSE, add = TRUE, col = "lightblue", border = "white")
+lines(resINLA$marginals.fixed$`(Intercept)`,
+      lwd = 3, col = "darkblue")
+
+legend("topright",
+       legend = c("JAGS", "INLA"), 
+       col = c("lightblue", "darkblue"),
+       lty = c(1,1), lwd = c(6,3))
+
+plot(resINLA$marginals.fixed$x,
+     type = "n", xlab = "", ylab = "",
+     main = expression(beta), las = 1, cex.main = 4)
+hist(resJAGS[[1]][,2], breaks = 100,
+     freq = FALSE, add = TRUE, col = "orange", border = "white")
+lines(resINLA$marginals.fixed$x,
+      lwd = 3, col = "brown")
+
+legend("topright",
+       legend = c("JAGS", "INLA"), 
+       col = c("orange", "brown"),
+       lty = c(1,1), lwd = c(6,3))
+```
+
+---
+class: inverse, center, middle
+
+
+# Spatial and spatiotemporal modelling using INLA
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+
+# Spatial modelling using INLA
+
+As mentionned earlier, to understand how to use INLA for spatial and spatiotemporal models, we need to also learn about:
+- Gaussian Markov Random Fields
+- Stochastic partial differential equation
+
+Actually, knowing about *Gaussian Markov Random Fields* is technically important for the basic INLA algorithm but we can skimmed over it earlier, however now we need to look into it in more details.
+
+---
+class: inverse, center, middle
+
+
+# Gaussian Markov Random Field
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF0.svg")
+```
+
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF1.svg")
+```
+
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF2.svg")
+```
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF3.svg")
+```
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF4.svg")
+```
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF5.svg")
+```
+
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF6.svg")
+```
+
+---
+
+# Conceptual representation
+
+Gaussian Markov Random Field can be illustrated using the following transect
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/GMRF7.svg")
+```
+
+## Property of Gaussian Markov Random Field
+- A stochastic process relying on the Gaussian distribution
+- A memoryless process that depends only on the present to decide the next outcome, not the events that occured in the past
+
+---
+
+# .scriptsize[Mathematics of Gaussian Markov Random Field]
+.small[
+A Gaussian Markov random field $\mathbf{y}$ is defined as
+
+$$\mathbf{y}\sim N(\mathbf{\mu}, \mathbf{\Sigma})$$
+which satisfies 
+$$p(y_i | \{y_j: i\ne j\}) = p(y_i | \{y_j: j \in \mathcal{N}_i\})$$
+where $\mathcal{N}$ is the neigbourhood around sample $i$
+]
+
+## A trick about Gaussian Markov random field
+
+.small[
+When defining a Gaussian Markov random field above, we relied on the covariance matrix $\mathbf{\Sigma}$. 
+
+Another way to present Gaussian Markov random field is to rely on precision.
+
+Precision is the inverse of covariance. This can be formalized as
+$$\mathbf{\Sigma} = \mathbf{Q}^{-1}$$
+]
+
+---
+
+# Why should we use $\mathbf{Q}$ and not $\mathbf{\Sigma}$? 
+
+What has been known for a while is that when $y_i$ and $y_j$ are uncorrelated, their covariance is 0. Mathematically, this can be written as 
+
+$$y_i \perp y_j \Leftrightarrow \mathbf{\Sigma}_{ij} = 0$$
+
+What Rue et al. (2009) showed is that conditional on $\mathbf{y}_{-ij}$ (a shorthand for $y_j : i\ne j$), when $y_i$ and $y_j$ are uncorrelated, their precision is 0. Mathematically, this can be written as 
+
+$$y_i \perp y_j | \mathbf{y}_{-ij} \Leftrightarrow \mathbf{Q}_{ij} = 0$$
+This discovery by Rue et al. (2009) is especially useful because the resulting precision matrix $\mathbf{Q}$ becomes a **sparse matrix**, making it much easier to invert (a necessary procedure when estimating models).
+
+*Note*: Computationally, inverting a matrix is challenging especially when the matrix is large and dense. However, the more zeros a matrix has the easier it gets to invert. 
+
+---
+
+# .small[Gaussian Markov Random Field in space]
+
+```{r, echo = FALSE, fig.align="center"}
+set.seed(42)
+loc <- matrix(runif(10*2),10,2)
+
+mesh <- inla.mesh.create(loc,refine=list(max.edge=0.1))
+
+par(mar = c(0,0,0,0))
+plot(mesh, main = "")
+pointSel<-which(mesh$loc[,1] > 0.38 & mesh$loc[,1] < 0.62 &
+                mesh$loc[,2] > 0.57 & mesh$loc[,2] < 0.83)
+
+points(mesh$loc[pointSel[14],1],
+       mesh$loc[pointSel[14],2],
+       col = "black", cex = 2, pch = 19)
+
+points(mesh$loc[pointSel[c(1,4,7,8,13 ,19:21)],1],
+       mesh$loc[pointSel[c(1,4,7,8,13 ,19:21)],2],
+       col = "blue", cex = 2, pch = 19)
+
+points(mesh$loc[pointSel[-c(1,4,7,8,13,14,19:21)],1],
+       mesh$loc[pointSel[-c(1,4,7,8,13,14,19:21)],2],
+       col = "turquoise", cex = 2, pch = 19)
+```
+
+---
+
+---
+
+---
+
+---
+
+---
+
 # .footnotesize[Linking INLA and latent Gaussian models]
 
 The goal of INLA is to estimate a *latent Gaussian model*, specifically, to learn about its:
@@ -616,132 +911,5 @@ p(\mathbf{\theta} | \mathbf{y}) &\approx \frac{p(\mathbf{y|x,\theta}) p(\mathbf{
 
 ---
 
-
----
-class: inverse, center, middle
-
-
-# Gaussian Markov Random Field
-
-<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
-
----
-
-# Conceptual representation
-
-Gaussian Markov Random Field can be illustrated using the following transect
-
-```{r echo=FALSE, fig.align='center', out.width="90%"}
-knitr::include_graphics("assets/img/GMRF0.svg")
-```
-
----
-
-# Conceptual representation
-
-Gaussian Markov Random Field can be illustrated using the following transect
-
-```{r echo=FALSE, fig.align='center', out.width="90%"}
-knitr::include_graphics("assets/img/GMRF1.svg")
-```
-
----
-
-# Conceptual representation
-
-Gaussian Markov Random Field can be illustrated using the following transect
-
-```{r echo=FALSE, fig.align='center', out.width="90%"}
-knitr::include_graphics("assets/img/GMRF2.svg")
-```
----
-
-# Conceptual representation
-
-Gaussian Markov Random Field can be illustrated using the following transect
-
-```{r echo=FALSE, fig.align='center', out.width="90%"}
-knitr::include_graphics("assets/img/GMRF3.svg")
-```
----
-
-# Conceptual representation
-
-Gaussian Markov Random Field can be illustrated using the following transect
-
-```{r echo=FALSE, fig.align='center', out.width="90%"}
-knitr::include_graphics("assets/img/GMRF4.svg")
-```
----
-
-# Conceptual representation
-
-Gaussian Markov Random Field can be illustrated using the following transect
-
-```{r echo=FALSE, fig.align='center', out.width="90%"}
-knitr::include_graphics("assets/img/GMRF5.svg")
-```
-
----
-
-# Conceptual representation
-
-Gaussian Markov Random Field can be illustrated using the following transect
-
-```{r echo=FALSE, fig.align='center', out.width="90%"}
-knitr::include_graphics("assets/img/GMRF6.svg")
-```
-
----
-
-# Conceptual representation
-
-Gaussian Markov Random Field can be illustrated using the following transect
-
-```{r echo=FALSE, fig.align='center', out.width="90%"}
-knitr::include_graphics("assets/img/GMRF7.svg")
-```
-
-## Property of Gaussian Markov Random Field
-- A stochastic process relying on the Gaussian distribution
-- A memoryless process that depends only on the present to decide the next outcome, not the events that occured in the past
-
----
-
-# .scriptsize[Mathematics of Gaussian Markov Random Field]
-.small[
-A Gaussian Markov random field $\mathbf{y}$ is defined as
-
-$$\mathbf{y}\sim N(\mathbf{\mu}, \mathbf{\Sigma})$$
-which satisfies 
-$$p(y_i | \{y_j: i\ne j\}) = p(y_i | \{y_j: j \in \mathcal{N}_i\})$$
-where $\mathcal{N}$ is the neigbourhood around sample $i$
-]
-
-## A trick about Gaussian Markov random field
-
-.small[
-When defining a Gaussian Markov random field above, we relied on the covariance matrix $\mathbf{\Sigma}$. 
-
-Another way to present Gaussian Markov random field is to rely on precision.
-
-Precision is the inverse of covariance. This can be formalized as
-$$\mathbf{\Sigma} = \mathbf{Q}^{-1}$$
-]
-
----
-
-# Why should we use $\mathbf{Q}$ and not $\mathbf{\Sigma}$? 
-
-What has been known for a while is that when $y_i$ and $y_j$ are uncorrelated, their covariance is 0. Mathematically, this can be written as 
-
-$$y_i \perp y_j \Leftrightarrow \mathbf{\Sigma}_{ij} = 0$$
-
-What Rue et al. (2009) showed is that conditional on $\mathbf{y}_{-ij}$ (a shorthand for $y_j : i\ne j$), when $y_i$ and $y_j$ are uncorrelated, their precision is 0. Mathematically, this can be written as 
-
-$$y_i \perp y_j | \mathbf{y}_{-ij} \Leftrightarrow \mathbf{Q}_{ij} = 0$$
-This discovery by Rue et al. (2009) is especially useful because the resulting precision matrix $\mathbf{Q}$ becomes a **sparse matrix**, making it much easier to invert (a necessary procedure when estimating models).
-
-*Note*: Computationally, inverting a matrix is challenging especially when the matrix is large and dense. However, the more zeros a matrix has the easier it gets to invert. 
 
 
