@@ -8,7 +8,7 @@ output:
     lib_dir: assets
     seal: false
     nature:
-      highlightStyle: github
+      highlightStyle: monokai
       highlightLines: true
       countIncrementalSlides: false
       beforeInit: "macros.js"
@@ -109,7 +109,6 @@ To understand how INLA works, we need to learn about:
 
 To understand how to use INLA for spatial and spatiotemporal models, we need to also learn about:
 - Gaussian Markov Random Fields
-- Stochastic partial differential equation
 
 So... A lot of rather complex mathematics is ahead of us...
 
@@ -451,7 +450,7 @@ resJAGS <- coda.samples(JAGSmodel, params, n.iter=50000 )
 # How fast is INLA ?
 
 ### INLA code
-```{r, message=FALSE}
+```{r, message=FALSE, eval=FALSE}
 library(INLA)
 
 system.time(
@@ -505,14 +504,25 @@ class: inverse, center, middle
 <html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
 
 ---
+# .small[Why use INLA for space(-time) modelling?]
 
-# Spatial modelling using INLA
+Spatial modelling is computationnally intensive.
+
+When the number of samples becomes largeish, the traditional ways of estimating spatial models falls apart especially when making spatial interpolation. 
+
+Specifically, computation time increases exponentially as the number of samples increases.
+
+Using INLA, it is possible to bypass some of the time consuming procedures and, as such, we can construct accurate spatial and spatiotemporal models even with a very large number of samples.
+
+
+---
+
+# Space(-time) modelling using INLA
 
 As mentionned earlier, to understand how to use INLA for spatial and spatiotemporal models, we need to also learn about:
 - Gaussian Markov Random Fields
-- Stochastic partial differential equation
 
-Actually, knowing about *Gaussian Markov Random Fields* is technically important for the basic INLA algorithm but we can skimmed over it earlier, however now we need to look into it in more details.
+Actually, knowing about *Gaussian Markov Random Fields* is technically important for the basic INLA algorithm but we skimmed over it earlier, however now we need to look into it in more details.
 
 ---
 class: inverse, center, middle
@@ -605,47 +615,9 @@ knitr::include_graphics("assets/img/GMRF7.svg")
 
 ---
 
-# .scriptsize[Mathematics of Gaussian Markov Random Field]
-.small[
-A Gaussian Markov random field $\mathbf{y}$ is defined as
+# .small[Conceptual representation in 2D]
 
-$$\mathbf{y}\sim N(\mathbf{\mu}, \mathbf{\Sigma})$$
-which satisfies 
-$$p(y_i | \{y_j: i\ne j\}) = p(y_i | \{y_j: j \in \mathcal{N}_i\})$$
-where $\mathcal{N}$ is the neigbourhood around sample $i$
-]
-
-## A trick about Gaussian Markov random field
-
-.small[
-When defining a Gaussian Markov random field above, we relied on the covariance matrix $\mathbf{\Sigma}$. 
-
-Another way to present Gaussian Markov random field is to rely on precision.
-
-Precision is the inverse of covariance. This can be formalized as
-$$\mathbf{\Sigma} = \mathbf{Q}^{-1}$$
-]
-
----
-
-# Why should we use $\mathbf{Q}$ and not $\mathbf{\Sigma}$? 
-
-What has been known for a while is that when $y_i$ and $y_j$ are uncorrelated, their covariance is 0. Mathematically, this can be written as 
-
-$$y_i \perp y_j \Leftrightarrow \mathbf{\Sigma}_{ij} = 0$$
-
-What Rue et al. (2009) showed is that conditional on $\mathbf{y}_{-ij}$ (a shorthand for $y_j : i\ne j$), when $y_i$ and $y_j$ are uncorrelated, their precision is 0. Mathematically, this can be written as 
-
-$$y_i \perp y_j | \mathbf{y}_{-ij} \Leftrightarrow \mathbf{Q}_{ij} = 0$$
-This discovery by Rue et al. (2009) is especially useful because the resulting precision matrix $\mathbf{Q}$ becomes a **sparse matrix**, making it much easier to invert (a necessary procedure when estimating models).
-
-*Note*: Computationally, inverting a matrix is challenging especially when the matrix is large and dense. However, the more zeros a matrix has the easier it gets to invert. 
-
----
-
-# .small[Gaussian Markov Random Field in space]
-
-```{r, echo = FALSE, fig.align="center"}
+```{r, echo = FALSE, fig.align="center", eval = FALSE}
 set.seed(42)
 loc <- matrix(runif(10*2),10,2)
 
@@ -671,7 +643,146 @@ points(mesh$loc[pointSel[-c(1,4,7,8,13,14,19:21)],1],
 
 ---
 
+
+# .scriptsize[Mathematics of Gaussian Markov Random Field]
+.small[
+A Gaussian Markov random field $\mathbf{y}$ is defined as
+
+$$\mathbf{y}\sim N(\mathbf{\mu}, \mathbf{\Sigma})$$
+which satisfies 
+$$p(y_i | \{y_j: i\ne j\}) = p(y_i | \{y_j: j \in \mathcal{N}_i\})$$
+where $\mathcal{N}$ is the neigbourhood around sample $i$
+]
+
+## A trick about Gaussian Markov random field
+
+.small[
+When defining a Gaussian Markov random field above, we relied on the covariance matrix $\mathbf{\Sigma}$. 
+
+Another way to present Gaussian Markov random field is to rely on precision $(\mathbf{Q})$.
+
+Precision is the inverse of covariance. This can be formalized as
+$$\mathbf{\Sigma} = \mathbf{Q}^{-1}$$
+]
+
 ---
+
+# Why should we rely on $\mathbf{Q}$ and not $\mathbf{\Sigma}$? 
+
+.small[
+What has been known for a while is that when $y_i$ and $y_j$ are uncorrelated, their covariance is 0. Mathematically, this can be written as 
+
+$$y_i \perp y_j \Leftrightarrow \mathbf{\Sigma}_{ij} = 0$$
+
+What Rue et al. (2009) showed is that conditional on $\mathbf{y}_{-ij}$ (a shorthand for $y_j : i\ne j$), when $y_i$ and $y_j$ are uncorrelated, their precision is 0. Mathematically, this can be written as 
+
+$$y_i \perp y_j | \mathbf{y}_{-ij} \Leftrightarrow \mathbf{Q}_{ij} = 0$$
+This discovery by Rue et al. (2009) is especially useful because the resulting precision matrix $\mathbf{Q}$ only has non-zero values for neighbours and diagonal elements. It is thus a **sparse matrix**, making it much easier to invert (a necessary procedure when estimating models).
+
+*Note*: Computationally, inverting a matrix is challenging especially when the matrix is large and dense. However, the more zeros a matrix has the easier it gets to invert. 
+]
+---
+# Constructing $\mathbf{Q}$
+
+.small[
+As you now know, in geostatistical context, the semivariogram serves as reference to make interpolations. 
+
+Through some fancy theoretical work by Lindgren et al. (2011) relying on *stochastic partial differential equation* we learned that a well suited model to derive a good precision matrix $\mathbf{Q}$ is the Matérn covariance model
+]
+
+.pull-left[
+.small[
+$$C(\boldsymbol{d}) = \frac{\sigma^2}{2^{\nu-1}\Gamma(\nu)}\left(\kappa \boldsymbol{d}\right)^\nu K_\nu\left(\kappa \boldsymbol{d}\right)$$
+where
+- $\boldsymbol{d}$ is the distance between two samples
+- $\sigma^2$ is the variance
+- $\nu$ and $\kappa$ are scaling parameters (always $> 0$)
+- $K_\nu$ is a Bessel function of the second kind of order $\nu$
+]
+]
+.pull-right[
+```{r, echo = FALSE, message=FALSE, warning=FALSE, fig.height=6.5}
+library(gstat)
+res <- show.vgms(kappa.range = c( .5, 2, 5, 10),
+          max = 15, plot = FALSE)
+par(mfrow = c(2,2), mar = c(1,1,1,1), oma = c(3,3,3,0))
+plot(res[1:50,2:1], 
+     type = "l", 
+     lwd = 3,
+     col = "blue",
+     xaxt = "n",
+     yaxt = "n")
+legend("bottomright",
+       legend = expression(paste(kappa,"= 0.5")),
+       cex = 2)
+
+plot(res[51:100,2:1], 
+     type = "l", 
+     lwd = 3,
+     col = "blue",
+     xaxt = "n",
+     yaxt = "n")
+legend("bottomright",
+       legend = expression(paste(kappa,"= 2")),
+       cex = 2)
+
+plot(res[101:150,2:1], 
+     type = "l", 
+     lwd = 3,
+     col = "blue",
+     xaxt = "n",
+     yaxt = "n")
+legend("bottomright",
+       legend = expression(paste(kappa,"= 5")),
+       cex = 2)
+
+plot(res[151:200,2:1], 
+     type = "l", 
+     lwd = 3,
+     col = "blue",
+     xaxt = "n",
+     yaxt = "n")
+legend("bottomright",
+       legend = expression(paste(kappa,"= 10")),
+       cex = 2)
+
+mtext("Distance", side = 1, cex = 2, outer = TRUE)
+mtext("Semivariance", side = 2, cex = 2, outer = TRUE)
+mtext("Matérn model", side = 3, cex = 2.5, outer = TRUE)
+```
+]
+
+---
+
+# Constructing $\mathbf{Q}$
+
+The reason why the Matérn covariance model is interesting to use is that it has wave spectrum that can be defined through the Bessel function used in its construction
+
+## Bessel function of the second kind
+```{r echo=FALSE, fig.align='center', out.width="50%"}
+knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Bessel_Functions_%282nd_Kind%2C_n%3D0%2C1%2C2%29.svg/300px-Bessel_Functions_%282nd_Kind%2C_n%3D0%2C1%2C2%29.svg.png")
+```
+
+---
+
+# Constructing $\mathbf{Q}$
+
+With the Matérn covariance model the difference between the classical approach can be seen visually
+
+.pull-left[
+## Classic
+]
+
+.pull-right[
+## INLA
+]
+
+```{r echo=FALSE, fig.align='center', out.width="90%"}
+knitr::include_graphics("assets/img/SPDE.png")
+```
+
+---
+# Constructing the mesh
 
 ---
 

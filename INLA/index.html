@@ -106,7 +106,6 @@ To understand how INLA works, we need to learn about:
 
 To understand how to use INLA for spatial and spatiotemporal models, we need to also learn about:
 - Gaussian Markov Random Fields
-- Stochastic partial differential equation
 
 So... A lot of rather complex mathematics is ahead of us...
 
@@ -424,11 +423,6 @@ resINLA &lt;- inla(y~x,
 )
 ```
 
-```
-##    user  system elapsed 
-##   0.719   0.510   1.338
-```
-
 ---
 
 # How fast is INLA ?
@@ -445,14 +439,25 @@ class: inverse, center, middle
 &lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
 
 ---
+# .small[Why use INLA for space(-time) modelling?]
 
-# Spatial modelling using INLA
+Spatial modelling is computationnally intensive.
+
+When the number of samples becomes largeish, the traditional ways of estimating spatial models falls apart especially when making spatial interpolation. 
+
+Specifically, computation time increases exponentially as the number of samples increases.
+
+Using INLA, it is possible to bypass some of the time consuming procedures and, as such, we can construct accurate spatial and spatiotemporal models even with a very large number of samples.
+
+
+---
+
+# Space(-time) modelling using INLA
 
 As mentionned earlier, to understand how to use INLA for spatial and spatiotemporal models, we need to also learn about:
 - Gaussian Markov Random Fields
-- Stochastic partial differential equation
 
-Actually, knowing about *Gaussian Markov Random Fields* is technically important for the basic INLA algorithm but we can skimmed over it earlier, however now we need to look into it in more details.
+Actually, knowing about *Gaussian Markov Random Fields* is technically important for the basic INLA algorithm but we skimmed over it earlier, however now we need to look into it in more details.
 
 ---
 class: inverse, center, middle
@@ -529,6 +534,13 @@ Gaussian Markov Random Field can be illustrated using the following transect
 
 ---
 
+# .small[Conceptual representation in 2D]
+
+
+
+---
+
+
 # .scriptsize[Mathematics of Gaussian Markov Random Field]
 .small[
 A Gaussian Markov random field `\(\mathbf{y}\)` is defined as
@@ -544,7 +556,7 @@ where `\(\mathcal{N}\)` is the neigbourhood around sample `\(i\)`
 .small[
 When defining a Gaussian Markov random field above, we relied on the covariance matrix `\(\mathbf{\Sigma}\)`. 
 
-Another way to present Gaussian Markov random field is to rely on precision.
+Another way to present Gaussian Markov random field is to rely on precision `\((\mathbf{Q})\)`.
 
 Precision is the inverse of covariance. This can be formalized as
 `$$\mathbf{\Sigma} = \mathbf{Q}^{-1}$$`
@@ -552,8 +564,9 @@ Precision is the inverse of covariance. This can be formalized as
 
 ---
 
-# Why should we use `\(\mathbf{Q}\)` and not `\(\mathbf{\Sigma}\)`? 
+# Why should we rely on `\(\mathbf{Q}\)` and not `\(\mathbf{\Sigma}\)`? 
 
+.small[
 What has been known for a while is that when `\(y_i\)` and `\(y_j\)` are uncorrelated, their covariance is 0. Mathematically, this can be written as 
 
 `$$y_i \perp y_j \Leftrightarrow \mathbf{\Sigma}_{ij} = 0$$`
@@ -561,19 +574,60 @@ What has been known for a while is that when `\(y_i\)` and `\(y_j\)` are uncorre
 What Rue et al. (2009) showed is that conditional on `\(\mathbf{y}_{-ij}\)` (a shorthand for `\(y_j : i\ne j\)`), when `\(y_i\)` and `\(y_j\)` are uncorrelated, their precision is 0. Mathematically, this can be written as 
 
 `$$y_i \perp y_j | \mathbf{y}_{-ij} \Leftrightarrow \mathbf{Q}_{ij} = 0$$`
-This discovery by Rue et al. (2009) is especially useful because the resulting precision matrix `\(\mathbf{Q}\)` becomes a **sparse matrix**, making it much easier to invert (a necessary procedure when estimating models).
+This discovery by Rue et al. (2009) is especially useful because the resulting precision matrix `\(\mathbf{Q}\)` only has non-zero values for neighbours and diagonal elements. It is thus a **sparse matrix**, making it much easier to invert (a necessary procedure when estimating models).
 
 *Note*: Computationally, inverting a matrix is challenging especially when the matrix is large and dense. However, the more zeros a matrix has the easier it gets to invert. 
+]
+---
+# Constructing `\(\mathbf{Q}\)`
+
+.small[
+As you now know, in geostatistical context, the semivariogram serves as reference to make interpolations. 
+
+Through some fancy theoretical work by Lindgren et al. (2011) relying on *stochastic partial differential equation* we learned that a well suited model to derive a good precision matrix `\(\mathbf{Q}\)` is the Matérn covariance model
+]
+
+.pull-left[
+.small[
+`$$C(\boldsymbol{d}) = \frac{\sigma^2}{2^{\nu-1}\Gamma(\nu)}\left(\kappa \boldsymbol{d}\right)^\nu K_\nu\left(\kappa \boldsymbol{d}\right)$$`
+where
+- `\(\boldsymbol{d}\)` is the distance between two samples
+- `\(\sigma^2\)` is the variance
+- `\(\nu\)` and `\(\kappa\)` are scaling parameters (always `\(&gt; 0\)`)
+- `\(K_\nu\)` is a Bessel function of the second kind of order `\(\nu\)`
+]
+]
+.pull-right[
+![](index_files/figure-html/unnamed-chunk-19-1.png)&lt;!-- --&gt;
+]
 
 ---
 
-# .small[Gaussian Markov Random Field in space]
+# Constructing `\(\mathbf{Q}\)`
 
-&lt;img src="index_files/figure-html/unnamed-chunk-18-1.png" style="display: block; margin: auto;" /&gt;
+The reason why the Matérn covariance model is interesting to use is that it has wave spectrum that can be defined through the Bessel function used in its construction
+
+## Bessel function of the second kind
+&lt;img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Bessel_Functions_%282nd_Kind%2C_n%3D0%2C1%2C2%29.svg/300px-Bessel_Functions_%282nd_Kind%2C_n%3D0%2C1%2C2%29.svg.png" width="50%" style="display: block; margin: auto;" /&gt;
 
 ---
 
+# Constructing `\(\mathbf{Q}\)`
+
+With the Matérn covariance model the difference between the classical approach can be seen visually
+
+.pull-left[
+## Classic
+]
+
+.pull-right[
+## INLA
+]
+
+&lt;img src="assets/img/SPDE.png" width="90%" style="display: block; margin: auto;" /&gt;
+
 ---
+# Constructing the mesh
 
 ---
 
@@ -634,7 +688,7 @@ class: inverse, center, middle
 
 .small[
 Suppose we have a variable distributed as in the figure below
-&lt;img src="index_files/figure-html/unnamed-chunk-19-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-22-1.png" style="display: block; margin: auto;" /&gt;
 
 The equation associated to the distribution of this variable is
 
@@ -649,7 +703,7 @@ A Laplace approximation can estimate the distribution of any unimodal variable (
 
 If we look at the probability distribution of a Gaussian distribution
 .pull-left[
-&lt;img src="index_files/figure-html/unnamed-chunk-20-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-23-1.png" style="display: block; margin: auto;" /&gt;
 ]
 .pull-right[
 `$$\frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(y - \mu)^2}{2\sigma^2}}$$`
@@ -739,7 +793,7 @@ Using the previous derivation we can
 
 # Visualisation
 
-&lt;img src="index_files/figure-html/unnamed-chunk-21-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-24-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 class: inverse, center, middle
@@ -781,7 +835,7 @@ p(\mathbf{\theta} | \mathbf{y}) &amp;\approx \frac{p(\mathbf{y|x,\theta}) p(\mat
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script src="macros.js"></script>
 <script>var slideshow = remark.create({
-"highlightStyle": "github",
+"highlightStyle": "monokai",
 "highlightLines": true,
 "countIncrementalSlides": false
 });
