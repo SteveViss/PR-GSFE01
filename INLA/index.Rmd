@@ -32,6 +32,7 @@ class: inverse, center, middle
 
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
+library(INLA)
 ```
 
 
@@ -756,23 +757,16 @@ mtext("Matérn model", side = 3, cex = 2.5, outer = TRUE)
 
 # Constructing $\mathbf{Q}$
 
-The reason why the Matérn covariance model is interesting to use is that it has wave spectrum that can be defined through the Bessel function used in its construction
+.footnotesize[
+Discrete approximation of the Matérn covariance model can be constructed using weighted basis functions.
 
-## Bessel function of the second kind
-```{r echo=FALSE, fig.align='center', out.width="50%"}
-knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Bessel_Functions_%282nd_Kind%2C_n%3D0%2C1%2C2%29.svg/300px-Bessel_Functions_%282nd_Kind%2C_n%3D0%2C1%2C2%29.svg.png")
-```
+Concretly, we can decide on a mesh underlying the study area to approximate the Matérn covariance model and as such the precision matrix $\mathbf{Q}$
 
----
-
-# Constructing $\mathbf{Q}$
-
-With the Matérn covariance model the difference between the classical approach can be seen visually
-
+We can thus visually see the difference between the INLA approach and the classical approach
+]
 .pull-left[
 ## Classic
 ]
-
 .pull-right[
 ## INLA
 ]
@@ -784,7 +778,102 @@ knitr::include_graphics("assets/img/SPDE.png")
 ---
 # Constructing the mesh
 
+What we want is a mesh that looks like this
+```{r, echo = FALSE, fig.align="center", eval = TRUE, fig.height=5, fig.width=5}
+set.seed(42)
+loc <- matrix(runif(50*2),50,2)
+
+mesh <- inla.mesh.2d(loc.domain = loc,
+                     max.edge = 0.1,
+                     offset = c(0.1,0.3))
+
+par(mar = c(0,0,0,0))
+plot(mesh, main = "")
+points(loc, pch = 19, col = "blue", cex = 2)
+```
+
 ---
+# Constructing the mesh
+## Property of a good mesh
+
+- The samples do **not** need to be at the corner of edges
+- Triangles formed in the mesh are roughly of the same size
+- The number of vertex (points in the mesh) is reasonable
+- There should be a buffer around the points 
+
+### Important technical consideration
+In INLA, estimation is performed at each point of the mesh and the interpolation is made between each vertex with an approach akin to a regression.
+
+---
+
+# Constructing the mesh
+## A few example of bad mesh
+
+You should be careful about a mesh that looks like this
+```{r, echo = FALSE, fig.align="center", eval = TRUE, fig.height=5, fig.width=5}
+mesh <- inla.mesh.2d(loc.domain = loc,
+                     max.edge = 0.02,
+                     offset = 0.2)
+
+par(mar = c(0,0,0,0))
+plot(mesh, main = "")
+points(loc, pch = 19, col = "blue", cex = 2)
+```
+It is not wrong, but it will take longer to estimate
+
+---
+
+# Constructing the mesh
+## A few example of bad mesh
+
+You should be careful about a mesh that looks like this
+```{r, echo = FALSE, fig.align="center", eval = TRUE, fig.height=5, fig.width=5}
+mesh <- inla.mesh.2d(loc.domain = loc,
+                     max.edge = 0.5,
+                     offset = 0.2)
+
+par(mar = c(0,0,0,0))
+plot(mesh, main = "")
+points(loc, pch = 19, col = "blue", cex = 2)
+```
+It is not wrong, but it will give a very (!) coarse interpolation
+
+---
+
+# Constructing the mesh
+## A few example of bad mesh
+
+Mesh like this should not use! 
+```{r, echo = FALSE, fig.align="center", eval = TRUE, fig.height=5, fig.width=5}
+mesh <- inla.mesh.2d(loc.domain = loc,
+                     max.edge = c(0.3,0.5),
+                     offset = c(0.05,0.3),n =4)
+
+par(mar = c(0,0,0,0))
+plot(mesh, main = "")
+points(loc, pch = 19, col = "blue", cex = 2)
+```
+The triangles are very different in size.
+
+---
+
+---
+
+
+---
+
+---
+
+
+---
+
+---
+
+
+---
+
+---
+
 
 ---
 
