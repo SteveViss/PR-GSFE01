@@ -1,0 +1,303 @@
+---
+title: Geostatistics – Handling Spatial and Spatial-temporal data Using R (GSFE01)
+author: Steve Vissault & Guillaume Blanchet
+date: `r format(Sys.time(), "%d %B, %Y")`
+output:
+  html_document:
+    toc: true
+    theme: united
+---
+
+## Downloading the original spatial data
+
+```r
+# Informations on sample sites
+download.file(URL1)
+# Habitat data
+# Benthic community data
+```
+
+## Reading the file
+
+Hence, the data have been downloaded and save on your computer, we would like to import the data within R environment.
+
+```{r}
+# Always check what is your current working directory
+getwd()
+# Does R see the files at this current location?
+dir("./raw")
+```
+Then, we load the datasets one by one.
+
+```{r}
+sites <- read.csv("../raw/cabin_study_data_mda02_1987-present.csv", fileEncoding="UTF-16", stringsAsFactors=FALSE)
+habitat <- read.csv("../raw/cabin_habitat_data_mda02_1987-present.csv", fileEncoding="UTF-16", stringsAsFactors=FALSE)
+benthos <- read.csv("../raw/cabin_benthic_data_mda02_1987-present.csv", fileEncoding="UTF-16", stringsAsFactors=FALSE)
+
+library(dplyr)
+library(sf)
+library(raster)
+library(mapview)
+
+sites <- sites %>% 
+  select(Latitude, Longitude, Site.Site) %>% 
+  group_by(Site.Site) %>% 
+  summarise(lat = mean(Latitude), lon = mean(Longitude))
+
+sites <- st_as_sf(sites, coords = c("lon", "lat"), crs = 4326)
+
+
+# Area of interest: Hamilton Harbor
+area <-  st_sfc(st_polygon(list(rbind(
+    c(-79.93934425598877, 43.31754646176933),
+    c(-79.77351936585205, 43.31754646176933),
+    c(-79.77351936585205, 43.26006787235734),
+    c(-79.93934425598877, 43.26006787235734),
+    c(-79.93934425598877, 43.31754646176933)
+))))
+st_crs(area) = 4326
+hamilton_sites <- st_intersection(sites,area)
+
+## Select Hamilton data
+hamilton_habitat <- subset(habitat, Site.Site %in% unique(hamilton_sites$Site.Site))
+hamilton_benthos <- subset(benthos, Site.Site %in% unique(hamilton_sites$Site.Site))
+
+n_var <- table(habitat$Variable)
+sel_var <- names(subset(n_var, n_var > 2000))
+
+# Filtering the dataset
+hamilton_habitat <- subset(hamilton_habitat, Year.Année %in% 2005:2017 & Variable %in% sel_var)
+hamilton_habitat <- merge(hamilton_sites,hamilton_habitat, by = "Site.Site")
+
+
+# Make hamilton habitat spatial
+library(gstat)
+#hamilton <- as(hamilton, "Spatial")
+
+# Doesn't work
+# pdf("vario.pdf")
+# for(v in sel_var) {
+#   hamilton_var <- hamilton[hamilton$Variable == v,]
+#   vario <- variogram(Value.Valeur ~ 1, hamilton_var, cloud = TRUE)
+#   plot(vario)
+# }
+# dev.off()
+
+```
+
+## Extract area of interest 
+
+
+```{r}
+# Load basic maps
+library(dplyr)
+library(sf)
+library(rgeos)
+
+st_layers("../raw/hamilton_harbor.gdb/") 
+lake <- st_read("../raw/hamilton_harbor.gdb/", layer="waterbody_2")
+mapview(lake) + mapview(hamilton_sites)
+
+library(ggplot2)
+
+# Does both spatial layers have the same CRS?
+st_crs(lake) == st_crs(hamilton_sites)
+lake <- st_transform(lake, st_crs(hamilton_sites))
+
+# Simple map of the stations
+ggplot() + 
+  geom_sf(data = lake, fill = "lightskyblue1", col = "skyblue3") + 
+  geom_sf(data = hamilton_sites, col = "red") + 
+  theme_bw()
+```
+
+## Spatial means
+
+```{r}
+# We have several samples/replicates by site and date, we want to compute the average value of TP (total Phosphorus) for each sampling period.
+hamilton_tp <- hamilton %>% filter(Variable == "TP") %>% group_by(Site.Site, Year.Année, JulianDay.JourJulian) %>% summarise(avg_tp=mean(Value.Valeur)) 
+ 
+# Some sampling stations have several positions. 
+hamilton_tp$geometry <- st_cast(hamilton_tp$geometry, "POINT")
+
+# facet per year
+ggplot() + 
+  geom_sf(data = lake, fill = "lightskyblue1", col = "skyblue3") + 
+  geom_sf(data = hamilton_tp, aes(col = avg_tp, size = avg_tp/max(avg_tp))) + 
+  scale_color_viridis_c(name = "ppm") +
+  facet_wrap(~Year.Année) +
+  guides(size = FALSE) +
+  theme_bw()
+
+# gganimate
+library(gganimate)
+library(gifski)
+
+ggplot() + 
+  geom_sf(data = lake, fill = "lightskyblue1", col = "skyblue3") + 
+  geom_sf(data = hamilton_tp, aes(col = avg_tp, size = avg_tp/max(avg_tp), group = seq_along(Year.Année))) + 
+  scale_color_viridis_c(name = "ppm") +
+  transition_states(Year.Année, transition_length = 2, state_length = 1) +
+  labs(title = 'Year: {closest_state}') +
+  guides(size = FALSE) +
+  theme_bw()
+
+# Means over years
+hamilton_avg_yr <- hamilton_tp %>% group_by(Year.Année, Site.Site) %>% summarise(avg=mean(avg_tp))
+
+ggplot() + 
+  geom_sf(data = lake, fill = "lightskyblue1", col = "skyblue3") + 
+  geom_sf(aes(col = avg, size = avg/max(avg)),data = hamilton_avg_yr) +
+  scale_color_viridis_c(name = "ppm") +
+  guides(size = FALSE) +
+  theme_bw()
+```
+
+## Inverse distance weighting 
+
+### fitting
+
+```{r}
+library(raster)
+library(gstat)
+
+# Transform to sp
+sp_avg_yr <- as(hamilton_avg_yr, "Spatial")
+lake <- as(lake, "Spatial")
+
+# Default
+r_ref <- raster(lake,res=0.001)
+gs <- gstat(formula=avg~1, locations=sp_avg_yr)
+idw <- interpolate(r_ref, gs)
+idwr <- mask(idw, lake)
+plot(idwr)
+
+# Smoothing 2 (increase function power = less smooth)????
+gs <- gstat(formula=avg~1, locations=sp_avg_yr, set=list(idp=2))
+idw <- interpolate(r_ref, gs)
+idwr <- mask(idw, lake)
+plot(idwr)
+```
+
+### Weighting sampling
+
+
+
+### Estimating confidence interval with jacknife
+
+Optionnal
+
+### Validation: pred vs obs
+
+The of the power function parameters (through `idp`) might be subjective.
+Let's perform a validation for `idp` of 2
+
+```{r}
+# Leave-one-out validation routine
+IDW.out <- vector(length = length(sp_avg_yr))
+for (i in 1:length(sp_avg_yr)) {
+  IDW.out[i] <- idw(avg ~ 1, sp_avg_yr[-i,], sp_avg_yr[i,], idp=2.0)$var1.pred
+}
+
+# Plot the differences
+plot(IDW.out ~ sp_avg_yr$avg, asp=1, xlab="Observed", ylab="Predicted", pch=16,
+      col=rgb(0,0,0,0.5))
+abline(lm(IDW.out ~ sp_avg_yr$avg), col="red", lw=2,lty=2)
+abline(0,1)
+```
+
+```{r}
+# Compute the root-mean-squared error (RMSE)
+sqrt(mean(IDW.out - sp_avg_yr$avg)^2))
+```
+
+### Optimize parameter c
+
+```{r}
+
+
+```
+
+### Validation K-Fold
+
+#### Split the dataset
+
+Pro: Faster for large dataset
+
+```{r}
+RMSE <- function(observed, predicted) {
+  sqrt(mean((predicted - observed)^2, na.rm=TRUE))
+}
+```
+
+```{r}
+# Declaring the number of groups (`nfold`), and attach each points to a specific group (`k`).
+nfolds <- 5
+k <- sample(1:nfolds,length(sp_avg_yr), replace = TRUE)
+```
+
+### Running the IDW model for each fold
+
+```{r}
+# Smoothing (power function parameter c)
+c <- 2
+
+# vector storing the RMSE value pour each fold
+vec_RMSE <- rep(NA, nfolds)
+
+# Looping over groups
+for (i in 1:nfolds) {
+  # Create training and validation set
+  test <- sp_avg_yr[k!=i,]
+  train <- sp_avg_yr[k==i,]
+
+  # Perform the IDW model on the training set
+  m <- gstat(formula=avg~1, locations=train, set=list(idp = 2))
+  p1 <- predict(m, newdata=test)$var1.pred
+
+  # Assign the value to the RMSE vector
+  vec_RMSE[i] <- RMSE(test$avg, p1)
+}
+
+# Compute mean RMSE
+mean(vec_RMSE)
+```
+
+### Optimize c parameters value
+
+The idea behing is to minimise the RMSE value
+
+```{r}
+# Smoothing (power function parameter c)
+c_vec <- 1:5
+# Vector storing the mean RMSE by c value parameter
+vec_mean_RMSE <- rep(NA, length(c_vec))
+
+for(c in 1:length(c_vec)){
+  # vector storing the RMSE value pour each fold
+  vec_RMSE <- rep(NA, nfolds)
+
+  # Looping over groups
+  for (i in 1:nfolds) {
+    # Create training and validation sets
+    test <- sp_avg_yr[k!=i,]
+    train <- sp_avg_yr[k==i,]
+
+    # Perform the IDW model on the training set
+    m <- gstat(formula=avg~1, locations=train, set=list(idp = c_vec[c]))
+    p1 <- predict(m, newdata=test)$var1.pred
+
+    # Assign the value to the RMSE vector
+    vec_RMSE[i] <- RMSE(test$avg, p1)
+  }
+  # Compute mean RMSE
+  vec_mean_RMSE[c] <- mean(vec_RMSE)
+}
+```
+
+
+
+
+
+
+
