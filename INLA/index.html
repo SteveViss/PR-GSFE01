@@ -405,6 +405,11 @@ system.time(
 resJAGS &lt;- coda.samples(JAGSmodel, params, n.iter=50000 )
 )
 ```
+
+```
+##    user  system elapsed 
+##  16.696   4.968  22.193
+```
 ]
 
 ---
@@ -423,12 +428,17 @@ resINLA &lt;- inla(y~x,
 )
 ```
 
+```
+##    user  system elapsed 
+##   0.714   0.552   1.432
+```
+
 ---
 
 # How fast is INLA ?
 ## Do the results match
 
-
+![](index_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
 
 ---
 class: inverse, center, middle
@@ -536,7 +546,7 @@ Gaussian Markov Random Field can be illustrated using the following transect
 
 # .small[Conceptual representation in 2D]
 
-
+&lt;img src="index_files/figure-html/unnamed-chunk-18-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 

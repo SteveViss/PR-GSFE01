@@ -1,0 +1,174 @@
+---
+title: "GSFE01"
+author: "Guillaume Blanchet & Steve Vissault"
+date: "2018/02/16"
+output:
+  xaringan::moon_reader:
+    css: [default, pr.css, pr-fonts.css, "hygge"]
+    lib_dir: assets
+    seal: false
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      beforeInit: "macros.js"
+---
+
+class: title-slide, middle
+
+<img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"></img>
+<img src="assets/img/UdeS_blanc.png" width="350px" ></img>
+
+# Variogram
+
+.instructors[
+  GSFE01 - F. Guillaume Blanchet & Steve Vissault
+]
+
+
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+
+library(sp)
+library(gstat)
+library(sf)
+setwd("~/ownCloud/PR-GSFE01/")
+
+# Load data
+hamiltonRaw <- readRDS("data_hamilton.rds")
+hamiltonSF <- st_as_sf(hamiltonRaw)
+ham <- st_transform(hamiltonSF,crs = 3161)
+```
+
+# Generalities about variograms
+
+## Definition
+
+.content-box-green[**Variogram**
+
+A variogram displays the variance of a variable measured at two different location in space.]
+
+.content-box-green[**Covariogram**
+
+A covariogram displays the variance of a variable measured at two different location in space across time.]
+
+---
+
+# variogram or semivariogram?
+
+In the litterature there are confusions about how to call a variogram.
+
+Some call it a **variogram** while other call it a **semivariogram**.
+
+The reason why **semivariogram** (or semivariance) is sometimes used stem from the fact that what is represented when plotting a variogram is *half* the variance.
+
+Bachmaier and Backes (2008) discussed this confusion and they showed that the term **variogram** should be used and that the terms *semivariance* and *semivariogram* should be avoided.
+
+---
+
+# Types of variogram
+
+We will see different types of (co)variogram today
+
+## Spatial variogram
+- Cloud variogram
+- Empirical variogram (sometimes referred to as *sample variogram*)
+- Model variogram
+- Directional variogram
+
+## Spatiotemporal variogram
+- Empirical variogram
+- Model variogram
+
+
+---
+class: inverse, center, middle
+
+# Cloud variogram
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+# Cloud variogram
+
+.content-box-green[A **cloud variogram** displays the variances between all pairs of samples]
+
+```{r,echo = FALSE, fig.height=5, fig.width=12, eval=TRUE}
+# Focus on 2005
+ham2005 <- ham[which(ham$Year.Année == 2005),]
+
+# Select TP
+tp <- ham2005[ham2005$Variable == "TP",]
+tpSP <- as(tp, "Spatial")
+
+vario <- variogram(Value.Valeur ~ 1,
+                   data = tpSP,
+                   cloud= TRUE,
+                   cutoff = 3500)
+
+par(mar = c(5,6.5,0.5,0.5))
+plot(vario$dist, vario$gamma,
+     xlab = "Distance (m)",
+     ylab = "",
+     cex.lab = 2, las = 1)
+mtext(text = "Variance",side = 2, cex = 2, line = 4)
+```
+
+## Use of cloud variogram
+- Exploratory analysis
+- It is the basis to construct the empirical variogram
+
+---
+
+# Directional variogram
+
+The variogram in the previous slide is constructed using all all samples equally. 
+
+This does not have to be the case. We can also construct a variogram using only samples in a cone in specific direction. These variograms are known as **directional variograms** 
+
+```{r,echo = FALSE, fig.height=5, fig.width=12, eval=TRUE}
+vario <- variogram(Value.Valeur ~ 1,
+                   data = tpSP,
+                   cloud= TRUE,
+                   cutoff = 3500,
+                   alpha = c(0, 45, 90, 135))
+
+plot(vario)
+```
+
+
+---
+class: inverse, center, middle
+
+# Empirical variogram
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+
+# Construction of empirical variogram
+
+The empirical variogram is constructed by defining bins into the cloud variogram and taking the average of the points in this bin
+
+
+```{r,echo = FALSE, fig.height=5, fig.width=12, eval=TRUE}
+bound <- seq(0,3500, by = 250)
+varioEmp <- variogram(Value.Valeur ~ 1,
+                   data = tpSP,
+                   cutoff = 3500,
+                   boundaries = bound)
+
+par(mar = c(5,6.5,0.5,0.5))
+plot(vario$dist, vario$gamma,
+     xlab = "Distance (m)",
+     ylab = "",
+     cex.lab = 2, las = 1)
+mtext(text = "Variance",side = 2, cex = 2, line = 4)
+
+points(varioEmp$dist, varioEmp$gamma,
+       col = "green", pch = 15, cex = 1.5)
+```
+

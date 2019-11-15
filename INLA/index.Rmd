@@ -439,7 +439,7 @@ JAGSmodel <- jags.model(file = "JAGSmodel.txt", data=dat,
 params <- c("alpha","beta","tau","mu") 
 ```
 
-```{r, eval = FALSE}
+```{r, eval=TRUE}
 system.time(
 resJAGS <- coda.samples(JAGSmodel, params, n.iter=50000 )
 )
@@ -451,7 +451,7 @@ resJAGS <- coda.samples(JAGSmodel, params, n.iter=50000 )
 # How fast is INLA ?
 
 ### INLA code
-```{r, message=FALSE, eval=FALSE}
+```{r, message=FALSE, eval=TRUE}
 library(INLA)
 
 system.time(
@@ -466,7 +466,7 @@ resINLA <- inla(y~x,
 # How fast is INLA ?
 ## Do the results match
 
-```{r, echo = FALSE, fig.width=12, eval = FALSE}
+```{r, echo = FALSE, fig.width=12, eval=TRUE}
 par(mfrow = c(1,2), mar = c(2,3,4,1))
 
 plot(resINLA$marginals.fixed$`(Intercept)`,
@@ -618,7 +618,7 @@ knitr::include_graphics("assets/img/GMRF7.svg")
 
 # .small[Conceptual representation in 2D]
 
-```{r, echo = FALSE, fig.align="center", eval = FALSE}
+```{r, echo = FALSE, fig.align="center", eval=TRUE}
 set.seed(42)
 loc <- matrix(runif(10*2),10,2)
 
