@@ -8,7 +8,10 @@
     line-height: 1.5;
     padding: 1em 2em 1em 2em
   }
+<<<<<<< HEAD
   
+=======
+>>>>>>> 1bc778fd7c9874abbf551a2208b013c6b9ee6c3f
 
   .inverse {
     background-color: #23373B;
@@ -18,7 +21,11 @@
   .remark-slide-content > h1 {
     font-family: 'Roboto Slab';
     font-weight: normal;
+<<<<<<< HEAD
     font-size: 45px;
+=======
+    font-size: 40px;
+>>>>>>> 1bc778fd7c9874abbf551a2208b013c6b9ee6c3f
     margin-top: -95px;
     margin-left: -00px;
     color: #FAFAFA;
@@ -36,6 +43,13 @@
     border-top: 0px solid #FAFAFA;
   }
   
+<<<<<<< HEAD
+=======
+  .clear > h1 {
+    color: #1A292C;
+  }
+
+>>>>>>> 1bc778fd7c9874abbf551a2208b013c6b9ee6c3f
   .remark-slide-content > h2, h3, h4 {
     padding-top: -15px;
     padding-bottom: 00px;
