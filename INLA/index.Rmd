@@ -693,9 +693,9 @@ Through some fancy theoretical work by Lindgren et al. (2011) relying on *stocha
 
 .pull-left[
 .small[
-$$C(\boldsymbol{d}) = \frac{\sigma^2}{2^{\nu-1}\Gamma(\nu)}\left(\kappa \boldsymbol{d}\right)^\nu K_\nu\left(\kappa \boldsymbol{d}\right)$$
+$$\gamma(\boldsymbol{h}) = \frac{\sigma^2}{2^{\nu-1}\Gamma(\nu)}\left(\kappa \boldsymbol{h}\right)^\nu K_\nu\left(\kappa \boldsymbol{h}\right)$$
 where
-- $\boldsymbol{d}$ is the distance between two samples
+- $\boldsymbol{h}$ is the distance between two samples
 - $\sigma^2$ is the variance
 - $\nu$ and $\kappa$ are scaling parameters (always $> 0$)
 - $K_\nu$ is a Bessel function of the second kind of order $\nu$
@@ -748,7 +748,7 @@ legend("bottomright",
        cex = 2)
 
 mtext("Distance", side = 1, cex = 2, outer = TRUE)
-mtext("Semivariance", side = 2, cex = 2, outer = TRUE)
+mtext("Variance", side = 2, cex = 2, outer = TRUE)
 mtext("Matérn model", side = 3, cex = 2.5, outer = TRUE)
 ```
 ]
