@@ -19,7 +19,7 @@ class: title-slide, middle
 <img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"></img>
 <img src="assets/img/UdeS_blanc.png" width="350px" ></img>
 
-# Basics of spatial and spatiotemporal data
+# Distance weighted interpolation with R
 
 .instructors[
   GSFE01 - F. Guillaume Blanchet & Steve Vissault
@@ -68,11 +68,6 @@ unique(habitat$Variable)[1:10]
 ```
 
 We will focus on the Total Phosphorus (ppm) for the years 2005 to 2007 and 2014.
-
-```{r, eval = FALSE}
-# The RDS file is an R object and can be read with the following command:
-hamilton_habitat_desc <- readRDS("ExemplePathTohamilton_habitat.rds")
-```
 
 ---
 class: inverse, middle, center
@@ -126,7 +121,6 @@ $$\widehat{\boldsymbol\mu}_{z,s}=\begin{bmatrix}
 ```{r echo=FALSE, out.width="100%", fig.align='center'}
 knitr::include_graphics("./assets/img/hamilton_tp.png")
 ```
-
 
 ---
 
@@ -304,47 +298,173 @@ legend("topright", title = "value of c",
 where $\gamma$ weight the importance is time in the analysis.
 
 ---
-# How does it works in R
+class: middle, center, inverse
+
+# Inverse Distance weighting with R
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+# Inverse Distance weighting with R
 
 First, we download the spatial data:
-  - [The GeoDatabase containing all shapefiles for the study area]()
+  - [The GeoDatabase containing all shapefiles for the study area](https://github.com/SteveViss/PR-GSFE01/raw/master/data/raw/hamilton_harbor.gdb.zip)
   - [The CABIN data for Hamilton Harbour](https://github.com/SteveViss/PR-GSFE01/raw/master/data/post_process/hamilton_sites.rds)
-
-```{r}
-library(raster)
-library(gstat)
-
-# Load the data
-st_read("")
-
-# Because, the data contains replicates (several years and samples), we want to average all measurements of
-# Total Phosphorus by site.
-
-
-# Transform to sp
-sp_avg_yr <- as(hamilton_avg_yr, "Spatial")
-lake <- as(lake, "Spatial")
-
-# Default
-r_ref <- raster(lake,res=0.001)
-gs <- gstat(formula=avg~1, locations=sp_avg_yr)
-idw <- interpolate(r_ref, gs)
-idwr <- mask(idw, lake)
-plot(idwr)
-
-# Smoothing with c = 2
-gs <- gstat(formula=avg~1, locations=sp_avg_yr, set=list(idp=2))
-idw <- interpolate(r_ref, gs)
-idwr <- mask(idw, lake)
-plot(idwr)
-```
 
 
 ---
+# Inverse Distance weighting with R
+
+Load the data
+
+```{r}
+library(sf)
+# The RDS file is an R object and can be read with the following command:
+hamilton_habitat_desc <- readRDS("../data/post_process/hamilton_habitat.rds")
+lake <- st_read("../data/raw/hamilton_harbor.gdb", layer="waterbody_2")
+
+# Making sure both are on the same CRS
+st_crs(lake) == st_crs(hamilton_habitat_desc)
+hamilton_habitat_desc <- st_transform(hamilton_habitat_desc, st_crs(lake))
+```
+
+---
+# Inverse Distance weighting with R
+
+Filter the variable of interest and compute the average by site.
+
+```{r, warnings = FALSE}
+# Because, the data contains replicates (several years and samples), we want to average all measurements of
+# Total Phosphorus by site.
+library(dplyr)
+
+hamilton_avg_tp <- hamilton_habitat_desc %>% 
+  filter(Variable == "TP") %>% 
+  group_by(Site.Site) %>% 
+  summarise(avg_tp=mean(Value.Valeur)) 
+
+# You can perform a visual check (commented below)
+# mapview(hamilton_avg_tp, zcol='avg_tp', cex = 'avg_tp' )   
+
+# Transform to sp (required by the function later)
+hml_avg_tp <- as(hamilton_avg_tp, "Spatial")
+lake <- as(lake, "Spatial")
+```
+
+---
+# Inverse Distance weighting with R
+
+The data is now ready, we can can fit the Inverse Distance weighting (IDW)
+
+```{r, warnings = FALSE}
+# We load the needed libraries
+library(raster)
+library(gstat)
+# Fit the IDW model
+gs <- gstat(formula=avg_tp~1, locations=hml_avg_tp)
+# We can change the smoothing with c
+gs_5 <- gstat(formula=avg_tp~1, locations=hml_avg_tp, set = list(idp = 5))
+# Create the reference grid for model projection (using the lake extent)
+r_ref <- raster(lake,res=100)
+# Project the model on the reference grid
+idw <- interpolate(r_ref, gs)
+# Mask pixels outsite of the lake
+idwr <- mask(idw, lake)
+```
+
+---
+# Inverse Distance weighting with R
+
+.pull-left[
+Smoothing with c = 2 (default)
+```{r, echo = FALSE}
+plot(idwr)
+```
+]
+
+--
+
+.pull-right[
+Smoothing with c = 5
+```{r, echo=FALSE, tidy = TRUE, tidy.opts = list(comment = FALSE)}
+idw_5 <- interpolate(r_ref, gs_5, debug.level = 0)
+idwr_5 <- mask(idw_5, lake)
+```
+```{r, echo = FALSE}
+plot(idwr_5)
+```
+]
+
+
+---
+class: middle, center, inverse
 
 # Finding smoothing parameter $c$
 
-## Cross-validation
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+How to choose the right $c$ parameter?
+
+---
+# Model quality evaluation through LOOCV
+
+The choice of the power function parameter (through `idp`) might be subjective.
+Let's perform a validation for `idp` of 2
+
+```{r}
+# Leave-one-out validation routine
+IDW.out <- vector(length = length(hml_avg_tp))
+for (i in 1:length(hml_avg_tp)) {
+  IDW.out[i] <- idw(avg_tp ~ 1, hml_avg_tp[-i,], hml_avg_tp[i,], idp = 2, debug.level = 0)$var1.pred
+}
+
+# Plot the differences
+plot(IDW.out ~ hml_avg_tp$avg_tp, asp=1, xlab="Observed", ylab="Predicted", pch=16,
+      col=rgb(0,0,0,0.5))
+abline(lm(IDW.out ~ hml_avg_tp$avg_tp), col="red", lw=2,lty=2)
+abline(0,1)
+```
+
+```{r}
+# Compute the root-mean-squared error (RMSE)
+sqrt(mean(IDW.out - hml_avg_tp$avg_tp)^2)
+```
+
+---
+# Finding smoothing parameter with `optim()`
+
+```{r, eval = FALSE}
+# Define the cost function
+cost_c <- function(c){
+  IDW.out <- vector(length = length(hml_avg_tp))
+  for (i in 1:length(hml_avg_tp)) {
+    IDW.out[i] <- idw(avg_tp ~ 1, hml_avg_tp[-i,], hml_avg_tp[i,], idp = c, debug.level = 0)$var1.pred
+  }
+  # Return the RMSE for the c value 
+  return(sqrt(mean(IDW.out - hml_avg_tp$avg_tp)^2))
+}
+```
+
+```{r, eval = FALSE}
+initialValue = 0.5
+optim(0.5, cost_c)
+```
+
+---
+class: middle, clear
+
+# `r icon::fa("gamepad")` Exercice
+
+---
+class: middle, center, inverse
+
+# Finding parameter $c$ for large datasets
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html>
+
+---
+
+# Cross-validation
 
 There are different variants of cross-validation. All variant involve splitting the dataset into *training* and *validation* datasets. 
 
@@ -387,6 +507,7 @@ $$\text{MSPE} = \frac{1}{m_k}\sum_{i=1}^{m_k}\left(Z_i-\widehat{Z}^{(-k)}_i\righ
 
 **Sum of squared prediction error**
 $$\text{SSPE} = \sum_{i=1}^{m_k}\left(Z_i-\widehat{Z}^{(-k)}_i\right)^2$$
+
 ---
 
 # Finding smoothing parameter $c$
@@ -418,7 +539,64 @@ Follows the same procedure as the $K$-fold cross-validation except that only a s
 - $K$-fold cross-validation with $K=5$ or $K=10$ groups has been shown to be a good compromise between *bias* and *variance*
 - Leave one out cross-validation is computationally intensive because a model needs to be constructed for each data sampled. That being said, parallel computing can be used to speed up the calculations
 
+---
+class: inverse, center, middle
 
+# $K$-fold cross-validation
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+# Subsampling within the dataset
+
+```{r}
+# Declaring the number of groups (`nfold`), and attach each points to a specific group (`k`).
+nfolds <- 5
+k <- sample(1:nfolds,length(hml_avg_tp), replace = TRUE)
+k
+```
+
+```{r, echo = FALSE, out.width = '100%', out.height = '50%'}
+sf_hml <- st_as_sf(hml_avg_tp)
+sf_hml$group <- k
+mapview(sf_hml, zcol='group')
+```
+
+
+---
+# Running the IDW model for each fold
+
+```{r, eval = FALSE}
+# Smoothing (power function parameter c)
+c <- 2
+
+# vector storing the RMSE value pour each fold
+vec_RMSE <- rep(NA, nfolds)
+
+# Looping over groups
+for (i in 1:nfolds) {
+  # Create training and validation set
+  test <- sp_avg_yr[k!=i,]
+  train <- sp_avg_yr[k==i,]
+
+  # Perform the IDW model on the training set
+  m <- gstat(formula=avg~1, locations=train, set=list(idp = 2))
+  p1 <- predict(m, newdata=test, debug = 0)$var1.pred
+
+  # Assign the value to the RMSE vector
+  vec_RMSE[i] <- RMSE(test$avg, p1)
+}
+
+# Compute mean RMSE
+mean(vec_RMSE)
+```
+
+
+
+---
+class: middle, clear
+
+# `r icon::fa("gamepad")` Exercice
 
 ---
 class: inverse, center, middle

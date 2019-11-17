@@ -215,13 +215,6 @@ abline(0,1)
 sqrt(mean(IDW.out - sp_avg_yr$avg)^2))
 ```
 
-### Optimize parameter c
-
-```{r}
-
-
-```
-
 ### Validation K-Fold
 
 #### Split the dataset

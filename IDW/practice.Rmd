@@ -1,0 +1,83 @@
+---
+title: "Distance weighted interpolation with R"
+author: Guillaume Blanchet & Steve Vissault
+date: November 19th, 2019
+output:
+  html_document:
+    highlight: tango
+    toc: true
+    toc_float: true
+---
+
+# Inverse Distance weighting with R
+
+## Prepare the data for analysis
+
+First, we download the spatial data:
+
+1. [The GeoDatabase containing all shapefiles for the study area](https://github.com/SteveViss/PR-GSFE01/raw/master/data/raw/hamilton_harbor.gdb.zip)
+2. [The CABIN data for Hamilton Harbour](https://github.com/SteveViss/PR-GSFE01/raw/master/data/post_process/hamilton_sites.rds)
+
+Import the data in R
+
+```{r}
+library(sf)
+# The RDS file is an R object and can be read with the following command:
+hamilton_habitat_desc <- readRDS("../data/post_process/hamilton_habitat.rds")
+lake <- st_read("../data/raw/hamilton_harbor.gdb", layer="waterbody_2")
+
+# Making sure both are on the same CRS
+st_crs(lake) == st_crs(hamilton_habitat_desc)
+hamilton_habitat_desc <- st_transform(hamilton_habitat_desc, st_crs(lake))
+```
+
+Filter the variable total phosphorus (ppm) and compute the average by site.
+
+```{r, warnings = FALSE}
+# Because, the data contains replicates (several years and samples), we want to average all measurements of
+# total phosphorus by site.
+library(dplyr)
+
+hamilton_avg_tp <- hamilton_habitat_desc %>% 
+  filter(Variable == "TP") %>% 
+  group_by(Site.Site) %>% 
+  summarise(avg_tp=mean(Value.Valeur)) 
+```
+
+We perform a visual check of the mean variable
+
+```{r, warnings = FALSE}
+mapview(hamilton_avg_tp, zcol='avg_tp', cex = 'avg_tp' )   
+```
+
+We need to transform the `sf` spatial object to `sp`, because the `gstat` package doesn't support `sf` class.
+
+```{r, warnings = FALSE}
+hml_avg_tp <- as(hamilton_avg_tp, "Spatial")
+lake <- as(lake, "Spatial")
+```
+
+The data is now ready for analysis. We need to load the needed libraries first.
+
+```{r}
+library(raster)
+library(gstat)
+```
+
+We fit the IDW model on the data. We can easily play with the smoothing paramater `c` (defined at the slide )
+
+```{r}
+gs <- gstat(formula=avg_tp~1, locations=hml_avg_tp)
+gs_5 <- gstat(formula=avg_tp~1, locations=hml_avg_tp, set = list(idp = 5))
+```
+
+
+# Create the reference grid for model projection (using the lake extent)
+r_ref <- raster(lake,res=100)
+# Project the model on the reference grid
+idw <- interpolate(r_ref, gs)
+# Mask pixels outsite of the lake
+idwr <- mask(idw, lake)
+
+
+
