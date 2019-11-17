@@ -27,11 +27,21 @@ class: title-slide, middle
 
 
 ---
+# Data 
 
+**Sampling sites in the Harbour of Hamilton (Ontario)**
 
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
 ```
+
+```{r, echo = FALSE, out.width="100%", out.height="80%"}
+library(mapview)
+sites <- readRDS("../data/post_process/hamilton_sites.rds")
+mapview(sites)
+```
+
+---
 
 # Mathematical formalisms
 Spatial coordinate of sample $i$ (out of $m$)
