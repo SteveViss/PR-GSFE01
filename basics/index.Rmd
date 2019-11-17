@@ -1266,7 +1266,7 @@ as.data.frame(rs_var1, xy = TRUE)
 # Great online resources
 
 .pull-left[
-### Good tutorials for spatial data in R
+Good tutorials for spatial data in R
 
 - [Raster analysis in R](https://mgimond.github.io/megug2017/)
 - [Geocomputation with R](https://geocompr.robinlovelace.net/intro.html)
@@ -1276,7 +1276,7 @@ as.data.frame(rs_var1, xy = TRUE)
 - [Tutorial on datacamp](https://www.datacamp.com/courses/spatial-analysis-in-r-with-sf-and-raster)
 - [R in space - Insileco](https://insileco.github.io/2018/04/14/r-in-space---a-series/)
 
-### `sf` manipulations
+`sf` manipulations
 
 - [sf vignette #4](https://cran.r-project.org/web/packages/sf/vignettes/sf4.html)
 - [Geocomputation with R](https://geocompr.robinlovelace.net/attr.html)
@@ -1284,7 +1284,7 @@ as.data.frame(rs_var1, xy = TRUE)
 - [Tidy spatial data in R](http://strimas.com/r/tidy-sf/)
 ]
 .pull-right[
-### Maps in R
+Maps in R
 
 - [Introduction to visualising spatial data in R](https://cran.r-project.org/doc/contrib/intro-spatial-rl.pdf)
 - [Geocomputation with R](https://geocompr.robinlovelace.net/adv-map.html)
@@ -1295,7 +1295,7 @@ as.data.frame(rs_var1, xy = TRUE)
 - [plotly](https://plot.ly/python/maps/)
 - [Animated maps](https://insileco.github.io/2017/07/05/animations-in-r-time-series-of-erythemal-irradiance-in-the-st.-lawrence/)
 
-### Get free data
+Get free data
 
 - [free data at country level](http://www.diva-gis.org/gdata)
 - [Quebec free data](http://mffp.gouv.qc.ca/le-ministere/acces-aux-donnees-gratuites/)
