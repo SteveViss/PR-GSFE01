@@ -162,7 +162,7 @@ dev.off()
 
 ## Inverse distance weighting 
 
-### fitting
+### Weighting with power function
 
 ```{r}
 library(raster)
@@ -186,13 +186,10 @@ idwr <- mask(idw, lake)
 plot(idwr)
 ```
 
-### Weighting sampling
+### Weigthing with gaussian kernel 
 
-
-
-### Estimating confidence interval with jacknife
-
-Optionnal
+# 1. Compute distance matrix (output matrix): rdist with time 
+# 2. theta (variance)
 
 ### Validation: pred vs obs
 

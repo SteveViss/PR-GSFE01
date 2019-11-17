@@ -60,15 +60,19 @@ the health of fresh water ecosystems in Canada.
 habitat <- readRDS("../data/post_process/hamilton_habitat.rds")
 ```
 
-`r length(unique(habitat$Variable))` abiotic variables sampled
+`r length(unique(habitat$Variable))` abiotic variables sampled ([Download the file](https://github.com/SteveViss/PR-GSFE01/raw/master/data/post_process/hamilton_sites.rds))
 
-The first 20 variables
-
+Name of the first 10 variables used to monitor water quality
 ```{r, echo = FALSE}
-unique(habitat$Variable)[1:20]
+unique(habitat$Variable)[1:10]
 ```
 
 We will focus on the Total Phosphorus (ppm) for the years 2005 to 2007 and 2014.
+
+```{r, eval = FALSE}
+# The RDS file is an R object and can be read with the following command:
+hamilton_habitat_desc <- readRDS("ExemplePathTohamilton_habitat.rds")
+```
 
 ---
 class: inverse, middle, center
@@ -226,6 +230,7 @@ $$\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\alpha) \equiv \frac{1}{\text{Distance
 
 where $c$ is a power coefficient that ranges from 0 to $+\infty$ that controls for smoothing
 
+
 ---
 
 # How it works
@@ -297,6 +302,39 @@ legend("topright", title = "value of c",
   - Euclidean distance should not be used when time is considered because space and time have a different basis. Other distances have been proposed in the litterature (spatiotemporal Euclidean distance)
   $$d_\text{SPTEucl} = \sqrt{(x_1 - x_2)^2 + (y_1 - y_2)^2 + \gamma^2(t_1 - t_2)}$$
 where $\gamma$ weight the importance is time in the analysis.
+
+---
+
+# How does it works in R
+
+```{r}
+library(raster)
+library(gstat)
+
+# Load the data
+
+# Because, the data contains replicates, we want to average the measurement of
+# Total Phosphorus by year and site.
+
+
+# Transform to sp
+sp_avg_yr <- as(hamilton_avg_yr, "Spatial")
+lake <- as(lake, "Spatial")
+
+# Default
+r_ref <- raster(lake,res=0.001)
+gs <- gstat(formula=avg~1, locations=sp_avg_yr)
+idw <- interpolate(r_ref, gs)
+idwr <- mask(idw, lake)
+plot(idwr)
+
+# Smoothing with c = 2
+gs <- gstat(formula=avg~1, locations=sp_avg_yr, set=list(idp=2))
+idw <- interpolate(r_ref, gs)
+idwr <- mask(idw, lake)
+plot(idwr)
+```
+
 
 ---
 

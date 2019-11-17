@@ -1224,14 +1224,58 @@ as.data.frame(rs_var1, xy = TRUE)
 ---
 # Basic arithmetics
 
-Some arithmetic operations:
+### Some arithmetic operations
 
 - Classic operators: `+`, `*`, `-` etc.
   - `rs_vars1 + rs_var2`
-- sum :  `sum(st_vars)`
+- sum:  `sum(st_vars)`
 - mean: `mean(st_vars)`
 - variance: `var(rs_var1)`
 - covariance: `cov(rs_var1, rs_var2)`
 - Frequecy values: `hist(rs_var1)`
 
 
+---
+
+# Great online resources
+
+.pull-left[
+### Good tutorials for spatial data in R
+
+- [Raster analysis in R](https://mgimond.github.io/megug2017/)
+- [Geocomputation with R](https://geocompr.robinlovelace.net/intro.html)
+- [Spatial data in R](https://github.com/Pakillo/R-GIS-tutorial/blob/master/R-GIS_tutorial.md)
+- [Document par Nicolas Casajus (fr)](https://qcbs.ca/wiki/_media/gisonr.pdf)
+- http://r-spatial.org/
+- [Tutorial on datacamp](https://www.datacamp.com/courses/spatial-analysis-in-r-with-sf-and-raster)
+- [R in space - Insileco](https://insileco.github.io/2018/04/14/r-in-space---a-series/)
+
+### `sf` manipulations
+
+- [sf vignette #4](https://cran.r-project.org/web/packages/sf/vignettes/sf4.html)
+- [Geocomputation with R](https://geocompr.robinlovelace.net/attr.html)
+- [Attribute manipulations](https://insileco.github.io/2018/04/09/r-in-space---attribute-manipulations/)
+- [Tidy spatial data in R](http://strimas.com/r/tidy-sf/)
+]
+.pull-right[
+### Maps in R
+
+- [Introduction to visualising spatial data in R](https://cran.r-project.org/doc/contrib/intro-spatial-rl.pdf)
+- [Geocomputation with R](https://geocompr.robinlovelace.net/adv-map.html)
+- [choropleth](https://cengel.github.io/rspatial/4_Mapping.nb.html)
+- [leaflet](https://rstudio.github.io/leaflet/)
+- [Mapview](https://r-spatial.github.io/mapview/index.html)
+- [tmap](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-nutshell.html)
+- [plotly](https://plot.ly/python/maps/)
+- [Animated maps](https://insileco.github.io/2017/07/05/animations-in-r-time-series-of-erythemal-irradiance-in-the-st.-lawrence/)
+
+### Get free data
+
+- [free data at country level](http://www.diva-gis.org/gdata)
+- [Quebec free data](http://mffp.gouv.qc.ca/le-ministere/acces-aux-donnees-gratuites/)
+- [sdmpredictors](https://cran.r-project.org/web/packages/sdmpredictors/index.html) access to many datasets in R
+- [find more spatial data](https://freegisdata.rtwilson.com/)
+- [create shapefile on line](http://geojson.io/)
+- EPSG: [link1](http://spatialreference.org/); [link2](http://epsg.io/)
+
+]
