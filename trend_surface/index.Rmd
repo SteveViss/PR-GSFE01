@@ -1,6 +1,6 @@
 ---
 title: "GSFE01"
-author: "Guillaume Blanchet & Steve Vissault"
+author: "F. Guillaume Blanchet & Steve Vissault"
 date: "2018/02/16"
 output:
   xaringan::moon_reader:
@@ -8,7 +8,7 @@ output:
     lib_dir: assets
     seal: false
     nature:
-      highlightStyle: github
+      highlightStyle: monokai
       highlightLines: true
       countIncrementalSlides: false
       beforeInit: "macros.js"

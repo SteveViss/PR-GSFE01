@@ -408,7 +408,7 @@ resJAGS &lt;- coda.samples(JAGSmodel, params, n.iter=50000 )
 
 ```
 ##    user  system elapsed 
-##  16.696   4.968  22.193
+##  17.484   4.540  22.076
 ```
 ]
 
@@ -430,7 +430,7 @@ resINLA &lt;- inla(y~x,
 
 ```
 ##    user  system elapsed 
-##   0.714   0.552   1.432
+##   0.817   0.663   1.648
 ```
 
 ---
@@ -599,9 +599,9 @@ Through some fancy theoretical work by Lindgren et al. (2011) relying on *stocha
 
 .pull-left[
 .small[
-`$$C(\boldsymbol{d}) = \frac{\sigma^2}{2^{\nu-1}\Gamma(\nu)}\left(\kappa \boldsymbol{d}\right)^\nu K_\nu\left(\kappa \boldsymbol{d}\right)$$`
+`$$\gamma(\boldsymbol{h}) = \frac{\sigma^2}{2^{\nu-1}\Gamma(\nu)}\left(\kappa \boldsymbol{h}\right)^\nu K_\nu\left(\kappa \boldsymbol{h}\right)$$`
 where
-- `\(\boldsymbol{d}\)` is the distance between two samples
+- `\(\boldsymbol{h}\)` is the distance between two samples
 - `\(\sigma^2\)` is the variance
 - `\(\nu\)` and `\(\kappa\)` are scaling parameters (always `\(&gt; 0\)`)
 - `\(K_\nu\)` is a Bessel function of the second kind of order `\(\nu\)`

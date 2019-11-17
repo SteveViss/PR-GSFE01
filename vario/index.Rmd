@@ -8,7 +8,7 @@ output:
     lib_dir: assets
     seal: false
     nature:
-      highlightStyle: mikado
+      highlightStyle: monokai
       highlightLines: true
       countIncrementalSlides: false
       beforeInit: "macros.js"
@@ -83,6 +83,14 @@ We will see different types of (co)variogram today
 - Empirical variogram
 - Model variogram
 
+---
+class: inverse, center, middle
+
+
+# Spatial variogram
+
+<html><div style='float:left'></div><hr color='#EB811B' size=3px width=720px></html> 
+<html><div style='float:left'></div><hr color='#EB811B' size=3px width=720px></html> 
 
 ---
 class: inverse, center, middle
@@ -94,7 +102,7 @@ class: inverse, center, middle
 ---
 # Definition
 
-.content-box-green[.small[A **cloud variogram** displays a variables' variances between all pairs of samples]]
+.content-box-green[.small[A **cloud variogram** displays the variance between all pairs of samples for a variable]]
 
 ## Mathematical definition
 
@@ -127,13 +135,13 @@ tp <- ham2005[ham2005$Variable == "TP",]
 tpSP <- as(tp, "Spatial")
 
 maxDist <- max(dist(coordinates(tpSP)))
-vario <- variogram(Value.Valeur ~ 1,
+varioCloud <- variogram(Value.Valeur ~ 1,
                    data = tpSP,
                    cloud= TRUE,
                    cutoff = maxDist)
 
 par(mar = c(5,6.5,0.5,0.5))
-plot(vario$dist, vario$gamma,
+plot(varioCloud$dist, varioCloud$gamma,
      xlab = "Distance (m)",
      ylab = "",
      cex.lab = 2, las = 1)
@@ -153,13 +161,13 @@ The variogram in the previous slide is constructed using all samples equally.
 This does not have to be the case. We can also construct a variogram using only samples in a cone in specific direction. These variograms are known as **directional variograms** 
 
 ```{r,echo = FALSE, fig.height=5, fig.width=12, eval=TRUE}
-vario <- variogram(Value.Valeur ~ 1,
+varioCloud <- variogram(Value.Valeur ~ 1,
                    data = tpSP,
                    cloud= TRUE,
                    cutoff = maxDist,
                    alpha = c(0, 45, 90, 135))
 
-plot(vario)
+plot(varioCloud)
 ```
 
 ---
@@ -191,7 +199,7 @@ where
 # .small[Visualization of the empirical variogram]
 
 ```{r,echo = FALSE, fig.height=5, fig.width=12, eval=TRUE}
-vario <- variogram(Value.Valeur ~ 1,
+varioCloud <- variogram(Value.Valeur ~ 1,
                    data = tpSP,
                    cutoff = 3500,
                    cloud= TRUE)
@@ -203,7 +211,7 @@ varioEmp <- variogram(Value.Valeur ~ 1,
                    boundaries = bound)
 
 par(mar = c(5,6.5,0.5,0.5))
-plot(vario$dist, vario$gamma,
+plot(varioCloud$dist, varioCloud$gamma,
      xlab = "Distance (m)",
      ylab = "",
      cex.lab = 2, las = 1)
@@ -227,12 +235,22 @@ segments(x0 = bin[-16],
 - Defining the *right* variogram is problem specific
 ]
 
+
+---
+# Building an empirical variogram
+
+**Total Phosphorus in sediment in the Harbour of Hamilton (Ontario)**
+
+```{r, echo = FALSE, message=FALSE, out.height="70%", out.width="100%"}
+library(mapview)
+mapview(tpSP, zcol="Value.Valeur")
+```
+
 ---
 
 # Building an empirical variogram
 
-## Step 1
-We first need to study how the variable is autocorrelated in space.
+## Step 1 - Study spatial autocorrelation
 
 ### Lagged scatter plot (take 1)
 
@@ -241,7 +259,7 @@ Lagged scatter plot draw point pairs at a specific separation distances.
 ---
 # Building an empirical variogram
 
-```{r, echo = FALSE, fig.align="center"}
+```{r, echo = FALSE, fig.align="center", fig.width=12}
 hscat(Value.Valeur ~ 1,
       data = tpSP,
       breaks = seq(0,maxDist, by = 500))
@@ -252,8 +270,7 @@ hscat(Value.Valeur ~ 1,
 ---
 # Building an empirical variogram
 
-## Step 1
-We first need to study how the variable is autocorrelated in space.
+## Step 1 - Study spatial autocorrelation
 
 ### Lagged scatter plot (take 2)
 
@@ -274,18 +291,18 @@ This results confirms that there is some autocorrelation structure within 1000 
 
 # Building an empirical variogram
 
-## Step 2
+## Step 2 - Cloud variogram 
 
 Construct a cloud variogram with a maximum distance of 1500 m (again just to be on the safe side).
 
 ```{r, echo = FALSE, fig.align="center", fig.width=12, fig.height=5}
-vario <- variogram(Value.Valeur ~ 1,
+varioCloud <- variogram(Value.Valeur ~ 1,
                    data = tpSP,
                    cloud= TRUE,
                    cutoff = 1500)
 
 par(mar = c(5,6.5,0.5,0.5))
-plot(vario$dist, vario$gamma,
+plot(varioCloud$dist, varioCloud$gamma,
      xlab = "Distance (m)",
      ylab = "",
      cex.lab = 2, las = 1)
@@ -296,12 +313,10 @@ mtext(text = "Variance",side = 2, cex = 2, line = 4)
 
 # Building an empirical variogram
 
-## Step 3
-
-Check for outliers
+## Step 3 - Check for outliers
 
 ```{r, eval=FALSE}
-outlier <- plot(vario, digitize = TRUE)
+outliers <- plot(varioCloud, digitize = TRUE)
 ```
 
 ```{r echo=FALSE, out.width="100%"}
@@ -312,67 +327,117 @@ knitr::include_graphics("assets/img/outlier.png")
 
 # Building an empirical variogram
 
-## Step 3
-
-Check for outliers
+## Step 3 - Check for outliers
 
 ```{r, eval=FALSE}
-plot(outlier, ham2005)
+outliers
 ```
 
-```{r echo=FALSE, out.width="100%"}
-knitr::include_graphics("assets/img/outlier.png")
+```{r, echo = FALSE}
+outliers <- data.frame(head = c(4, 5), tail = c(6, 6))
+outliers
 ```
 
 ---
 
 # Building an empirical variogram
 
-## Step 4
+## Step 3 - Check for outliers
 
-Remove outlier if any
+```{r echo=FALSE, out.width="70%", fig.align='center'}
+knitr::include_graphics("assets/img/OutlierPlot.png")
+```
+See something ? Look very carefully...
 
 ---
 
+# Building an empirical variogram
+
+## Step 3 - Check for outliers
+
+.tiny[
+```{r}
+tpSP@data[4:6,]
+```
+]
+
+---
 
 # Building an empirical variogram
 
-## Step 5
+## Step 4 - Remove outlier
 
-Define the bins.
+```{r}
+tpSPClean <- tpSP[-6,]
+```
+
+---
+# Building an empirical variogram
+
+## Step 5 - Redraw the cloud variogram
+
+
+```{r, echo = TRUE, eval = FALSE}
+varioCloud <- variogram(Value.Valeur ~ 1, data = tpSPClean,
+                   cloud= TRUE,cutoff = 1500)
+
+plot(varioCloud)
+```
+
+```{r, echo = FALSE, fig.align="center", fig.width=12, fig.height=5}
+varioCloud <- variogram(Value.Valeur ~ 1,
+                   data = tpSPClean,
+                   cloud= TRUE,
+                   cutoff = 1500)
+
+par(mar = c(5,6.5,0.5,0.5))
+plot(varioCloud$dist, varioCloud$gamma,
+     xlab = "Distance (m)",
+     ylab = "",
+     cex.lab = 2, las = 1)
+mtext(text = "Variance",side = 2, cex = 2, line = 4)
+```
+
+---
+
+# Building an empirical variogram
+
+## Step 6 - Define the bins
 
 Recall that :
 - More bins at small distances
 - There should be enough values in each bin
 
+```{r,echo = TRUE, fig.height=5, fig.width=12, eval=TRUE}
+# Define bin limits
+binLimit <- c(seq(0,1000,by = 100),
+              seq(1200,1500, by = 200))
 
-```{r,echo = FALSE, fig.height=5, fig.width=12, eval=TRUE}
-bound <- c(seq(0,1000,by = 100),
-           seq(1100,1500, by = 200))
-
-maxDist <- max(dist(coordinates(tpSP)))/2
+# Construct variogram
 varioEmpGood <- variogram(Value.Valeur ~ 1,
-                          data = tpSP,
-                          cutoff = maxDist,
-                          boundaries = bound)
+                          data = tpSPClean,
+                          cutoff = 1500,
+                          boundaries = binLimit)
+```
 
-par(mar = c(5,6.5,0.5,0.5))
-plot(vario$dist, vario$gamma,
-     xlab = "Distance (m)",
-     ylab = "",
-     cex.lab = 2, las = 1)
-mtext(text = "Variance",side = 2, cex = 2, line = 4)
+---
 
-bin <- c(0,((varioEmpGood$dist[-1] - varioEmpGood$dist[-nrow(varioEmpGood)])/2 + varioEmpGood$dist[-nrow(varioEmpGood)]), max(bound))
+# Building an empirical variogram
 
-abline(v = bin, col = "blue", lwd = 5)
+## Step 6 - Define the bins
 
-segments(x0 = bin[-(nrow(varioEmpGood) + 1)],
-         x1 = bin[-1],
-         y0 = varioEmp$gamma,
-         y1 = varioEmp$gamma,
-         col = "orange",
-         lwd = 5)
+```{r,echo = TRUE, eval=TRUE, fig.align='center', fig.width=12, fig.height=5}
+plot(varioEmpGood, cex = 2, pch = 19)
+```
+
+---
+
+# Building an empirical variogram
+
+## Step 6 - Define the bins
+
+```{r,echo = TRUE, eval=TRUE}
+head(varioEmpGood)
 ```
 
 ---
@@ -386,7 +451,7 @@ class: inverse, center, middle
 
 # Model variogram
 
-The model variogram fits the structure in the empirical variogram.
+The model variogram fits the empirical variogram.
 
 Variogram (empirical and model alike) have a typical structure, to which some terminology is typically used.
 
@@ -436,49 +501,6 @@ show.vgms()
 ```
 
 ---
-# The Matérn model
-
-```{r, echo = FALSE, message=FALSE, warning=FALSE, fig.height=3.5, fig.width=12, fig.align="center"}
-library(gstat)
-res <- show.vgms(kappa.range = c(5, 10),
-          max = 15, plot = FALSE, models = "Mat")
-par(mfrow = c(1,2), mar = c(1,1,1,1), oma = c(3,3,3,0))
-plot(res[1:50,2:1], 
-     type = "l", 
-     lwd = 3,
-     col = "blue",
-     xaxt = "n",
-     yaxt = "n")
-legend("bottomright",
-       legend = expression(paste(kappa,"= 5")),
-       cex = 2)
-
-plot(res[51:100,2:1], 
-     type = "l", 
-     lwd = 3,
-     col = "blue",
-     xaxt = "n",
-     yaxt = "n")
-legend("bottomright",
-       legend = expression(paste(kappa,"= 10")),
-       cex = 2)
-mtext("Distance", side = 1, cex = 2, outer = TRUE)
-mtext("Variance", side = 2, cex = 2, outer = TRUE)
-mtext("Sill = 1 - Range = 1", side = 3, cex = 2, outer = TRUE)
-```
-
-.small[
-$$\gamma(\boldsymbol{h}) = \frac{\sigma^2}{2^{\nu-1}\Gamma(\nu)}\left(\kappa \boldsymbol{h}\right)^\nu K_\nu\left(\kappa \boldsymbol{h}\right)$$
-]
-
-where
-- $\boldsymbol{h}$ is the distance between two samples
-- $\sigma^2$ is the variance (sill)
-- $\nu$ is the range
-- $\kappa$ is scaling parameter (always $> 0$)
-- $K_\nu$ is a Bessel function of the second kind of order $\nu$
-
----
 # The Spherical model
 
 ```{r, echo = FALSE, message=FALSE, warning=FALSE, fig.height=3.5, fig.width=12, fig.align="center"}
@@ -508,7 +530,7 @@ mtext("Distance", side = 1, cex = 2, outer = TRUE)
 mtext("Variance", side = 2, cex = 2, outer = TRUE)
 ```
 
-.footnotesize[
+.small[
 $$\gamma(\boldsymbol{h}) = \left\{\begin{align}
 \sigma^2_0 + \sigma^2_c\left(\frac{3\boldsymbol{h}}{2\nu}-\frac{1\boldsymbol{h^3}}{2\nu^3}\right), &\qquad 0 < \boldsymbol{h} \le \nu\\
 \sigma^2_0 + \sigma^2_c, &\qquad \boldsymbol{h} \ge \nu\\
@@ -552,7 +574,6 @@ mtext("Distance", side = 1, cex = 2, outer = TRUE)
 mtext("Variance", side = 2, cex = 2, outer = TRUE)
 ```
 
-.footnotesize[
 $$\gamma(\boldsymbol{h}) = \sigma^2_0 + \sigma^2_c\left(1 - e^{-\boldsymbol{h}/\nu}\right)$$
 
 - $\boldsymbol{h}$ is the distance between two samples
@@ -560,13 +581,53 @@ $$\gamma(\boldsymbol{h}) = \sigma^2_0 + \sigma^2_c\left(1 - e^{-\boldsymbol{h}/\
 - $\sigma^2_0$ is the nugget effect
 - $\nu$ is the effective range
 
-]
 ---
+# The Matérn model
 
+```{r, echo = FALSE, message=FALSE, warning=FALSE, fig.height=3.5, fig.width=12, fig.align="center"}
+library(gstat)
+res <- show.vgms(kappa.range = c(5, 10),
+          max = 15, plot = FALSE, models = "Mat")
+par(mfrow = c(1,2), mar = c(1,1,1,1), oma = c(3,3,3,0))
+plot(res[1:50,2:1], 
+     type = "l", 
+     lwd = 3,
+     col = "blue",
+     xaxt = "n",
+     yaxt = "n")
+legend("bottomright",
+       legend = expression(paste(kappa,"= 5")),
+       cex = 2)
+
+plot(res[51:100,2:1], 
+     type = "l", 
+     lwd = 3,
+     col = "blue",
+     xaxt = "n",
+     yaxt = "n")
+legend("bottomright",
+       legend = expression(paste(kappa,"= 10")),
+       cex = 2)
+mtext("Distance", side = 1, cex = 2, outer = TRUE)
+mtext("Variance", side = 2, cex = 2, outer = TRUE)
+mtext("Sill = 1 - Range = 1", side = 3, cex = 2, outer = TRUE)
+```
+
+.small[
+$$\gamma(\boldsymbol{h}) = \frac{\sigma^2}{2^{\nu-1}\Gamma(\nu)}\left(\kappa \boldsymbol{h}\right)^\nu K_\nu\left(\kappa \boldsymbol{h}\right)$$
+]
+
+where
+- $\boldsymbol{h}$ is the distance between two samples
+- $\sigma^2$ is the variance (sill)
+- $\nu$ is the range
+- $\kappa$ is scaling parameter (always $> 0$)
+- $K_\nu$ is a Bessel function of the second kind of order $\nu$
+---
 
 # Choosing the right model variogram
 
-Let's be pragmatic, choosing the right model variogram depends on the problem at hand.
+Choosing the right model variogram depends on the problem at hand.
 
 However, there are a few important aspects worth knowing
 
@@ -578,3 +639,205 @@ However, there are a few important aspects worth knowing
 
 - Some doubts have been raised about the **hole** model variogram
 - The **spline** model variogram seems to need exceeding large range values to fit an empirical variogram properly
+
+---
+
+# Fitting a model variogram
+
+There exist a few ways to fit a model variogram to an empirical variogram.
+
+## Visually
+
+By trying to visually pass the best possible curve to the empirical variogram.
+
+This approach is implemented in the package `geoR` in the function `eyefit`.
+
+.Large[.red[**Not recommended**]]
+
+---
+
+# Fitting a model variogram
+
+There exist a few ways to fit a model variogram to an empirical variogram. In the `fit.variogram` function of the `gstat` package.
+
+## Weighing the importance of the bin
+Using as weight
+- The number of points per bin (`fit.method = 1`)
+$$n_{\mathbf{h}_j}$$
+- The number of points per bin divided by the variance (`fit.method = 2`)
+$$\frac{n_{\mathbf{h}_j}}{\gamma(\boldsymbol h_j)^2}$$
+
+---
+
+# Fitting a model variogram
+
+There exist a few ways to fit a model variogram to an empirical variogram. In the `fit.variogram` function of the `gstat` package.
+
+## Weighing the importance of the bin
+Using as weight
+- The number of points per bin divided by the squared bin size (`fit.method=7`)
+$$\frac{n_{\mathbf{h}_j}}{\boldsymbol h_j^2}$$
+
+This is the default option in `fit.variogram`. 
+
+In practice, it is a technique that has been shown to work well, but is not supported by theory.
+
+---
+
+# Fitting a model variogram
+
+There exist a few ways to fit a model variogram to an empirical variogram. In the `fit.variogram` function of the `gstat` package.
+
+## Using ordinary least squares (OLS)
+The sums of squares between the model and the data is minimized (`fit.method=6`)
+
+$$\sum\left(Z(\mathbf{s})-\widehat{Z}(\mathbf{s})\right)^2$$
+
+---
+
+# Fitting a model variogram
+
+## Using restricted maximum likelihood (REML)
+
+The `fit.variogram.reml` function  of the `gstat` package uses a restricted maximum likelihood (REML) approach to fit the model variogram to the empirical variogram. 
+
+This is approach is rather slow and it is not recommended if there are more than 100 samples. 
+
+This approach relies on all distances (pairs of points;  cloud variogram) to fit the model variogram.
+
+---
+
+# Choosing the right fitting approach
+
+The short answer is : 
+
+.Large["It depends !"]
+
+.small[
+Visual fitting: Use **only** to get some starting values for other model fitting approaches. 
+
+`fit.method = 1` : If you want to place more emphasis on the number of points in bins.
+
+`fit.method = 2` : If you want to account for the variation of the data in bins.
+
+`fit.method = 6` : If you **do not** want to account for the size of the bins. This approach only fits the model to the points (That's it!) This may be interesting to use if the bins all have the same number of points.
+
+`fit.method = 7` :  If you want to account for the size (in distance) of bins.
+
+`fit.variogram.reml` : Theoretically, this is often the best approach, but because it is slow, it becomes useless to use it for moderate to large datasets (more 100 samples). 
+]
+
+---
+
+# Fitting a model variogram in practice
+
+**Total Phosphorus in sediment in the Harbour of Hamilton (Ontario)**
+
+```{r, echo = FALSE, message=FALSE, out.height="55%", out.width="100%"}
+library(mapview)
+mapview(tpSP, zcol="Value.Valeur")
+```
+
+## Step 1 - Let's think of what we are measuring
+- Do we know how it should vary in space (from the litterature) ?
+- Are there some particularities of the sampling we need to account for ?
+- ...
+
+---
+# Fitting a model variogram in practice
+
+## Step 2 - Choosing the right model variogram
+
+Let's look at the empirical variogram
+```{r,echo = FALSE, eval=TRUE, fig.align='center', fig.width=12, fig.height=4}
+plot(varioEmpGood, cex = 2, pch = 19)
+```
+
+We also need to think about:
+- The property of the variable we are modelling
+- The reasons **why** we want to model it
+
+For this example, we will use the **exponential** model variogram.
+
+---
+# Fitting a model variogram in practice
+
+## Step 3 - Fitting the model variogram
+
+Always keep in mind : 
+- The property of the variable we are modelling
+- The reasons **why** we want to model it
+
+Let's use REML
+
+```{r, eval = TRUE}
+tpDF <- data.frame(x = coordinates(tpSPClean)[,1],
+                   y = coordinates(tpSPClean)[,2],
+                   tpSPClean@data)
+
+modelIni <-  vgm(psill = 4e5, model = "Exp",
+                 range = 800, nugget = 50000)
+
+modelVario <- fit.variogram.reml(Value.Valeur ~ 1,
+                                 ~ x + y, 
+                                 data = tpDF,
+                                 model =modelIni)
+```
+
+---
+# Fitting a model variogram in practice
+
+## Step 4 - Visualization
+
+```{r, echo = FALSE, fig.align='center', fig.height=5, fig.width=12}
+plot(varioCloud, model = modelVario, lwd = 3)
+```
+
+---
+class: inverse, center, middle
+
+# Spatiotemporal variogram
+
+<html><div style='float:left'></div><hr color='#EB811B' size=3px width=720px></html> 
+<html><div style='float:left'></div><hr color='#EB811B' size=3px width=720px></html> 
+
+---
+class: inverse, center, middle
+
+# Empirical variogram
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+# Spatiotemporal empirical variogram
+
+Spatiotemporal empirical variogram are technically exactly the same as their spatial counterpart. The only difference is that time needs to be accounted. 
+
+As such, time and space needs to be bin following the same rules as for spatial empirical variograms.
+
+```{r echo=FALSE, out.width="50%", fig.align='center'}
+knitr::include_graphics("assets/img/STempiricalVario.png")
+```
+
+---
+class: inverse, center, middle
+
+# Model variogram
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+---
+# Spatiotemporal model variogram
+
+As for the spatial model variogram, we need to decide the type of model variogram to use. 
+
+In addition, we need to decide how to link space and time. This is done througth the `vgmST` function in `gstat`
+
+In short, space and time can be modelled seperately or jointly and weights can be given to the relationship.
+
+---
+# Spatiotemporal model variogram
+
+```{r echo=FALSE, out.width="60%", fig.align='center'}
+knitr::include_graphics("assets/img/STmodelVario.png")
+```

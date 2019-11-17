@@ -8,7 +8,7 @@ output:
     lib_dir: assets
     seal: false
     nature:
-      highlightStyle: mikado
+      highlightStyle: monokai
       highlightLines: true
       countIncrementalSlides: false
       beforeInit: "macros.js"
@@ -21,6 +21,7 @@ options(htmltools.dir.version = FALSE)
 ```
 
 <img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"></img>
+<img src="assets/img/UdeS_blanc.png" width="350px" ></img>
 
 # Handling Spatial and Spatio-temporal data Using R
 ## Introduction
@@ -168,6 +169,7 @@ Krige and Georges Matheron were the two statisticians that initiated this branch
 
 ---
 
+# A bit of history
 
 Nowadays, Noel Cressie and Christopher Wikle are the dominant figures of this field.
 
