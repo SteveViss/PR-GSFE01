@@ -27,7 +27,13 @@ class: title-slide, middle
 
 
 ---
-# Data 
+class: inverse, middle, center
+
+# Data description
+<html><div style='float:left'></div><hr color='#EB811B' size=3px width=720px></html> 
+
+---
+# Data description
 
 **Sampling sites in the Harbour of Hamilton (Ontario)**
 
@@ -35,11 +41,40 @@ class: title-slide, middle
 options(htmltools.dir.version = FALSE)
 ```
 
-```{r, echo = FALSE, out.width="100%", out.height="80%"}
+```{r, echo = FALSE, out.width="100%", out.height="60%"}
 library(mapview)
 sites <- readRDS("../data/post_process/hamilton_sites.rds")
 mapview(sites)
 ```
+
+Part of the CABIN Canadian Aquatic Biomonitoring Network: The Canadian Aquatic
+Biomonitoring Network (CABIN) is an aquatic biomonitoring program for assessing
+the health of fresh water ecosystems in Canada. 
+
+---
+# Data 
+
+**Sampling sites in the Harbour of Hamilton (Ontario)**
+
+```{r, echo = FALSE}
+habitat <- readRDS("../data/post_process/hamilton_habitat.rds")
+```
+
+`r length(unique(habitat$Variable))` abiotic variables sampled
+
+The first 20 variables
+
+```{r, echo = FALSE}
+unique(habitat$Variable)[1:20]
+```
+
+We will focus on the Total Phosphorus (ppm) for the years 2005 to 2007 and 2014.
+
+---
+class: inverse, middle, center
+
+# Mathematical formalisms
+<html><div style='float:left'></div><hr color='#EB811B' size=3px width=720px></html> 
 
 ---
 
@@ -84,7 +119,18 @@ $$\widehat{\boldsymbol\mu}_{z,s}=\begin{bmatrix}
 
 # Spatial Mean 
 
-Example
+```{r echo=FALSE, out.width="100%", fig.align='center'}
+knitr::include_graphics("./assets/img/hamilton_tp.png")
+```
+
+
+---
+
+# Spatial Mean 
+
+```{r echo=FALSE, out.width="100%", fig.align='center'}
+knitr::include_graphics("./assets/img/hamilton_tp_mean.png")
+```
 
 ---
 
@@ -105,8 +151,10 @@ where $\top$ is the transpose of a matrix.
 
 # Spatial Covariance
  
-Example
 
+```{r echo=FALSE, out.width="100%", fig.align='center'}
+knitr::include_graphics("./assets/img/tp_trends.gif")
+```
 
 ---
 class: inverse, center, middle
@@ -180,6 +228,30 @@ where $c$ is a power coefficient that ranges from 0 to $+\infty$ that controls f
 
 ---
 
+# How it works
+
+## Step 3 - Calculating weights
+
+```{r, echo = FALSE, fig.height = 6, fig.width = 6, fig.align = 'center', fig.retina=2}
+# Different c
+par(mar = c(3, 3, 0.5, 0.5))
+plot(0,0, xlim = c(1,10), ylim = c(0,0.25), type = "n",
+     xaxt = "n", yaxt = "n", xlab = "", ylab = "")
+
+mtext(text = "Distance (> 1)", 1, cex = 2, line = 1.5)
+mtext(text = "Weight", 2, cex = 2, line = 1)
+
+abline(h = 0, col = "grey")
+curve((1/x^4)/sum(1/x^4), xlim = c(1,10), lwd = 3, col = "orange", add= TRUE)
+curve((1/x^2)/sum(1/x^2), xlim = c(1,10), lwd = 3, col = "blue", add= TRUE)
+curve((1/x)/sum(1/x), xlim = c(1,10), lwd = 3, add= TRUE)
+
+legend("topright", title = "value of c",
+       lty = 1, lwd = 3, col = c("black", "blue", "orange"), legend = c(1, 2, 4))
+```
+
+---
+
 # Particularities
 
 - The math may look complicated but inverse distance weighting is essentially a weighted average with more weights given to nearby data
@@ -188,6 +260,29 @@ where $c$ is a power coefficient that ranges from 0 to $+\infty$ that controls f
 - To account for measurement uncertainty we can modify the equation for $\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\alpha)$ to
 $$\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\alpha) \equiv \frac{1}{\left(\text{Distance}\left((\mathbf{s}_{ij}, t_j), (\mathbf{s}_\alpha, t_\alpha)\right)+ b \right)^c}$$
 where $b > 0$.
+
+---
+
+# Particularities
+
+```{r, echo = FALSE, fig.height = 6, fig.width = 6, fig.align = 'center', fig.retina=2}
+# With a b value of 0.05
+par(mar = c(3, 3, 0.5, 0.5))
+plot(0,0, xlim = c(1,10), ylim = c(0,0.25), type = "n",
+     xaxt = "n", yaxt = "n", xlab = "", ylab = "")
+
+mtext(text = "Distance (> 1)", 1, cex = 2, line = 1.5)
+mtext(text = "Weight", 2, cex = 2, line = 1)
+
+abline(h = 0, col = "grey")
+
+curve((1/x^4+ 0.05)/sum(1/x^4+ 0.05) , xlim = c(1,10), lwd = 3, col = "orange", add= TRUE)
+curve((1/x^2+ 0.05)/sum(1/x^2+ 0.05), xlim = c(1,10), lwd = 3, col = "blue", add= TRUE)
+curve((1/x+ 0.05)/sum(1/x+ 0.05), xlim = c(1,10), lwd = 3, add= TRUE)
+
+legend("topright", title = "value of c",
+       lty = 1, lwd = 3, col = c("black", "blue", "orange"), legend = c(1, 2, 4))
+```
 
 ---
 

@@ -35,17 +35,14 @@ habitat <- read.csv("../raw/cabin_habitat_data_mda02_1987-present.csv", fileEnco
 benthos <- read.csv("../raw/cabin_benthic_data_mda02_1987-present.csv", fileEncoding="UTF-16", stringsAsFactors=FALSE)
 
 library(dplyr)
-library(sf)
-library(raster)
-library(mapview)
-
 sites <- sites %>% 
-  select(Latitude, Longitude, Site.Site) %>% 
+  dplyr::select(Latitude, Longitude, Site.Site) %>% 
   group_by(Site.Site) %>% 
   summarise(lat = mean(Latitude), lon = mean(Longitude))
 
-sites <- st_as_sf(sites, coords = c("lon", "lat"), crs = 4326)
 
+library(sf)
+sites <- st_as_sf(sites, coords = c("lon", "lat"), crs = 4326)
 
 # Area of interest: Hamilton Harbor
 area <-  st_sfc(st_polygon(list(rbind(
@@ -93,6 +90,7 @@ library(gstat)
 library(dplyr)
 library(sf)
 library(rgeos)
+library(mapview)
 
 st_layers("../raw/hamilton_harbor.gdb/") 
 lake <- st_read("../raw/hamilton_harbor.gdb/", layer="waterbody_2")
@@ -115,12 +113,13 @@ ggplot() +
 
 ```{r}
 # We have several samples/replicates by site and date, we want to compute the average value of TP (total Phosphorus) for each sampling period.
-hamilton_tp <- hamilton %>% filter(Variable == "TP") %>% group_by(Site.Site, Year.Année, JulianDay.JourJulian) %>% summarise(avg_tp=mean(Value.Valeur)) 
+hamilton_tp <- hamilton_habitat %>% filter(Variable == "TP") %>% group_by(Site.Site, Year.Année, JulianDay.JourJulian) %>% summarise(avg_tp=mean(Value.Valeur)) 
  
 # Some sampling stations have several positions. 
 hamilton_tp$geometry <- st_cast(hamilton_tp$geometry, "POINT")
 
 # facet per year
+png("./hamilton_tp.png", res="300", width = 3000, height=1500)
 ggplot() + 
   geom_sf(data = lake, fill = "lightskyblue1", col = "skyblue3") + 
   geom_sf(data = hamilton_tp, aes(col = avg_tp, size = avg_tp/max(avg_tp))) + 
@@ -128,12 +127,15 @@ ggplot() +
   facet_wrap(~Year.Année) +
   guides(size = FALSE) +
   theme_bw()
+dev.off()
+
 
 # gganimate
 library(gganimate)
 library(gifski)
 
-ggplot() + 
+# animate in a two step process:
+tp_trends <- ggplot() + 
   geom_sf(data = lake, fill = "lightskyblue1", col = "skyblue3") + 
   geom_sf(data = hamilton_tp, aes(col = avg_tp, size = avg_tp/max(avg_tp), group = seq_along(Year.Année))) + 
   scale_color_viridis_c(name = "ppm") +
@@ -142,15 +144,20 @@ ggplot() +
   guides(size = FALSE) +
   theme_bw()
 
+animate(tp_trends, height = 1500, width = 3000, res = 300)
+anim_save("tp_trends.gif")
+
 # Means over years
 hamilton_avg_yr <- hamilton_tp %>% group_by(Year.Année, Site.Site) %>% summarise(avg=mean(avg_tp))
 
+png("./hamilton_tp_mean.png", res="300", width = 3000, height=1500)
 ggplot() + 
   geom_sf(data = lake, fill = "lightskyblue1", col = "skyblue3") + 
   geom_sf(aes(col = avg, size = avg/max(avg)),data = hamilton_avg_yr) +
   scale_color_viridis_c(name = "ppm") +
   guides(size = FALSE) +
   theme_bw()
+dev.off()
 ```
 
 ## Inverse distance weighting 
