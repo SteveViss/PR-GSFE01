@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>GSFE01</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="F. Guillaume Blanchet &amp; Steve Vissault" />
+    <link href="assets/remark-css/default.css" rel="stylesheet" />
+    <link href="assets/remark-css/hygge.css" rel="stylesheet" />
+    <link rel="stylesheet" href="pr.css" type="text/css" />
+    <link rel="stylesheet" href="pr-fonts.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+class: title-slide, middle
+
+
+
+
+&lt;img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"&gt;&lt;/img&gt;
+
+# Handling Spatial and Spatio-temporal data Using R
+## Introduction
+
+.instructors[
+  GSFE01 - F. Guillaume Blanchet &amp; Steve Vissault
+]
+
+---
+class: inverse, center, middle
+
+# The very basics
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+# Internet
+
+## Network : TheFortGarry
+## Password : broadway
+
+---
+
+# Basic hotel information
+
+---
+class: inverse, center, middle
+
+# Let's start !
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+
+# Why do we sample?
+
+A complete census is usually not practical. 
+
+We can not sample very large areas or long time periods without:
+
+- Lots of money/resources
+- Extensive disturbance (e.g. soil samples)
+- Violating assumptions (population closure for mobile species)
+
+Therefore, we take a sample that (we hope!) is representative of the larger area, and use statistics to infer about the whole statistical population. 
+
+---
+
+# Sampling is not always easy
+
+We need to get there (complete randomness might not be cost efficient)
+
+Sometimes sample at the right time may be challenging (seasons, time-of-day)
+
+Sometimes samples at the same location is nearly impossible (marine surveys)
+
+---
+
+# Space(-time) data
+
+It comes in many form shape and sizes
+
+## Vectorized data
+&lt;img src="assets/img/vectors.png" width="90%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Space(-time) data
+
+It comes in many form shape and sizes
+
+## Raster
+&lt;img src="assets/img/raster.png" width="90%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# What is autocorrelations?
+## Spatial autocorrelation
+
+`$$\textbf{Broad}\qquad\qquad\qquad \longrightarrow \qquad\qquad\qquad \textbf{Fine}$$`
+&lt;img src="https://journals.openedition.org/cybergeo/docannexe/image/27429/img-5-small480.jpg" width="90%" style="display: block; margin: auto;" /&gt;
+
+---
+# What is autocorrelations?
+## Temporal autocorrelation
+
+&lt;img src="assets/img/TempAuto.png" width="90%" style="display: block; margin: auto;" /&gt;
+
+Maximum temperature (in Fahrenheit), from different weather stations (blue lines) of the United States of America National Oceanic and Atmospheric Administration (NOAA) and the empirical temporal mean  (black line). These data were gathered from May 1 1993 to September 30 1993.
+---
+
+#  Modelling space(-time) data
+
+There are three groups of methods that are designed to account for spatial and spatiotemporal autocorrelation
+- Autoregressive models
+- Eigenbase spatial/temporal decompositions
+- Geostatistics
+
+For this course, we will focus on geostatistical models.
+
+---
+
+# What is geostatistics ?
+
+Geostatistics is a branch of statistics designed to account for the **spatial**  and **spatiotemporal** covariance in data.
+
+## How we will use this framework
+- To account for spatial (and spatiotemporal) autocorrelation
+- Better understand spatial (and spatiotemporal) systems
+- Sample spatially (and spatiotemporally) constrained systems
+- Interpolate over space (and time)
+- Extrapolate over space (and time)
+
+---
+
+# A bit of history
+
+The "geo" in geostatistics refers to **geology**.
+
+## Historical figures
+
+.pull-left[
+**Daniel G. Krige**
+&lt;img src="https://www.nae.edu/File.aspx?id=191706" width="55%" style="display: block; margin: auto;" /&gt;
+]
+.pull-right[
+**Georges Matheron**
+&lt;img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Georges_Matheron.jpg" width="75%" style="display: block; margin: auto;" /&gt;
+]
+
+Krige and Georges Matheron were the two statisticians that initiated this branch of statistics.
+
+---
+
+
+Nowadays, Noel Cressie and Christopher Wikle are the dominant figures of this field.
+
+.pull-left[
+**Noel Cressie**
+&lt;img src="https://samsiatrtp.files.wordpress.com/2012/09/cressie_final.jpg" width="45%" style="display: block; margin: auto;" /&gt;
+]
+
+.pull-right[
+**Christopher Wikle**
+&lt;img src="http://faculty.missouri.edu/~wiklec/DSC_0010.JPG" width="45%" style="display: block; margin: auto;" /&gt;
+]
+---
+class: inverse, center, middle
+
+# Course structure
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
+---
+# Course structure
+
+0. Quick review of R basic objects and manipulations
+1. Manipulating spatial and spatiotemporal data
+2. Geostatistical modelling
+&lt;img src="assets/img/Fig_8_9_Bivand_et_al.png" width="100%" /&gt;
+3. Introduction to Integrated nested Laplace Approximation (INLA)
+4. Using INLA with large spatial and spatiotemporal data
+
+---
+
+# Good reference to use
+
+&lt;img src="https://spacetimewithr.org/cover.jpg" width="30%" style="display: block; margin: auto;" /&gt;
+
+A good portion of this course material is based on this book.
+
+The book (and much more!) is freely available here
+
+[https://spacetimewithr.org](https://spacetimewithr.org)
+
+---
+
+# Great technical reference
+
+.pull-left[
+&lt;img src="http://t0.gstatic.com/images?q=tbn:ANd9GcT4DpYLXgVAU-xVJZEHqNxU9oFBj_hLxI-A51FcHPZ4uP_Jjw1U" width="75%" style="display: block; margin: auto;" /&gt;
+]
+.pull-right[
+&lt;img src="http://t2.gstatic.com/images?q=tbn:ANd9GcQ2QMnp2zQQYVVFTboQ8IWD7od_9DPjrO40ztAzfCY0Tn3dfgNN" width="70%" style="display: block; margin: auto;" /&gt;
+]
+
+Everything (really everything !) is there but it gets very technical very fast !
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="macros.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "mikado",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

@@ -1,0 +1,2 @@
+# Compile slides
+rmarkdown::render("file.Rmd")
