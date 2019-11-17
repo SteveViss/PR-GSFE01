@@ -19,7 +19,7 @@ class: title-slide, middle
 <img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"></img>
 <img src="assets/img/UdeS_blanc.png" width="250px" ></img>
 
-# Handling Spatial and Spatio-temporal data Using R
+# Handling spatial data with R
 
 .instructors[
   GSFE01 - F. Guillaume Blanchet & Steve Vissault
@@ -28,16 +28,6 @@ class: title-slide, middle
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
 ```
-
-
----
-class: middle, clear
-
-# Objectives
-
-1. Brief overview of basics R instructions (30 minutes)
-2. Handle spatial data in R (2 hours)
-3. Manipulate and explore spatio-temporal data in R (2 hours)
 
 ---
 class: inverse, center, middle
@@ -210,9 +200,9 @@ m[1,2]
 # Matrix algebra
 
 ```{r}
-m <- matrix(c(1,1,1,1),nrow=2,ncol=2)
+m <- matrix(c(1,1,2,2,3,3),nrow=3,ncol=2)
 m
-3 * m
+m %*% t(m)
 ```
 
 ---
@@ -283,6 +273,7 @@ df[,1]
 df[1,1]
 ```
 
+
 ---
 
 # Dataframe
@@ -293,6 +284,81 @@ df[1,1]
 df[,c("col_text","col_date")]
 df$col_date
 ```
+
+--
+
+With dataframe, all columns have to be same length. One way to avoid this
+problem is to use `list()`. 
+
+---
+class: inverse, center, middle
+
+# List
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+
+---
+
+# List
+
+A list store collections of objects (single value, vector or matrix).
+
+```{r}
+l <- list(
+  v = c(1,2,3,4),
+  m = matrix(c(1,1,1,1),nrow=2,ncol=2)
+)
+```
+```{r}
+l
+```
+
+---
+
+# List
+
+```{r}
+l <- list(
+  v = c(1,2,3,4),
+  m = matrix(c(1,1,1,1),nrow=2,ncol=2)
+)
+```
+```{r results="hold"}
+l$v
+#equivalent: l[['v']]
+```
+
+---
+
+# List
+
+```{r}
+l <- list(
+  v = c(1,2,3,4),
+  m = matrix(c(1,1,1,1),nrow=2,ncol=2)
+)
+```
+```{r results="hold"}
+l$m 
+#equivalent: l[['m']]
+```
+
+---
+
+# List
+
+```{r}
+l <- list(
+  v = c(1,2,3,4),
+  m = matrix(c(1,1,1,1),nrow=2,ncol=2)
+)
+```
+
+```{r}
+l$v[2]
+```
+
 
 ---
 class: inverse, center, middle
@@ -315,6 +381,7 @@ knitr::include_graphics("./assets/img/data_structures.png")
 .font70[
   From https://mgimond.github.io/ES218/Week02a.html
 ]
+
 
 ---
 
@@ -360,12 +427,12 @@ class: clear, middle
 # Interact with the R universe
 
 ```{r, eval = FALSE}
-# Install distant packages
-install.packages("vegan")
+# Install packages
+install.packages("sf")
 # Then access to a specific function
-vegan::decostand()
+sf::st_crop()
 # Or load the entire package
-library(vegan)
+library(sf)
 ```
 
 
@@ -422,9 +489,9 @@ class: clear, middle
 
 1. Overview of spatial objects
 2. Manipulate spatial vectors (POINT, LINE, POLYGON)
-3. Manipulate rasters   
-4. Spatial operations
-5. Export geographical objects
+4. Spatial operations on vectors
+5. Rasters manipulations   
+6. Spatial operations on rasters
 
 ---
 class: inverse, center, middle
@@ -504,7 +571,7 @@ knitr::include_graphics("./assets/img/projection2.png")
 knitr::include_graphics("./assets/img/proj_vs_unproj.png")
 ```
 
-Representation not very different at regional scale, BUT very important if you want to conduct spatial analysis (e.g. euclidean distances among points)
+Representation not very different at regional scale, **but very important if you want to conduct spatial analysis (e.g. euclidean distances among points).**
 
 ---
 
@@ -553,8 +620,12 @@ class: middle, clear
 - `sp` package provides classes and methods for dealing with spatial data. 
 - `sf` is a newer package now on CRAN, and is being
 actively developed here: sf, providing Simple Features for R, in compliance with
-the OGC Simple Feature standard. 
+the [Open Geospatial Consortium](https://www.opengeospatial.org/) (OGC) Simple Feature standard. 
+- `maptools` & `rgeos` packages give access to functions to manipulate and analyze spatial vectors
 
+--
+
+In this course, we will focus mainly on `sf`.
 
 ---
 class: inverse, center, middle
@@ -626,7 +697,7 @@ class: inverse, center, middle
 ---
 # Points
 
-Declare spatial points (same as .shp file)
+Declare spatial vertices / points (same as .shp file)
 ```{r}
 library(sf) # Do not forget to load the library
 
@@ -692,7 +763,6 @@ library(mapview)
 mapview(great_cities, zoom = 1)
 ```
 
-
 --
 
 What about spatial lines and polygons?
@@ -700,12 +770,13 @@ What about spatial lines and polygons?
 ---
 # Lines
 
-Declaring lines and polygons are getting complex if you have fine details (more points).
+Declaring lines and polygons are getting complex if you have fine details (more vertices / points).
 
 
 ```{r, fig.height = 4, fig.width = 4, fig.align="center", fig.retina = 2}
-# line composed of 3 coordinates
+# Example of line composed of 3 coordinates
 line <- st_linestring(rbind(c(0,0),c(1,1),c(2,1)))
+class(line)
 
 # Visualise
 plot(line, col = "red", lwd=2)
@@ -715,7 +786,7 @@ plot(st_cast(line,"MULTIPOINT"), pch = 19, add = TRUE)
 ---
 # Polygons
 
-Declaring lines and polygons are getting complex if you have fine details (more points).
+Declaring lines and polygons are getting complex if you have fine details (more vertices / points).
 
 ```{r, fig.height = 4, fig.width = 4, fig.align="center", fig.retina = 2}
 outer = matrix(c(0,0,10,0,10,10,0,10,0,0),ncol=2, byrow=TRUE)
@@ -723,15 +794,14 @@ hole1 = matrix(c(1,1,1,2,2,2,2,1,1,1),ncol=2, byrow=TRUE)
 hole2 = matrix(c(5,5,5,6,6,6,6,5,5,5),ncol=2, byrow=TRUE)
 pts = list(outer, hole1, hole2)
 poly <- st_polygon(pts)
+class(poly)
 
 plot(poly, col = "red")
-
-
 ```
 
 --
 
-This is why we usually import spatial data from shapefiles (lines & polygons) and CSV (points).
+This is why we usually import them from shapefiles (lines & polygons) and CSV (points).
 
 ---
 class: inverse, center, middle
@@ -741,7 +811,7 @@ class: inverse, center, middle
 <html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
 
 ---
-# Importing simple features from CSV
+# Importing simple points features from CSV
 
 ```{r}
 ca_cities <- read.csv("https://simplemaps.com/static/data/country-cities/ca/ca.csv")
@@ -752,41 +822,78 @@ head(ca_cities, 4)
 
 How to make it spatial?
 We need to know 3 basics informations: latitude (`lat`), longitude (`lng`), the CRS.
+Unfortunately, you have to dig sometimes to find the exact CRS. The CRS is often attach in the metadata for CSV file.
 
 ---
 # Importing simple features from CSV
 
 ```{r out.height='65%', out.width='100%'}
-sf_cities <- st_as_sf(ca_cities, coords = c("lng", "lat"), crs = 4326)
-sf_cities
+sf_ca_cities_wgs84 <- st_as_sf(ca_cities, coords = c("lng", "lat"), crs = 4326)
+sf_ca_cities_wgs84
 ```
 
 And it's done.
 
 ---
-# Supported files format
+# Importing features from files
 
-`sf` offers a large number of drivers 
+`sf` can read a large number of spatial vector formats. This is possible because
+of the hardwork of the OGC organisation developing international standards.
+
+The first 50 formats
 
 ```{r}
-st_drivers(what = "vector")[,1]
+st_drivers(what = "vector")[1:50,1]
 ```
 
----
-# Importing features from Shapefiles
 
-Simple exemple from the Community Aquatic Monitoring Program (CAMP) for the Southern Gulf of St. Lawrence
-([Open Data](https://open.canada.ca/data/en/dataset/c4474517-3d9b-e581-a6e2-e95273f2058e))
+
+---
+# Importing features from ESRI shapefiles
+
+Let's download the world coastlines shapefile (available [here](https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_coastline.zip)) 
 
 ```{r}
+# download the data 
+download.file("http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_coastline.zip", 
+              destfile = 'assets/data/coastlines.zip')
 
+# unzip the file
+unzip(zipfile = "assets/data/coastlines.zip", 
+      exdir = 'assets/data/ne-coastlines-10m')
+
+# WARNING: You have to define you own path in destfile argument and exdir.
+```
+
+
+---
+# Importing features from ESRI shapefiles
+
+```{r}
+dir('assets/data/ne-coastlines-10m')
+```
+
+### Valid ESRI shapefiles
+
+- `.shp`: The main file that stores the feature geometry (required).
+- `.shx`: The index file that stores the index of the feature geometry (required).
+- `.dbf`: The dBASE table that stores the attribute information of features (required).
+- `.prj`: The file that stores the coordinate system information (used by ArcGIS).
+
+---
+# Importing features from ESRI shapefiles
+
+```{r, fig.align = 'center', fig.height = 4, fig.width = 6}
+coast <- st_read('assets/data/ne-coastlines-10m')
+par(mar=rep(0,4))
+plot(st_geometry(coast))
 ```
 
 ---
 # Importing features from GeoDataBase
 
 Simple exemple from the Community Aquatic Monitoring Program (CAMP) for the Southern Gulf of St. Lawrence
-([Open Data](https://open.canada.ca/data/en/dataset/c4474517-3d9b-e581-a6e2-e95273f2058e))
+(Download from [open.canada.ca](https://open.canada.ca/data/en/dataset/c4474517-3d9b-e581-a6e2-e95273f2058e))
 
 ```{r}
 st_layers("assets/data/camp_station_summary_eng.gdb")
@@ -798,7 +905,7 @@ stations <- st_read("assets/data/camp_station_summary_eng.gdb",
 # Importing features from GeoDataBase
 
 Simple exemple from the Community Aquatic Monitoring Program (CAMP) for the Southern Gulf of St. Lawrence
-([Open Data](https://open.canada.ca/data/en/dataset/c4474517-3d9b-e581-a6e2-e95273f2058e))
+(Download from [open.canada.ca](https://open.canada.ca/data/en/dataset/c4474517-3d9b-e581-a6e2-e95273f2058e))
 
 
 ```{r, echo = FALSE, out.height='50%', out.width='100%'}
@@ -806,60 +913,325 @@ mapview(stations)
 ```
 
 ---
+# Export spatial vectors
+
+We go back to the coastline object and want to extract the St-Lawrence Gulf.
+First, we draw the polygon of the area of interest (using http://arthur-e.github.io/Wicket/sandbox-gmaps3.html).
+
+```{r, warnings = FALSE}
+area <- st_as_sfc("POLYGON((-71.19219092922373 51.818174659518405,-55.06426124172373 51.818174659518405,-55.06426124172373 45.47097576656452,-71.19219092922373 45.47097576656452,-71.19219092922373 51.818174659518405))")
+# This is a WKT representation of the polygon, often used on the web, 
+# a quick way to define a polygon
+area <- st_set_crs(area, 4326)
+cropped_coast <- st_crop(coast,area)
+
+# Visual representation
+par(mar=rep(0,4))
+plot(st_geometry(cropped_coast))
+```
+
+---
+# Export spatial vectors
+
+Then, we save the new cropped spatial feature to a ESRI shapefile on my computer.
+
+```{r, eval = FALSE}
+st_write(cropped_coast, dsn = "assets/data/cropped_coast", driver = "ESRI Shapefile")
+```
+
+---
+class: clear, middle
+
+# `r icon::fa("gamepad")` Exercice
+
+1. Download the [coastline shapefile](https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_coastline.zip) on your own computer.
+2. Read the shapefile with the `st_read()` function.
+
+If you want, you can try with your own data or download other shapefiles from https://www.naturalearthdata.com/
+
+---
 class: inverse, center, middle
 
-# Manipulating spatial features
+# Manipulating spatial features with `sf`
 
 <html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
 
 ---
-# Subsetting features
+# Filtering based on data attributes
 
-https://r-spatial.github.io/sf/articles/sf4.html
+Select cities in Manitoba
+
+```{r, out.height='45%', out.width='100%'}
+mb_cities <- subset(sf_ca_cities_wgs84, admin == 'Manitoba')
+mapview(mb_cities)
+```
 
 ---
-# Removing features
+# Remove spatial features
 
-https://r-spatial.github.io/sf/articles/sf4.html
+```{r}
+# Select the first feature
+mb_cities[1,]
+```
+
+---
+# Remove spatial features 
+
+```{r}
+# Remove the first 5 features
+mb_cities[-c(1:5),]
+```
 
 ---
 # Transform CRS
 
-https://r-spatial.github.io/sf/articles/sf4.html
+Change the original projection WGS84 (SRID 4326) to NAD83 / Statistics Canada Lambert (SRID 3347). 
 
+```{r}
+sf_ca_cities_nad83 <- st_transform(sf_ca_cities_wgs84, 3347)
+sf_ca_cities_nad83
+```
+
+--- 
+
+# Create buffers around city points
+
+TODO
+
+And so many spatial operations that we cannot cover all of them...
 
 ---
-# Let's practice (20 minutes)
+# Spatial operations with `sf`
 
-EXERCICE TODO
-1. Import shapefile 
-2. Select based on criteria (ex. size of the pop)
-3. 
+```{r echo=FALSE, out.width="90%", fig.align='center'}
+knitr::include_graphics("./assets/img/geom_ops.png")
+```
 
-???
-# Vector
-- Import from csv and shapefiles
-  - Données Canada (click)
-- Reprojections
-- Crop 
-- Buffers
-# Raster
-- Resampling (optionnal)
-# Raster avec vectors
-- Exercice Interception raster avec points et Polygons
-- Crop / mask 
-- 
+[Download `sf` cheat sheet](https://github.com/rstudio/cheatsheets/blob/master/sf.pdf)
+
+---
+class: clear, middle
+
+# `r icon::fa("gamepad")` Exercice
+
+1. Download and read with `sf` the [canadian cities CSV file](https://simplemaps.com/static/data/country-cities/ca/ca.csv).
+2. Select all cities from your province
+3. Select the 10 most populated cities in your province
 
 ---
 class: inverse, center, middle
 
-# Raster: gridded spatial data
-
----
-class: inverse, center, middle
-
-
-# Spatio-temporal data
+# Rasters manipulation
 
 <html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+
+---
+
+# Gridded spatial data
+
+Gridded spatial data is a special case that need to be handle with the library `raster`.
+
+```{r echo=FALSE, out.width="90%", fig.align='center'}
+knitr::include_graphics("./assets/img/raster_pic.png")
+```
+136 raster formats supported by GDAL library (and hence by R). 
+
+---
+# Diversity of formats
+
+
+.pull-left[
+**Some examples**
+
+*Classic gridded format*
+```
+GTiff: GeoTIFF
+XYZ: ASCII Gridded XYZ
+```
+
+*Images*
+```
+PNG: Portable Network Graphics
+JPEG: JPEG JFIF
+```
+
+*Multibands (often related to satellite imaging)*
+```
+netCDF: Network Common Data Format
+HDF4: Hierarchical Data Format Release 4
+```
+]
+
+.pull-right[
+```{r echo=FALSE, out.width="100%", fig.align='center'}
+knitr::include_graphics("./assets/img/rgb.jpeg")
+```
+]
+
+
+---
+# Load raster from file
+
+We simply use the function `raster()` to import the file in R.
+
+```{r, fig.height=4, fig.width=7}
+library(raster)
+ocean_bottom <- raster("assets/data/OB_LR/OB_LR.tif")
+ocean_bottom
+image(ocean_bottom)
+# Not the the absolute depth
+```
+
+---
+
+# Retrieving free GIS data with `getData`
+
+The function `getData` in the raster package allows to freely and quickly retrieve free GIS data such as:
+
+- **GADM** - global administrative boundaries at different level of administrative subdivision
+- **worldclim** - global interpolated climate data
+- **alt** and STRM - coarse and fine resolution elevation data
+- **ISO3** - 3 letter ISO codes for country names.
+
+```{r}
+# alt90 <- getData('SRTM', lon = -73.7, lat = 45.5) # Fine resolution
+altCAN <- getData(name = "alt", country = "CAN", path = "assets/data") # Coarse resolution
+altCAN
+```
+
+---
+# Retrieving free GIS data with `getData`
+
+```{r, fig.width = 8, fig.height=5}
+plot(altCAN)
+```
+
+---
+# Extract spatial values at specific locations
+
+To interact with raster object, we have to convert the `sf_ca_cities_wgs84` containing the canadian cities.
+
+```{r}
+sf_ca_cities_wgs84$elev <- extract(altCAN,sf_ca_cities_wgs84) 
+# return a vector of values with we can be attach to the sf object
+sf_ca_cities_wgs84$elev
+```
+
+---
+# Extract spatial values at specific locations
+
+To interact with raster object, we have to convert the `sf_ca_cities_wgs84` containing the canadian cities.
+
+```{r}
+sf_ca_cities_wgs84$elev <- extract(altCAN,sf_ca_cities_wgs84) 
+# return a vector of values with we can be attach to the sf object
+sf_ca_cities_wgs84$elev
+```
+---
+
+# Crop and mask rasters
+
+`crop()` and `mask()` reduce object memory use and therefore computational time for raster manipulations.
+`crop()` will decrease the extent of a raster, `mask()` will set to NA values outside a polygon boundary.
+
+```{r}
+# Get Quebec shapefile
+can <- raster::getData("GADM", country = "CAN", level = 1, path = "assets/data")
+# convert to sf
+can <- st_as_sf(can)
+# Subset Quebec
+qc <- subset(can, NAME_1 == "Québec")
+
+alt_qc <- crop(altCAN, qc) 
+# alt_mask <- mask(altCAN, qc)
+# Take a while
+plot(alt_qc)
+```
+
+---
+# Set new raster projection
+
+We can use `projectRaster()` to transform the CRS of one spatial object to match another spatial object.
+
+```{r, fig.width = 8, fig.height=5}
+st_crs(sf_ca_cities_nad83)
+alt_qc_nad83 <- projectRaster(alt_qc, crs="+proj=lcc +lat_1=49 +lat_2=77 
++lat_0=63.390675 +lon_0=-91.86666666666666 +x_0=6200000 +y_0=3000000 +ellps=GRS80 
++towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+plot(alt_qc_nad83)
+```
+
+---
+
+class: clear, middle
+
+# `r icon::fa("gamepad")` Exercice
+
+1. Read with `sf` the [canadian cities CSV file](https://simplemaps.com/static/data/country-cities/ca/ca.csv).
+2. Import with `getData` the canadian digital elevation model (elevation raster)
+3. Project the elevation raster and the canadian cities in NAD83 (`raster::projectRaster()` & `sf::st_transform()`)
+4. Make a buffer of 10 kms around each canadian cities (`sf::st_buffer()`)
+5. Crop the elevation raster with those buffers (`sf::st_crop()`) and compute the mean per buffer
+
+---
+# Stacking rasters
+
+Two possibilities: over variables or over time period.
+
+```{r echo=FALSE, out.width="90%", fig.align='center'}
+knitr::include_graphics("./assets/img/raster_pic.png")
+```
+
+???
+Bricks vs Stacks
+
+---
+
+# Stacking rasters
+
+Example from scratch
+
+```{r}
+library(raster)
+# Create two empty rasters
+rs_var1 <- raster(ncol=10, nrow=10)
+rs_var2 <- raster(ncol=10, nrow=10)
+
+# Fill both with random values
+rs_var1[] <- runif(100)
+rs_var2[] <- runif(100)
+
+# Stack them
+st_vars <- stack(rs_var1, rs_var2)
+st_vars
+```
+
+---
+
+# Coerce rasterstack or raster to dataframe
+
+```{r}
+as.data.frame(st_vars, xy = TRUE)
+```
+
+
+```{r, eval=FALSE}
+as.data.frame(rs_var1, xy = TRUE)
+```
+
+
+---
+# Basic arithmetics
+
+Some arithmetic operations:
+
+- Classic operators: `+`, `*`, `-` etc.
+  - `rs_vars1 + rs_var2`
+- sum :  `sum(st_vars)`
+- mean: `mean(st_vars)`
+- variance: `var(rs_var1)`
+- covariance: `cov(rs_var1, rs_var2)`
+- Frequecy values: `hist(rs_var1)`
+
 

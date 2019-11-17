@@ -1,71 +1,20 @@
-
----
-class: inverse, center, middle
-
-# List
-
-<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
-
-
 ---
 
-# List
+# R basics
 
-A list store collections of objects (single value, vector or matrix).
+### Working directory
 
-```{r}
-l <- list(
-  v = c(1,2,3,4),
-  m = matrix(c(1,1,1,1),nrow=2,ncol=2)
-)
-```
-```{r}
-l
-```
+It is well known that users are often struggling with their active working directory: where R is reading and writing files on your computer.
 
----
+Some hints / functions to deal with that aspect:
 
-# List
-
-```{r}
-l <- list(
-  v = c(1,2,3,4),
-  m = matrix(c(1,1,1,1),nrow=2,ncol=2)
-)
-```
-```{r results="hold"}
-l$v
-#equivalent: l[['v']]
-```
-
----
-
-# List
-
-```{r}
-l <- list(
-  v = c(1,2,3,4),
-  m = matrix(c(1,1,1,1),nrow=2,ncol=2)
-)
-```
-```{r results="hold"}
-l$m 
-#equivalent: l[['m']]
-```
-
----
-
-# List
-
-```{r}
-l <- list(
-  v = c(1,2,3,4),
-  m = matrix(c(1,1,1,1),nrow=2,ncol=2)
-)
-```
-
-```{r}
-l$v[2]
+```{r, eval = FALSE}
+getwd() # Print the path of the active folder / working directory
+setwd(choose.dir()) 
+# 1. setwd() is a function to set a new active directory
+# 2. choose.dir() works exclusively on windows 
+# This function opens a dialog box to set your custom working directory
+dir() # function which list all the files in the working directory.
 ```
 
 ---
