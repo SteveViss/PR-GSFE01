@@ -35,10 +35,10 @@ options(htmltools.dir.version = FALSE)
 library(sp)
 library(gstat)
 library(sf)
-setwd("~/ownCloud/PR-GSFE01/")
+setwd("~/Documents/Recherche/Cours donnés/2019/geostatistics/PR-GSFE01/data/post_process/")
 
 # Load data
-hamiltonRaw <- readRDS("data_hamilton.rds")
+hamiltonRaw <- readRDS("hamilton_habitat.rds")
 hamiltonSF <- st_as_sf(hamiltonRaw)
 ham <- st_transform(hamiltonSF,crs = 3161)
 ```
@@ -126,10 +126,11 @@ ham2005 <- ham[which(ham$Year.Année == 2005),]
 tp <- ham2005[ham2005$Variable == "TP",]
 tpSP <- as(tp, "Spatial")
 
+maxDist <- max(dist(coordinates(tpSP)))
 vario <- variogram(Value.Valeur ~ 1,
                    data = tpSP,
                    cloud= TRUE,
-                   cutoff = 3500)
+                   cutoff = maxDist)
 
 par(mar = c(5,6.5,0.5,0.5))
 plot(vario$dist, vario$gamma,
@@ -155,12 +156,11 @@ This does not have to be the case. We can also construct a variogram using only 
 vario <- variogram(Value.Valeur ~ 1,
                    data = tpSP,
                    cloud= TRUE,
-                   cutoff = 3500,
+                   cutoff = maxDist,
                    alpha = c(0, 45, 90, 135))
 
 plot(vario)
 ```
-
 
 ---
 class: inverse, center, middle
@@ -191,6 +191,11 @@ where
 # .small[Visualization of the empirical variogram]
 
 ```{r,echo = FALSE, fig.height=5, fig.width=12, eval=TRUE}
+vario <- variogram(Value.Valeur ~ 1,
+                   data = tpSP,
+                   cutoff = 3500,
+                   cloud= TRUE)
+
 bound <- seq(0,3500, by = 250)
 varioEmp <- variogram(Value.Valeur ~ 1,
                    data = tpSP,
@@ -239,7 +244,7 @@ Lagged scatter plot draw point pairs at a specific separation distances.
 ```{r, echo = FALSE, fig.align="center"}
 hscat(Value.Valeur ~ 1,
       data = tpSP,
-      breaks = seq(0,6000, by = 500))
+      breaks = seq(0,maxDist, by = 500))
 ```
 
 .small[There seems to be some structure among samples at distances between 0 and 1000 m.]
