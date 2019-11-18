@@ -68,6 +68,7 @@ dir() # function which list all the files in the working directory.
 ## Solution 
 
 ```{r}
+library(dplyr)
 # 1. Read file
 ca_cities <- read.csv("https://simplemaps.com/static/data/country-cities/ca/ca.csv")
 ca_cities <- st_as_sf(ca_cities, coords = c("lng", "lat"), crs = 4326)
@@ -94,6 +95,7 @@ ca_cities[1:10,]
 ## Solution 
 
 ```{r}
+library(raster)
 # 1. Read file
 ca_cities <- read.csv("https://simplemaps.com/static/data/country-cities/ca/ca.csv")
 ca_cities <- st_as_sf(ca_cities, coords = c("lng", "lat"), crs = 4326)
