@@ -1,5 +1,5 @@
 ---
-title: "GSFE01"
+title: "Trend surface estimation"
 author: "F. Guillaume Blanchet & Steve Vissault"
 date: "2018/02/16"
 output:

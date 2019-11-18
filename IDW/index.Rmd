@@ -1,5 +1,5 @@
 ---
-title: "GSFE01"
+title: "Distance weighted interpolation"
 author: "F. Guillaume Blanchet & Steve Vissault"
 date: "2018/02/16"
 output:
@@ -19,7 +19,7 @@ class: title-slide, middle
 <img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"></img>
 <img src="assets/img/UdeS_blanc.png" width="350px" ></img>
 
-# Distance weighted interpolation with R
+# Distance weighted interpolation
 
 .instructors[
   GSFE01 - F. Guillaume Blanchet & Steve Vissault
@@ -101,7 +101,7 @@ $$\mathbf{Z}_{t_j}$$
 
 If we want to focus only on spatial information of a spatiotemporal data, we can average over time
 
-$$\widehat{\mu}_{z,s}(\mathbf{s}_i) \equiv \frac{1}{T}\sum_{j = 1}^TZ(\mathbf{s}_i, t_j)$$
+$$\widehat{\mu}_{z,s}(\mathbf{s}_i) = \frac{1}{T}\sum_{j = 1}^TZ(\mathbf{s}_i, t_j)$$
 The previous equation focuses only on a single sample. It can be generalized to be applied to multiple samples
 
 $$\widehat{\boldsymbol\mu}_{z,s}=\begin{bmatrix}
@@ -137,12 +137,12 @@ knitr::include_graphics("./assets/img/hamilton_tp_mean.png")
 Studying the covariance in spatial data is useful because it gives us insight about how different samples behave similarly across space and/or through time
 
 For a pair of samples
-$$\widehat{C}_z^{(\tau)}(\mathbf{s}_i,\mathbf{s}_k) \equiv \frac{1}{T-\tau}\sum_{j = \tau + 1}^T \left(Z(\mathbf{s}_i, t_j) - \widehat{\mu}_{z,s}(\mathbf{s}_i)\right)\left(Z(\mathbf{s}_k, t_j - \tau) - \widehat{\mu}_{z,s}(\mathbf{s}_k)\right)$$
+$$\widehat{C}_z^{(\tau)}(\mathbf{s}_i,\mathbf{s}_k) = \frac{1}{T-\tau}\sum_{j = \tau + 1}^T \left(Z(\mathbf{s}_i, t_j) - \widehat{\mu}_{z,s}(\mathbf{s}_i)\right)\left(Z(\mathbf{s}_k, t_j - \tau) - \widehat{\mu}_{z,s}(\mathbf{s}_k)\right)$$
 where $\tau$ are time lag ranging from $0, 1, \dots,T$. Note that this equation calculates the covariance values associated to a single time lag.
 
 This equation can be generalized to account for all pairs of spatial samples for a single time lag
 
-$$\widehat{\mathbf{C}}_z^{(\tau)} \equiv \frac{1}{T-\tau}\sum_{j = \tau + 1}^T \left(\mathbf{Z}_{t_j} - \widehat{\boldsymbol{\mu}}_{z,s}\right)\left(\mathbf{Z}_{t_j-\tau} - \widehat{\boldsymbol{\mu}}_{z,s}\right)^\top$$
+$$\widehat{\mathbf{C}}_z^{(\tau)} = \frac{1}{T-\tau}\sum_{j = \tau + 1}^T \left(\mathbf{Z}_{t_j} - \widehat{\boldsymbol{\mu}}_{z,s}\right)\left(\mathbf{Z}_{t_j-\tau} - \widehat{\boldsymbol{\mu}}_{z,s}\right)^\top$$
 where $\top$ is the transpose of a matrix.
 
 ---
@@ -199,14 +199,14 @@ Z(\mathbf{s}_{1_T}, t_T) & \dots & Z(\mathbf{s}_{i_T}, t_T) & \dots & Z(\mathbf{
 
 ## Step 2 - General formulation of inverse distance weighting
 
-Let's say we want to estimate what a variable's value at spatial location $\mathbf{s}_\alpha$ for time $t_\alpha$. Using inverse distance weighting we would use the following equation
+Let's say we want to estimate what a variable's value at spatial location $\mathbf{s}_\alpha$ for time $t_\phi$. Using inverse distance weighting we would use the following equation
 
-$$\widehat{Z}(\mathbf{s}_\alpha, t_\alpha) = \sum_{j=1}^T\sum_{i=1}^mw_{ij}(\mathbf{s}_\alpha, t_\alpha)Z(\mathbf{s}_{ij}, t_j)$$
+$$\widehat{Z}(\mathbf{s}_\alpha, t_\phi) = \sum_{j=1}^T\sum_{i=1}^mw_{ij}(\mathbf{s}_\alpha, t_\phi)Z(\mathbf{s}_{ij}, t_j)$$
 where $w_{ij}$ is a weight.
 
 ### Asumption
 - The coordinates $\mathbf{s}_\alpha$ is within the sampling region
-- The time point $t_\alpha$ is between the earliest and latest time point when data was gathered
+- The time point $t_\phi$ is between the earliest and latest time point when data was gathered
 
 ---
 
@@ -216,11 +216,11 @@ where $w_{ij}$ is a weight.
 
 In the equation presented in the previous slide, the weight $w_{ij}$ can be defined as
 
-$$w_{ij}(\mathbf{s}_\alpha, t_\alpha) \equiv \frac{\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\alpha)}{\sum_{k=1}^T\sum_{l=1}^{m_k}\widetilde{w}_{lk}(\mathbf{s}_\alpha, t_\alpha)}$$
+$$w_{ij}(\mathbf{s}_\alpha, t_\phi) = \frac{\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\phi)}{\sum_{k=1}^T\sum_{l=1}^{m_k}\widetilde{w}_{lk}(\mathbf{s}_\alpha, t_\phi)}$$
 
 where
 
-$$\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\alpha) \equiv \frac{1}{\text{Distance}\left((\mathbf{s}_{ij}, t_j), (\mathbf{s}_\alpha, t_\alpha)\right)^c}$$
+$$\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\phi) = \frac{1}{\text{Distance}\left((\mathbf{s}_{ij}, t_j), (\mathbf{s}_\alpha, t_\phi)\right)^c}$$
 
 where $c$ is a power coefficient that ranges from 0 to $+\infty$ that controls for smoothing
 
@@ -250,14 +250,74 @@ legend("topright", title = "value of c",
 ```
 
 ---
+# Smoothing with $c = 2$
+
+```{r, echo = FALSE, message = FALSE, warning=FALSE, }
+library(sf)
+# The RDS file is an R object and can be read with the following command:
+hamilton_habitat_desc <- readRDS("../data/post_process/hamilton_habitat.rds")
+lake <- st_read("../data/raw/hamilton_harbor.gdb", layer="waterbody_2", quiet = TRUE)
+
+# Making sure both are on the same CRS
+hamilton_habitat_desc <- st_transform(hamilton_habitat_desc, st_crs(lake))
+
+# Because, the data contains replicates (several years and samples), we want to average all measurements of
+# Total Phosphorus by site.
+library(dplyr)
+
+hamilton_avg_tp <- hamilton_habitat_desc %>% 
+  filter(Variable == "TP") %>% 
+  group_by(Site.Site) %>% 
+  summarise(avg_tp=mean(Value.Valeur)) 
+
+# You can perform a visual check (commented below)
+# mapview(hamilton_avg_tp, zcol='avg_tp', cex = 'avg_tp' )   
+
+# Transform to sp (required by the function later)
+hml_avg_tp <- as(hamilton_avg_tp, "Spatial")
+lake <- as(lake, "Spatial")
+
+# We load the needed libraries
+library(raster)
+library(gstat)
+# Fit the IDW model
+gs <- gstat(formula=avg_tp~1, locations=hml_avg_tp)
+# We can change the smoothing with c
+gs_4 <- gstat(formula=avg_tp~1, locations=hml_avg_tp, set = list(idp = 4))
+# Create the reference grid for model projection (using the lake extent)
+r_ref <- raster(lake,res=100)
+# Project the model on the reference grid
+idw <- interpolate(r_ref, gs, debug = 0)
+# Mask pixels outsite of the lake
+idwr <- mask(idw, lake)
+```
+
+```{r, echo = FALSE, fig.align='center', fig.height=5, fig.width=10}
+# Draw map
+library(mapview)
+mapview(idwr)
+```
+
+---
+# Smoothing with $c = 4$
+```{r, echo=FALSE, tidy = TRUE, tidy.opts = list(comment = FALSE)}
+idw_4 <- interpolate(r_ref, gs_4, debug.level = 0)
+idwr_4 <- mask(idw_4, lake)
+```
+
+```{r, echo = FALSE, fig.align='center', fig.height=5, fig.width=10}
+mapview(idwr_4)
+```
+
+---
 
 # Particularities
 
 - The math may look complicated but inverse distance weighting is essentially a weighted average with more weights given to nearby data
 - Inverse distance weighting is an *exact* method. That is, if one wants to estimate a value at a location where a variable was sampled the exact same value will be estimated.
   - This can be problematic if there is some uncertainty in the measured variable
-- To account for measurement uncertainty we can modify the equation for $\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\alpha)$ to
-$$\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\alpha) \equiv \frac{1}{\left(\text{Distance}\left((\mathbf{s}_{ij}, t_j), (\mathbf{s}_\alpha, t_\alpha)\right)+ b \right)^c}$$
+- To account for measurement uncertainty we can modify the equation for $\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\phi)$ to
+$$\widetilde{w}_{ij}(\mathbf{s}_\alpha, t_\phi) = \frac{1}{\left(\text{Distance}\left((\mathbf{s}_{ij}, t_j), (\mathbf{s}_\alpha, t_\phi)\right)+ b \right)^c}$$
 where $b > 0$.
 
 ---
@@ -296,171 +356,6 @@ legend("topright", title = "value of c",
   - Euclidean distance should not be used when time is considered because space and time have a different basis. Other distances have been proposed in the litterature (spatiotemporal Euclidean distance)
   $$d_\text{SPTEucl} = \sqrt{(x_1 - x_2)^2 + (y_1 - y_2)^2 + \gamma^2(t_1 - t_2)}$$
 where $\gamma$ weight the importance is time in the analysis.
-
----
-class: middle, center, inverse
-
-# Inverse Distance weighting with R
-
-<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
-
----
-# Inverse Distance weighting with R
-
-First, we download the spatial data:
-  - [The GeoDatabase containing all shapefiles for the study area](https://github.com/SteveViss/PR-GSFE01/raw/master/data/raw/hamilton_harbor.gdb.zip)
-  - [The CABIN data for Hamilton Harbour](https://github.com/SteveViss/PR-GSFE01/raw/master/data/post_process/hamilton_sites.rds)
-
-
----
-# Inverse Distance weighting with R
-
-Load the data
-
-```{r}
-library(sf)
-# The RDS file is an R object and can be read with the following command:
-hamilton_habitat_desc <- readRDS("../data/post_process/hamilton_habitat.rds")
-lake <- st_read("../data/raw/hamilton_harbor.gdb", layer="waterbody_2")
-
-# Making sure both are on the same CRS
-st_crs(lake) == st_crs(hamilton_habitat_desc)
-hamilton_habitat_desc <- st_transform(hamilton_habitat_desc, st_crs(lake))
-```
-
----
-# Inverse Distance weighting with R
-
-Filter the variable of interest and compute the average by site.
-
-```{r, warnings = FALSE}
-# Because, the data contains replicates (several years and samples), we want to average all measurements of
-# Total Phosphorus by site.
-library(dplyr)
-
-hamilton_avg_tp <- hamilton_habitat_desc %>% 
-  filter(Variable == "TP") %>% 
-  group_by(Site.Site) %>% 
-  summarise(avg_tp=mean(Value.Valeur)) 
-
-# You can perform a visual check (commented below)
-# mapview(hamilton_avg_tp, zcol='avg_tp', cex = 'avg_tp' )   
-
-# Transform to sp (required by the function later)
-hml_avg_tp <- as(hamilton_avg_tp, "Spatial")
-lake <- as(lake, "Spatial")
-```
-
----
-# Inverse Distance weighting with R
-
-The data is now ready, we can can fit the Inverse Distance weighting (IDW)
-
-```{r, warnings = FALSE}
-# We load the needed libraries
-library(raster)
-library(gstat)
-# Fit the IDW model
-gs <- gstat(formula=avg_tp~1, locations=hml_avg_tp)
-# We can change the smoothing with c
-gs_5 <- gstat(formula=avg_tp~1, locations=hml_avg_tp, set = list(idp = 5))
-# Create the reference grid for model projection (using the lake extent)
-r_ref <- raster(lake,res=100)
-# Project the model on the reference grid
-idw <- interpolate(r_ref, gs)
-# Mask pixels outsite of the lake
-idwr <- mask(idw, lake)
-```
-
----
-# Inverse Distance weighting with R
-
-.pull-left[
-Smoothing with c = 2 (default)
-```{r, echo = FALSE}
-plot(idwr)
-```
-]
-
---
-
-.pull-right[
-Smoothing with c = 5
-```{r, echo=FALSE, tidy = TRUE, tidy.opts = list(comment = FALSE)}
-idw_5 <- interpolate(r_ref, gs_5, debug.level = 0)
-idwr_5 <- mask(idw_5, lake)
-```
-```{r, echo = FALSE}
-plot(idwr_5)
-```
-]
-
-
----
-class: middle, center, inverse
-
-# Finding smoothing parameter $c$
-
-<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
-
-How to choose the right $c$ parameter?
-
----
-# Model quality evaluation through LOOCV
-
-The choice of the power function parameter (through `idp`) might be subjective.
-Let's perform a validation for `idp` of 2
-
-```{r}
-# Leave-one-out validation routine
-IDW.out <- vector(length = length(hml_avg_tp))
-for (i in 1:length(hml_avg_tp)) {
-  IDW.out[i] <- idw(avg_tp ~ 1, hml_avg_tp[-i,], hml_avg_tp[i,], idp = 2, debug.level = 0)$var1.pred
-}
-
-# Plot the differences
-plot(IDW.out ~ hml_avg_tp$avg_tp, asp=1, xlab="Observed", ylab="Predicted", pch=16,
-      col=rgb(0,0,0,0.5))
-abline(lm(IDW.out ~ hml_avg_tp$avg_tp), col="red", lw=2,lty=2)
-abline(0,1)
-```
-
-```{r}
-# Compute the root-mean-squared error (RMSE)
-sqrt(mean(IDW.out - hml_avg_tp$avg_tp)^2)
-```
-
----
-# Finding smoothing parameter with `optim()`
-
-```{r, eval = FALSE}
-# Define the cost function
-cost_c <- function(c){
-  IDW.out <- vector(length = length(hml_avg_tp))
-  for (i in 1:length(hml_avg_tp)) {
-    IDW.out[i] <- idw(avg_tp ~ 1, hml_avg_tp[-i,], hml_avg_tp[i,], idp = c, debug.level = 0)$var1.pred
-  }
-  # Return the RMSE for the c value 
-  return(sqrt(mean(IDW.out - hml_avg_tp$avg_tp)^2))
-}
-```
-
-```{r, eval = FALSE}
-initialValue = 0.5
-optim(0.5, cost_c)
-```
-
----
-class: middle, clear
-
-# `r icon::fa("gamepad")` Exercice
-
----
-class: middle, center, inverse
-
-# Finding parameter $c$ for large datasets
-
-<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html>
 
 ---
 
@@ -542,65 +437,6 @@ Follows the same procedure as the $K$-fold cross-validation except that only a s
 ---
 class: inverse, center, middle
 
-# $K$-fold cross-validation
-
-<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
-
----
-# Subsampling within the dataset
-
-```{r}
-# Declaring the number of groups (`nfold`), and attach each points to a specific group (`k`).
-nfolds <- 5
-k <- sample(1:nfolds,length(hml_avg_tp), replace = TRUE)
-k
-```
-
-```{r, echo = FALSE, out.width = '100%', out.height = '50%'}
-sf_hml <- st_as_sf(hml_avg_tp)
-sf_hml$group <- k
-mapview(sf_hml, zcol='group')
-```
-
-
----
-# Running the IDW model for each fold
-
-```{r, eval = FALSE}
-# Smoothing (power function parameter c)
-c <- 2
-
-# vector storing the RMSE value pour each fold
-vec_RMSE <- rep(NA, nfolds)
-
-# Looping over groups
-for (i in 1:nfolds) {
-  # Create training and validation set
-  test <- sp_avg_yr[k!=i,]
-  train <- sp_avg_yr[k==i,]
-
-  # Perform the IDW model on the training set
-  m <- gstat(formula=avg~1, locations=train, set=list(idp = 2))
-  p1 <- predict(m, newdata=test, debug = 0)$var1.pred
-
-  # Assign the value to the RMSE vector
-  vec_RMSE[i] <- RMSE(test$avg, p1)
-}
-
-# Compute mean RMSE
-mean(vec_RMSE)
-```
-
-
-
----
-class: middle, clear
-
-# `r icon::fa("gamepad")` Exercice
-
----
-class: inverse, center, middle
-
 # Kernel predictor
 
 <html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
@@ -631,7 +467,7 @@ The *bandwitch* parameter $\theta$:
 
 ## The Gaussian radial basis kernel
 
-$$f\left((\mathbf{s}_{ij}, t_j),(\mathbf{s}_\alpha, t_\alpha), \theta\right) \equiv \exp\left(-\frac {1}{\theta}\text{Distance}\left((\mathbf{s}_{ij}, t_j),(\mathbf{s}_\alpha, t_\alpha)\right)^2\right)$$
+$$f\left((\mathbf{s}_{ij}, t_j),(\mathbf{s}_\alpha, t_\alpha), \theta\right) = \exp\left(-\frac {1}{\theta}\text{Distance}\left((\mathbf{s}_{ij}, t_j),(\mathbf{s}_\alpha, t_\alpha)\right)^2\right)$$
 
 As for inverse distance weighting, choosing the right $\theta$ can be done through cross validation.
 
@@ -658,5 +494,3 @@ Kernels that gives a value of 0 after a specific distance threshold
 Kernels that do not gives a value of 0 after a specific distance threshold
 
 Inverse distance weighting and Gaussian radial basis kernel are *non-compact* support kernels
-
----
