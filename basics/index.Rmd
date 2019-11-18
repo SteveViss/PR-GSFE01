@@ -30,6 +30,15 @@ options(htmltools.dir.version = FALSE)
 ```
 
 ---
+class: clear, center, middle
+
+## Slides available:
+https://steveviss.github.io/PR-GSFE01/basics
+
+## Solutions of all exercises:
+https://steveviss.github.io/PR-GSFE01/basics/practice.html
+
+---
 class: inverse, center, middle
 
 # Review basic R instructions
@@ -999,14 +1008,13 @@ sf_ca_cities_nad83 <- st_transform(sf_ca_cities_wgs84, 3347)
 sf_ca_cities_nad83
 ```
 
---- 
-
+---
 # Create buffers around cities
 
 Create buffer of 10 kms around cities. This will transform sf_ca_cities_nad83
 from POINT to POLYGONS.
 
-```{r, out.width = "100%", out.height = "65%"}
+```{r, out.width = "100%", out.height = "55%"}
 buf_10K_cities <- st_buffer(sf_ca_cities_nad83, 10000)
 mapview(buf_10K_cities)
 ```

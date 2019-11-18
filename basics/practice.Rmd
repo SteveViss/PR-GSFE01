@@ -65,10 +65,65 @@ dir() # function which list all the files in the working directory.
 2. Select all cities from your province
 3. Select the 10 most populated cities in your province
 
+## Solution 
+
+```{r}
+# 1. Read file
+ca_cities <- read.csv("https://simplemaps.com/static/data/country-cities/ca/ca.csv")
+ca_cities <- st_as_sf(ca_cities, coords = c("lng", "lat"), crs = 4326)
+
+# 2. Select all cities from your province
+head(ca_cities)
+qc_cities <- filter(ca_cities, admin == "Québec")
+mapview(qc_cities)
+
+# 3. Sort the cities dataframe by population
+ca_cites <- ca_cities[order(ca_cities$population),]
+# Print the 10 first cities
+ca_cities[1:10,]
+```
+
 # `r icon::fa("gamepad")` Practice 3
 
 1. Read with `sf` the [canadian cities CSV file](https://simplemaps.com/static/data/country-cities/ca/ca.csv).
 2. Import with `getData` the canadian digital elevation model (elevation raster)
 3. Project the elevation raster and the canadian cities in NAD83 (`raster::projectRaster()` & `sf::st_transform()`)
 4. Make a buffer of 10 kms around each canadian cities (`sf::st_buffer()`)
-5. Crop the elevation raster with those buffers (`sf::st_crop()`) and compute the mean per buffer
+5. Compute the elevation mean per buffer (`raster::extract()`) 
+
+## Solution 
+
+```{r}
+# 1. Read file
+ca_cities <- read.csv("https://simplemaps.com/static/data/country-cities/ca/ca.csv")
+ca_cities <- st_as_sf(ca_cities, coords = c("lng", "lat"), crs = 4326)
+
+# 2. Import the digital elevation model
+altCAN <- getData(name = "alt", country = "CAN", path = "assets/data") # Coarse resolution
+
+# 3 Print the current CRS of elevation raster 
+proj4string(altCAN)
+# Print the current CRS of the canadian cities
+st_crs(ca_cities)
+
+# Reproject ca_cities and altCan in 3347
+# https://spatialreference.org/ref/epsg/3347/
+# With sf
+ca_cities <- st_transform(ca_cities, 3347)
+# With raster
+# This takes a while
+altCAN <- projectRaster(altCAN, crs="+proj=lcc +lat_1=49 +lat_2=77 +lat_0=63.390675 +lon_0=-91.86666666666666 +x_0=6200000 +y_0=3000000 +ellps=GRS80 +datum=NAD83 +units=m +no_defs;")
+
+# 4. Generate the buffers
+cities_buf <- st_buffer(ca_cities, 10000)
+mapview(cities_buf)
+
+# 5. Crop elevation raster with buffers and compute the mean elevation
+mu_elev_cities <- extract(altCAN, cities_buf, fun = mean, na.rm = TRUE)
+head(mu_elev_cities)
+length(mu_elev_cities)
+
+# Visual check of the result
+ca_cities$mu_elev_cities <- as.numeric(mu_elev_cities)
+mapview(ca_cities, zcol = "mu_elev_cities", cex = "mu_elev_cities")
+```
