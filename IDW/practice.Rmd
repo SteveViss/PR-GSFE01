@@ -18,7 +18,7 @@ First, we download the spatial data:
 1. [The GeoDatabase containing all shapefiles for the study area](https://github.com/SteveViss/PR-GSFE01/raw/master/data/raw/hamilton_harbor.gdb.zip)
 2. [The CABIN data for Hamilton Harbour](https://github.com/SteveViss/PR-GSFE01/raw/master/data/post_process/hamilton_sites.rds)
 
-Import the data in R
+Import the data in R.
 
 ```{r}
 library(sf)
@@ -31,11 +31,12 @@ st_crs(lake) == st_crs(hamilton_habitat_desc)
 hamilton_habitat_desc <- st_transform(hamilton_habitat_desc, st_crs(lake))
 ```
 
-Filter the variable total phosphorus (ppm) and compute the average by site.
+Filter the variable total phosphorus (ppm). Because, the data contains
+replicates (several years and samples), we want to average all measurements of
+total phosphorus by site.
 
 ```{r, warnings = FALSE}
-# Because, the data contains replicates (several years and samples), we want to average all measurements of
-# total phosphorus by site.
+
 library(dplyr)
 
 hamilton_avg_tp <- hamilton_habitat_desc %>% 
@@ -44,9 +45,10 @@ hamilton_avg_tp <- hamilton_habitat_desc %>%
   summarise(avg_tp=mean(Value.Valeur)) 
 ```
 
-We perform a visual check of the mean variable
+We perform a visual check of the mean variable.
 
 ```{r, warnings = FALSE}
+library(mapview)
 mapview(hamilton_avg_tp, zcol='avg_tp', cex = 'avg_tp' )   
 ```
 
@@ -57,27 +59,187 @@ hml_avg_tp <- as(hamilton_avg_tp, "Spatial")
 lake <- as(lake, "Spatial")
 ```
 
-The data is now ready for analysis. We need to load the needed libraries first.
+The data is now ready for analysis. 
+
+## Fit the Inverse Distance Weight (IDW)
+
+We need to load the needed libraries for the analysis.
 
 ```{r}
 library(raster)
 library(gstat)
 ```
 
-We fit the IDW model on the data. We can easily play with the smoothing paramater `c` (defined at the slide )
+We fit the IDW model on the data. We can easily play with the smoothing
+paramater `c` with `set = list(idp = 5)` in the `gstat` function.
 
 ```{r}
 gs <- gstat(formula=avg_tp~1, locations=hml_avg_tp)
 gs_5 <- gstat(formula=avg_tp~1, locations=hml_avg_tp, set = list(idp = 5))
 ```
 
+## Build the predictions map
 
-# Create the reference grid for model projection (using the lake extent)
+Then, when the model is fitted, we want to make a predictions map. 
+We create the reference grid for model projection (using the extent of the `lake`).
+
+```{r}
 r_ref <- raster(lake,res=100)
-# Project the model on the reference grid
+```
+And we project the model on the reference grid
+
+```{r}
 idw <- interpolate(r_ref, gs)
-# Mask pixels outsite of the lake
-idwr <- mask(idw, lake)
+plot(idw)
+```
+
+As you can see, the model estimates the values for the entire extent of the reference grid.
+We can mask those values using the following command:
+
+```{r}
+idw_mask <- mask(idw, lake)
+plot(idw_mask)
+```
+
+We can then compare with the map predictions for `c = 5`
+
+```{r}
+idw5 <- interpolate(r_ref, gs_5)
+idw5_mask <- mask(idw5, lake)
+
+par(mfrow=c(1,2))
+plot(idw_mask, main = "c = 2")
+plot(idw5_mask, main = "c = 5", legend = FALSE)
+```
+
+## Evaluate the model quality
+
+The choice of the power function parameter (through `idp`) might be subjective.
+Let's perform quality evaluation through with Leave-one-out validation routine (LOOCV) with $c = 2$.
+
+```{r}
+IDW_out <- vector(length = length(hml_avg_tp))
+for (i in 1:length(hml_avg_tp)) {
+  IDW_out[i] <- idw(avg_tp ~ 1, hml_avg_tp[-i,], hml_avg_tp[i,], idp = 2, debug.level = 0)$var1.pred
+}
+```
+
+We then can assess the model quality by comparing the observed versus the predicted data
+
+```{r}
+plot(IDW_out ~ hml_avg_tp$avg_tp, asp=1, xlab="Observed", ylab="Predicted", pch=16,
+      col=rgb(0,0,0,0.5))
+abline(lm(IDW_out ~ hml_avg_tp$avg_tp), col="red", lw=2,lty=2)
+abline(0,1)
+```
+
+### Model quality metrics
+
+#### Quick reminder on the metrics
+
+**Sum of squared prediction error**
+$$\text{SSPE} = \sum_{i=1}^{m_k}\left(Z_i-\widehat{Z}^{(-k)}_i\right)^2$$
+
+Using the vector `IDW_out`, we can compute the sum of squared prediction error (SSPE) for the IDW model (with $c = 2$)
+
+TODO: GUILLAUME
+
+```{r}
+sum(hml_avg_tp$avg_tp - IDW_out)^2
+```
+
+### Finding the optimum $c$ value 
+
+#### Define the cost function
+
+`optim()` is general-purpose optimization function. `optim()` will cover the
+parameter space (here $c$) in order to minimize the sum of squared prediction
+error (SSPE). Once the minimum sum of squared prediction error (SSPE) found,
+`optim` returns the best corresponding $c$ value. For this purpose, you need to
+provide a cost function to `optim`. This function `cost_fun` takes the $c$
+parameter as an argument and compute the SSPE with the Leave-one-out validation
+routine (LOOCV).
+
+```{r}
+cost_fun <- function(c){
+  IDW_out <- vector(length = length(hml_avg_tp))
+  for (i in 1:length(hml_avg_tp)) {
+    IDW_out[i] <- idw(avg_tp ~ 1, hml_avg_tp[-i,], hml_avg_tp[i,], idp = c, debug.level = 0)$var1.pred
+  }
+  # Return the RMSE for the c value 
+  return(sum(hml_avg_tp$avg_tp - IDW_out)^2)
+}
+
+# Set the initial c parameter
+init_c <- 1
+# Lauch optim function
+# optim(init_c, cost_fun)
+```
+
+### $K$-fold cross-validation
+
+- **Step 1:** Randomly split the data into $K$ roughly equal-size group (or components or folds)
+
+Declaring the number of groups (`nfold`), and attach each points to a specific group (`k`).
+
+```{r}
+nfolds <- 5
+k <- sample(1:nfolds,length(hml_avg_tp), replace = TRUE)
+k
+```
+
+```{r}
+sf_hml <- st_as_sf(hml_avg_tp)
+sf_hml$group <- k
+mapview(sf_hml, zcol='group')
+```
+
+- **Step 2:** Hold out one group (the $k^\text{th}$ group) and *train* the model on the remaining data. Usually, using 5 or 10 groups works well.
+The resulting model can be defined as $\widehat{Z}^{(-k)}_i$ for $i = 1, \dots, m_k$ where $m_k$ is the number of samples in the $k^\text{th}$ group.
+- **Step 3:** Use a metric to evaluate the quality of the model (MSPE here)
+- **Step 4:** Repeat steps 2 and 3 by holding out another group until all groups have been considered.
+- **Step 5:** Evaluate the quality of the cross valiation using a $K$-fold cross-validation score 
+
+$$\text{CV}_{(K)} = \frac{1}{K} \sum_{k=1}^K \text{MSPE}_k$$
+
+The cross-validation score is particularly useful if there is an interest in comparing different model formulation.
+
+#### Step 2 to 5
+
+TODO: Voir avec guillaume
+
+```{r}
+# Declare c parameter
+c <- 2
+
+# vector storing the MSPE value pour each fold
+vec_MSPE <- rep(NA, nfolds)
+
+# Looping over groups
+for (i in 1:nfolds) {
+  # Create training and validation set
+  test <- sp_avg_yr[k!=i,]
+  train <- sp_avg_yr[k==i,]
+
+  # Perform the IDW model on the training set
+  m <- gstat(formula=avg~1, locations=train, set=list(idp = 2))
+  preds <- predict(m, newdata=test)$var1.pred
+
+  # Assign the value to the RMSE vector
+  vec_MSPE[i] <- sqrt(mean(preds - test$avg_tp)^2) 
+}
+
+# Compute mean RMSE
+cr_k <- mean(vec_MSPE)
+
+# TODO: GUILLAUME
+```
+
+## Using a weighted gaussian kernel
 
 
-
+```{r}
+# install.packages("spatialEco")
+library("spatialEco")
+sp.kde(hml_avg_tp, bw = 0, newdata = ref_rs)
+```
