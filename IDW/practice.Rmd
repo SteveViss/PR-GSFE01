@@ -137,15 +137,10 @@ abline(0,1)
 
 #### Quick reminder on the metrics
 
-**Sum of squared prediction error**
-$$\text{SSPE} = \sum_{i=1}^{m_k}\left(Z_i-\widehat{Z}^{(-k)}_i\right)^2$$
-
-Using the vector `IDW_out`, we can compute the sum of squared prediction error (SSPE) for the IDW model (with $c = 2$)
-
-TODO: GUILLAUME
+Using the vector `IDW_out`, we can compute the mean of squared prediction error (MSPE) for the IDW model (with $c = 2$)
 
 ```{r}
-sum(hml_avg_tp$avg_tp - IDW_out)^2
+mean((hml_avg_tp$avg_tp - IDW_out)^2)
 ```
 
 ### Finding the optimum $c$ value 
@@ -166,8 +161,8 @@ cost_fun <- function(c){
   for (i in 1:length(hml_avg_tp)) {
     IDW_out[i] <- idw(avg_tp ~ 1, hml_avg_tp[-i,], hml_avg_tp[i,], idp = c, debug.level = 0)$var1.pred
   }
-  # Return the RMSE for the c value 
-  return(sum(hml_avg_tp$avg_tp - IDW_out)^2)
+  # Return the MSPE for the c value 
+  return(mean((hml_avg_tp$avg_tp - IDW_out)^2))
 }
 
 # Set the initial c parameter
@@ -218,21 +213,19 @@ vec_MSPE <- rep(NA, nfolds)
 # Looping over groups
 for (i in 1:nfolds) {
   # Create training and validation set
-  test <- hml_avg_tp[k!=i,]
   train <- hml_avg_tp[k==i,]
+  valid <- hml_avg_tp[k!=i,]
 
   # Perform the IDW model on the training set
   m <- gstat(formula=avg_tp~1, locations=train, set=list(idp = 2))
-  preds <- predict(m, newdata=test)$var1.pred
+  preds <- predict(m, newdata=valid)$var1.pred
 
-  # Assign the value to the RMSE vector
-  vec_MSPE[i] <- sqrt(mean(preds - test$avg_tp)^2) 
+  # Assign the value to the MSPE vector
+  vec_MSPE[i] <- mean((preds - test$avg_tp)^2) 
 }
 
-# Compute mean RMSE
-cr_k <- mean(vec_MSPE)
-
-# TODO: GUILLAUME
+# Compute mean MSPE
+cv_k <- mean(vec_MSPE)
 ```
 
 ## Using a weighted gaussian kernel
@@ -241,5 +234,16 @@ cr_k <- mean(vec_MSPE)
 ```{r}
 # install.packages("spatialEco")
 library("spatialEco")
-sp.kde(hml_avg_tp, bw = 100, newdata = r_ref)
+test <- sp.kde(x= hml_avg_tp, y = hml_avg_tp$avg_tp,bw = 100, newdata = r_ref)
+
+## Not run:
+library(sp)
+data(meuse)
+coordinates(meuse) <- ~x+y
+# Weighted KDE using cadmium and spatial locations
+cadmium.kde <- sp.kde(x = meuse, y = meuse$cadmium, bw = 1000, n = 5000,
+standardize = TRUE, scale.factor = 10000 )
+# Unweighted KDE (spatial locations only)
+pt.kde <- sp.kde(x = meuse, bw = 1000, sta
+
 ```
