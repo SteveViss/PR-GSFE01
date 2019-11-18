@@ -9,7 +9,7 @@ output:
     toc_float: true
 ---
 
-# `r icon::fa("gamepad")` Practice 1
+# Practice 1
 
 1. Download the [coastline shapefile](https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_coastline.zip) on your own computer.
 2. Read the shapefile with the `st_read()` function.
@@ -58,7 +58,7 @@ dir() # function which list all the files in the working directory.
 1. `setwd()` is a function to set a new active directory
 2. `choose.dir()` works exclusively on windows, This function opens a dialog box to set your custom working directory
 
-# `r icon::fa("gamepad")` Practice 2
+# Practice 2
 
 
 1. Download and read with `sf` the [canadian cities CSV file](https://simplemaps.com/static/data/country-cities/ca/ca.csv).
@@ -83,7 +83,7 @@ ca_cites <- ca_cities[order(ca_cities$population),]
 ca_cities[1:10,]
 ```
 
-# `r icon::fa("gamepad")` Practice 3
+# Practice 3
 
 1. Read with `sf` the [canadian cities CSV file](https://simplemaps.com/static/data/country-cities/ca/ca.csv).
 2. Import with `getData` the canadian digital elevation model (elevation raster)

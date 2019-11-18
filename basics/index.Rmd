@@ -30,12 +30,12 @@ options(htmltools.dir.version = FALSE)
 ```
 
 ---
-class: clear, center, middle
+class: clear, middle
 
-## Slides available:
+## `r icon::fa("slideshare")` Slides available at:
 https://steveviss.github.io/PR-GSFE01/basics
 
-## Solutions of all exercises:
+## `r icon::fa("tag")` Solutions of all practices:
 https://steveviss.github.io/PR-GSFE01/basics/practice.html
 
 ---
