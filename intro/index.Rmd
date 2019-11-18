@@ -299,19 +299,40 @@ We strongly (!) encourage you to use RStudio.
 - `INLA`
 ]
 
-## Installing INLA
+**data**
+
+- `devtools`
+- `STRbook`
+
+
+---
+
+# R package  to install
+
+## Installing all packages
+(except, `STRbook` and `INLA`)
+
 .small[
+```{r, eval = FALSE}
+install.packages(c("sf","sp", "rgdal", "raster", "mapview",
+                   "gstat", "geoR","spacetime", "spatialEco",
+                   "devtools"))
+```
+]
+
+## Installing `INLA`
+.footnotesize[
 ```{r, eval = FALSE}
 install.packages("INLA", repos=c(getOption("repos"), INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
 ```
 ]
 
-## Installing all other packages
 
+## Installing `STRbook`
 .small[
 ```{r, eval = FALSE}
-install.packages(c("sf","sp", "rgdal", "raster", "mapview",
-                   "gstat", "geoR","spacetime", "spatialEco"))
+library(devtools)
+install_github("andrewzm/STRbook")
 ```
 ]
 
