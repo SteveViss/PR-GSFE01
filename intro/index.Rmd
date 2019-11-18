@@ -1,5 +1,5 @@
 ---
-title: "GSFE01"
+title: "Introduction"
 author: "F. Guillaume Blanchet & Steve Vissault"
 date: "2018/02/16"
 output:
@@ -23,7 +23,6 @@ options(htmltools.dir.version = FALSE)
 <img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"></img>
 <img src="assets/img/UdeS_blanc.png" width="350px" ></img>
 
-# Handling Spatial and Spatio-temporal data Using R
 ## Introduction
 
 .instructors[
@@ -41,12 +40,41 @@ class: inverse, center, middle
 
 # Internet
 
-## Network : TheFortGarry
-## Password : broadway
+## **Network : TheFortGarry**
+## **Password : broadway**
+
+---
+class: clear, middle
+
+# These slides
+
+.Large[[https://steveviss.github.io/PR-GSFE01/intro](https://steveviss.github.io/PR-GSFE01/intro)]
 
 ---
 
-# Basic hotel information
+# General daily schedule
+
+.Large[
+9h00 - Start of the day
+
+9h00 to 12h00 - Lecture/Practice
+
+12h00 to 13h00 - Lunch
+
+13h00 to 17h00 - Lecture/Practice
+
+**Note** During the "classroom" will be locked.
+]
+---
+
+# General hotel stuff
+
+.Large[
+- Washroom
+- Snacks
+- Coffee
+- ...
+]
 
 ---
 class: inverse, center, middle
@@ -73,11 +101,11 @@ Therefore, we take a sample that (we hope!) is representative of the larger area
 
 # Sampling is not always easy
 
-We need to get there (complete randomness might not be cost efficient)
+We need to get there (complete randomness might not be cost efficient).
 
-Sometimes sample at the right time may be challenging (seasons, time-of-day)
+Sometimes sample at the right time may be challenging (seasons, time-of-day).
 
-Sometimes samples at the same location is nearly impossible (marine surveys)
+Sometimes samples at the same location is nearly impossible (marine surveys).
 
 ---
 
@@ -215,8 +243,7 @@ knitr::include_graphics("https://spacetimewithr.org/cover.jpg")
 
 A good portion of this course material is based on this book.
 
-The book (and much more!) is freely available here
-
+The book (and much more!) is freely available here : 
 [https://spacetimewithr.org](https://spacetimewithr.org)
 
 ---
@@ -235,3 +262,56 @@ knitr::include_graphics("http://t2.gstatic.com/images?q=tbn:ANd9GcQ2QMnp2zQQYVVF
 ]
 
 Everything (really everything !) is there but it gets very technical very fast !
+
+---
+
+# R
+
+All of the practical aspect of the course will be done.
+
+## RStudio
+
+We strongly (!) encourage you to use RStudio.
+
+
+---
+
+# R package  to install
+
+.pull-left[
+**Reading spatial objects**
+
+- `sf`
+- `sp`
+- `rgdal`
+- `raster`
+- `mapview`
+- `spacetime`
+]
+
+.pull-right[
+
+**Analyze and spatial data**
+
+- `gstat`
+- `geoR`
+- `spatialEco`
+- `INLA`
+]
+
+## Installing INLA
+.small[
+```{r, eval = FALSE}
+install.packages("INLA", repos=c(getOption("repos"), INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
+```
+]
+
+## Installing all other packages
+
+.small[
+```{r, eval = FALSE}
+install.packages(c("sf","sp", "rgdal", "raster", "mapview",
+                   "gstat", "geoR","spacetime", "spatialEco"))
+```
+]
+
