@@ -1,0 +1,188 @@
+---
+title: "Trend surface estimation with R"
+author: Guillaume Blanchet & Steve Vissault
+date: November 19th, 2019
+output:
+  html_document:
+    highlight: tango
+    toc: true
+    toc_float: true
+---
+
+# Trend surface estimation
+
+## Prepare the data for analysis
+
+First, we download the spatial data:
+
+1. [The GeoDatabase containing all shapefiles for the study area](https://github.com/SteveViss/PR-GSFE01/raw/master/data/raw/hamilton_harbor.gdb.zip)
+2. [The CABIN data for Hamilton Harbour](https://github.com/SteveViss/PR-GSFE01/raw/master/data/post_process/hamilton_sites.rds)
+
+Import the data in R
+
+```{r}
+library(sf)
+# The RDS file is an R object and can be read with the following command:
+hamilton_habitat_desc <- readRDS("../data/post_process/hamilton_habitat.rds")
+lake <- st_read("../data/raw/hamilton_harbor.gdb", layer="waterbody_2")
+
+# Making sure both are on the same CRS
+st_crs(lake) == st_crs(hamilton_habitat_desc)
+hamilton_habitat_desc <- st_transform(hamilton_habitat_desc, st_crs(lake))
+```
+
+Filter the variable total phosphorus (ppm)
+
+```{r, warnings = FALSE}
+# Because, the data contains replicates (several years and samples), we want to average all measurements of
+# total phosphorus by site.
+library(dplyr)
+
+# Total Phosphorus in sediment
+hamilton_tp <- hamilton_habitat_desc %>% 
+  filter(Variable == "TP") %>% 
+  group_by(Site.Site) 
+
+# Lake Bottom Temperature
+hamilton_lbt <- hamilton_habitat_desc %>% 
+  filter(Variable == "General-TempLakeBottom") %>% 
+  group_by(Site.Site) 
+
+# Depth from Surface
+hamilton_depth <- hamilton_habitat_desc %>% 
+  filter(Variable == "Depth-Lake") %>% 
+  group_by(Site.Site) 
+```
+
+We perform a visual check of the mean variable
+
+```{r, warnings = FALSE}
+library(mapview)
+mapview(hamilton_tp, zcol='Year.Année', cex = "Value.Valeur")   
+mapview(hamilton_lbt, zcol='Year.Année', cex = "Value.Valeur")  
+mapview(hamilton_depth, zcol='Year.Année', cex = "Value.Valeur")
+```
+
+We need to transform the `sf` spatial object to `sp`, because the `gstat` package doesn't support `sf` class.
+
+```{r, warnings = FALSE}
+# Organise into SpatialPointDataFrame
+hml_tp <- as(hamilton_tp, "Spatial")
+hml_depth <- as(hamilton_depth, "Spatial")
+hml_lbt <- as(hamilton_lbt, "Spatial")
+
+# Organise into a single SpatialPointDataFrame
+hml <- hml_tp
+colnames(hml@data)[17] <- "tp"
+hml$depth <- hml_depth$Value.Valeur
+hml$lbt <- hml_lbt$Value.Valeur
+
+# A data.frame of the non-spatial data
+tp <- hml@data$tp
+
+# SpatialPolygons
+lake <- as(lake, "Spatial")
+```
+
+Build a reference raster to make the projection
+
+```{r}
+library(raster)
+r_ref <- raster(lake,res=100)
+```
+
+Find pixel location from the raster. In the process, it is important to standardize the coordinates
+```{r}
+sampleLoc <- cellFromXY(r_ref, hml)
+
+xy <-scale(coordinates(r_ref))
+xySample <- xy[sampleLoc,]
+
+# Add x and y to hmlDF
+hmlDF <- data.frame(tp = tp, x = xySample[,1], y = xySample[,2])
+```
+
+The data is now ready for analysis. We need to load the needed packages first.
+
+# Trend surface analysis using `lm`
+
+Trend surface analysis of degree 3
+```{r}
+lmTp <- lm(tp ~ x + y + I(x^2) + I(y^2) + I(x*y), data = hmlDF)
+summary(lmTp)
+
+rTrend <- r_ref
+rTrend[1:length(rTrend)]<-predict(lmTp, newdata = as.data.frame(xy))
+
+rTrendMask <- mask(rTrend, lake)
+plot(rTrendMask)
+```
+
+## Calculate residuals sums of squares
+
+$$\text{RSS} = \sum_{j=1}^T\sum_{i=1}^m \left(Z(\mathbf{s}_i, t_j) - \widehat{Z}(\mathbf{s}_i, t_j)\right)^2$$
+
+```{r}
+RSSLM <- sum((hmlDF$tp - predict(lmTp))^2)
+```
+
+## Calculate model variance
+
+$$\widehat\sigma^2_\varepsilon = \frac{\text{RSS}}{mT-p-1}.$$
+
+```{r}
+m <- nrow(hmlDF)
+ncoef <- length(coef(lmTp))
+varResidLM <- RSSLM/(m - ncoef)
+varResidLM
+```
+
+
+# Trend surface analysis using additive models
+
+```{r, warning=FALSE}
+library(mgcv)
+AMTp <- gam(tp ~ s(x,y), data = hmlDF, family = "gaussian")
+summary(AMTp)
+
+rAMTrend <- r_ref
+rAMTrend[1:length(rAMTrend)]<-predict(AMTp, newdata = as.data.frame(xy))
+
+rAMTrendMask <- mask(rAMTrend, lake)
+plot(rAMTrendMask)
+```
+
+## Calculate residuals sums of squares
+
+```{r}
+RSSAM <- sum((hmlDF$tp - predict(AMTp))^2)
+```
+
+## Calculate model variance
+
+```{r}
+m <- nrow(hmlDF)
+ncoef <- length(coef(AMTp))
+varResidAM <- RSSAM/(m - ncoef)
+varResidAM
+```
+
+### Question : Which model is the "best" one based on this statistics ?
+
+# Moran's $I$
+
+```{r, message = FALSE}
+library(spdep)
+
+# Construct neigbours
+dnn <- dnearneigh(coordinates(hml), 0, 1500)
+plot(dnn, coordinates(hml))
+
+MoranI <- moran.mc(tp, nb2listw(dnn), nsim = 999,  alternative = "greater", zero.policy = TRUE)
+
+MoranI
+```
+
+### Exercice : Recalculating the Moran's $I$ at different distances. 
+
+### Think of the number of permutations to use
