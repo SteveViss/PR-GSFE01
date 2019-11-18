@@ -1,0 +1,74 @@
+---
+title: "Handling spatial data with R"
+author: Guillaume Blanchet & Steve Vissault
+date: November 19th, 2019
+output:
+  html_document:
+    highlight: tango
+    toc: true
+    toc_float: true
+---
+
+# `r icon::fa("gamepad")` Practice 1
+
+1. Download the [coastline shapefile](https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_coastline.zip) on your own computer.
+2. Read the shapefile with the `st_read()` function.
+
+If you want, you can try with your own data or download other shapefiles from https://www.naturalearthdata.com/
+
+## Solution
+
+```{r}
+# if sf is not installed
+# install.packages("sf")
+library(sf)
+
+# download the data 
+download.file("http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_coastline.zip", 
+              destfile = 'assets/data/coastlines.zip')
+
+# unzip the file
+unzip(zipfile = "assets/data/coastlines.zip", 
+      exdir = 'assets/data/ne-coastlines-10m')
+
+# WARNING: You have to define you own path in destfile argument and exdir.
+
+# Read the file
+coast <- read_sf("assets/data/ne-coastlines-10m")
+```
+Make a visual check of the spatial R object
+
+```{r}
+# if mapview is not installed
+# install.packages("mapview")
+library(mapview)
+mapview(coast)
+```
+
+### Hint: Manage your active directory
+
+To import files on R from your computer, you have to set properly active working directory: where R is reading and writing files on your computer.
+Some hints / functions to deal with that aspect.
+
+```{r, eval = FALSE}
+getwd() # Print the path of the active folder / working directory
+setwd(choose.dir()) 
+dir() # function which list all the files in the working directory.
+```
+1. `setwd()` is a function to set a new active directory
+2. `choose.dir()` works exclusively on windows, This function opens a dialog box to set your custom working directory
+
+# `r icon::fa("gamepad")` Practice 2
+
+
+1. Download and read with `sf` the [canadian cities CSV file](https://simplemaps.com/static/data/country-cities/ca/ca.csv).
+2. Select all cities from your province
+3. Select the 10 most populated cities in your province
+
+# `r icon::fa("gamepad")` Practice 3
+
+1. Read with `sf` the [canadian cities CSV file](https://simplemaps.com/static/data/country-cities/ca/ca.csv).
+2. Import with `getData` the canadian digital elevation model (elevation raster)
+3. Project the elevation raster and the canadian cities in NAD83 (`raster::projectRaster()` & `sf::st_transform()`)
+4. Make a buffer of 10 kms around each canadian cities (`sf::st_buffer()`)
+5. Crop the elevation raster with those buffers (`sf::st_crop()`) and compute the mean per buffer

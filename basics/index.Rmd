@@ -949,7 +949,7 @@ st_write(cropped_coast, dsn = "assets/data/cropped_coast", driver = "ESRI Shapef
 ---
 class: clear, middle
 
-# `r icon::fa("gamepad")` Exercice
+# `r icon::fa("gamepad")` Practice
 
 1. Download the [coastline shapefile](https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_coastline.zip) on your own computer.
 2. Read the shapefile with the `st_read()` function.
@@ -1001,16 +1001,22 @@ sf_ca_cities_nad83
 
 --- 
 
-# Create buffers around city points
+# Create buffers around cities
 
-TODO
+Create buffer of 10 kms around cities. This will transform sf_ca_cities_nad83
+from POINT to POLYGONS.
+
+```{r, out.width = "100%", out.height = "65%"}
+buf_10K_cities <- st_buffer(sf_ca_cities_nad83, 10000)
+mapview(buf_10K_cities)
+```
 
 And so many spatial operations that we cannot cover all of them...
 
 ---
 # Spatial operations with `sf`
 
-```{r echo=FALSE, out.width="90%", fig.align='center'}
+```{r echo=FALSE, out.width="85%", fig.align='center'}
 knitr::include_graphics("./assets/img/geom_ops.png")
 ```
 
@@ -1019,7 +1025,7 @@ knitr::include_graphics("./assets/img/geom_ops.png")
 ---
 class: clear, middle
 
-# `r icon::fa("gamepad")` Exercice
+# `r icon::fa("gamepad")` Practice
 
 1. Download and read with `sf` the [canadian cities CSV file](https://simplemaps.com/static/data/country-cities/ca/ca.csv).
 2. Select all cities from your province
@@ -1192,7 +1198,7 @@ plot(alt_qc_nad83)
 
 class: clear, middle
 
-# `r icon::fa("gamepad")` Exercice
+# `r icon::fa("gamepad")` Practice
 
 1. Read with `sf` the [canadian cities CSV file](https://simplemaps.com/static/data/country-cities/ca/ca.csv).
 2. Import with `getData` the canadian digital elevation model (elevation raster)
@@ -1263,10 +1269,9 @@ as.data.frame(rs_var1, xy = TRUE)
 
 ---
 
-# Great online resources
+# Great online resources 1/3
 
-.pull-left[
-Good tutorials for spatial data in R
+### Good tutorials for spatial data in R
 
 - [Raster analysis in R](https://mgimond.github.io/megug2017/)
 - [Geocomputation with R](https://geocompr.robinlovelace.net/intro.html)
@@ -1276,15 +1281,18 @@ Good tutorials for spatial data in R
 - [Tutorial on datacamp](https://www.datacamp.com/courses/spatial-analysis-in-r-with-sf-and-raster)
 - [R in space - Insileco](https://insileco.github.io/2018/04/14/r-in-space---a-series/)
 
-`sf` manipulations
+### `sf` manipulations
 
 - [sf vignette #4](https://cran.r-project.org/web/packages/sf/vignettes/sf4.html)
 - [Geocomputation with R](https://geocompr.robinlovelace.net/attr.html)
 - [Attribute manipulations](https://insileco.github.io/2018/04/09/r-in-space---attribute-manipulations/)
 - [Tidy spatial data in R](http://strimas.com/r/tidy-sf/)
-]
-.pull-right[
-Maps in R
+
+---
+
+# Great online resources 2/3
+
+### Maps in R
 
 - [Introduction to visualising spatial data in R](https://cran.r-project.org/doc/contrib/intro-spatial-rl.pdf)
 - [Geocomputation with R](https://geocompr.robinlovelace.net/adv-map.html)
@@ -1295,7 +1303,12 @@ Maps in R
 - [plotly](https://plot.ly/python/maps/)
 - [Animated maps](https://insileco.github.io/2017/07/05/animations-in-r-time-series-of-erythemal-irradiance-in-the-st.-lawrence/)
 
-Get free data
+
+---
+
+# Great online resources 3/3
+
+### Get free data
 
 - [free data at country level](http://www.diva-gis.org/gdata)
 - [Quebec free data](http://mffp.gouv.qc.ca/le-ministere/acces-aux-donnees-gratuites/)
@@ -1303,5 +1316,3 @@ Get free data
 - [find more spatial data](https://freegisdata.rtwilson.com/)
 - [create shapefile on line](http://geojson.io/)
 - EPSG: [link1](http://spatialreference.org/); [link2](http://epsg.io/)
-
-]
