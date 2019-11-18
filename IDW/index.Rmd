@@ -659,4 +659,3 @@ Kernels that do not gives a value of 0 after a specific distance threshold
 
 Inverse distance weighting and Gaussian radial basis kernel are *non-compact* support kernels
 
----
