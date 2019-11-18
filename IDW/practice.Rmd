@@ -36,7 +36,6 @@ replicates (several years and samples), we want to average all measurements of
 total phosphorus by site.
 
 ```{r, warnings = FALSE}
-
 library(dplyr)
 
 hamilton_avg_tp <- hamilton_habitat_desc %>% 
@@ -156,10 +155,10 @@ parameter as an argument and compute the SSPE with the Leave-one-out validation
 routine (LOOCV).
 
 ```{r}
-cost_fun <- function(c){
+cost_fun <- function(const){
   IDW_out <- vector(length = length(hml_avg_tp))
   for (i in 1:length(hml_avg_tp)) {
-    IDW_out[i] <- idw(avg_tp ~ 1, hml_avg_tp[-i,], hml_avg_tp[i,], idp = c, debug.level = 0)$var1.pred
+    IDW_out[i] <- idw(avg_tp ~ 1, hml_avg_tp[-i,], hml_avg_tp[i,], idp = const, debug.level = 0)$var1.pred
   }
   # Return the MSPE for the c value 
   return(mean((hml_avg_tp$avg_tp - IDW_out)^2))
@@ -201,11 +200,9 @@ The cross-validation score is particularly useful if there is an interest in com
 
 #### Step 2 to 5
 
-TODO: Voir avec guillaume
-
 ```{r}
 # Declare c parameter
-c <- 2
+const <- 2
 
 # vector storing the MSPE value pour each fold
 vec_MSPE <- rep(NA, nfolds)
@@ -213,15 +210,15 @@ vec_MSPE <- rep(NA, nfolds)
 # Looping over groups
 for (i in 1:nfolds) {
   # Create training and validation set
-  train <- hml_avg_tp[k==i,]
-  valid <- hml_avg_tp[k!=i,]
+  valid <- hml_avg_tp[k==i,]
+  train <- hml_avg_tp[k!=i,]
 
   # Perform the IDW model on the training set
-  m <- gstat(formula=avg_tp~1, locations=train, set=list(idp = 2))
-  preds <- predict(m, newdata=valid)$var1.pred
+  m <- gstat(formula=avg_tp~1, locations=train, set=list(idp = const))
+  preds <- predict(m, newdata=valid, debug = 0)$var1.pred
 
   # Assign the value to the MSPE vector
-  vec_MSPE[i] <- mean((preds - test$avg_tp)^2) 
+  vec_MSPE[i] <- mean((preds - valid$avg_tp)^2) 
 }
 
 # Compute mean MSPE
@@ -230,20 +227,24 @@ cv_k <- mean(vec_MSPE)
 
 ## Using a weighted gaussian kernel
 
-
-```{r}
+```{r, warning=FALSE}
 # install.packages("spatialEco")
 library("spatialEco")
-test <- sp.kde(x= hml_avg_tp, y = hml_avg_tp$avg_tp,bw = 100, newdata = r_ref)
 
-## Not run:
-library(sp)
-data(meuse)
-coordinates(meuse) <- ~x+y
-# Weighted KDE using cadmium and spatial locations
-cadmium.kde <- sp.kde(x = meuse, y = meuse$cadmium, bw = 1000, n = 5000,
-standardize = TRUE, scale.factor = 10000 )
-# Unweighted KDE (spatial locations only)
-pt.kde <- sp.kde(x = meuse, bw = 1000, sta
+# Include some data into the raster
+r_ref[1:length(r_ref)]<- 0 
 
+# Weighted gaussian kernel
+wgk <- sp.kde(x= hml_avg_tp,
+              y = hml_avg_tp$avg_tp,
+              bw = 1000,
+              newdata = r_ref,
+              standardize = TRUE,
+              scale.factor = 10000)
+
+# Clean results for projection
+wgk_mask <- mask(wgk, lake)
+
+# Draw map
+mapview(wgk_mask)
 ```
