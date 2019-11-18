@@ -231,7 +231,7 @@ cv_k <- mean(vec_MSPE)
 # install.packages("spatialEco")
 library("spatialEco")
 
-# Include some data into the raster
+# Include some data into the raster (if you do not it will not work !)
 r_ref[1:length(r_ref)]<- 0 
 
 # Weighted gaussian kernel
