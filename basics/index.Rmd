@@ -500,7 +500,7 @@ class: clear, middle
 1. Overview of spatial objects
 2. Manipulate spatial vectors (POINT, LINE, POLYGON)
 4. Spatial operations on vectors
-5. Rasters manipulations   
+5. Manipulate rasters  
 6. Spatial operations on rasters
 
 ---
