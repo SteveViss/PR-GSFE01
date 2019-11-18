@@ -25,6 +25,10 @@ class: title-slide, middle
   GSFE01 - F. Guillaume Blanchet & Steve Vissault
 ]
 
+---
+class: clear, middle, center
+
+.Large[[https://steveviss.github.io/PR-GSFE01/IDW/](https://steveviss.github.io/PR-GSFE01/IDW/)]
 
 ---
 class: inverse, middle, center
@@ -494,3 +498,9 @@ Kernels that gives a value of 0 after a specific distance threshold
 Kernels that do not gives a value of 0 after a specific distance threshold
 
 Inverse distance weighting and Gaussian radial basis kernel are *non-compact* support kernels
+
+---
+
+# Coding time !
+
+.Large[[https://steveviss.github.io/PR-GSFE01/IDW/practice](https://steveviss.github.io/PR-GSFE01/IDW/practice)]
