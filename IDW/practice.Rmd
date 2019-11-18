@@ -218,11 +218,11 @@ vec_MSPE <- rep(NA, nfolds)
 # Looping over groups
 for (i in 1:nfolds) {
   # Create training and validation set
-  test <- sp_avg_yr[k!=i,]
-  train <- sp_avg_yr[k==i,]
+  test <- hml_avg_tp[k!=i,]
+  train <- hml_avg_tp[k==i,]
 
   # Perform the IDW model on the training set
-  m <- gstat(formula=avg~1, locations=train, set=list(idp = 2))
+  m <- gstat(formula=avg_tp~1, locations=train, set=list(idp = 2))
   preds <- predict(m, newdata=test)$var1.pred
 
   # Assign the value to the RMSE vector
@@ -241,5 +241,5 @@ cr_k <- mean(vec_MSPE)
 ```{r}
 # install.packages("spatialEco")
 library("spatialEco")
-sp.kde(hml_avg_tp, bw = 0, newdata = ref_rs)
+sp.kde(hml_avg_tp, bw = 100, newdata = r_ref)
 ```
