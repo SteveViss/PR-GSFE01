@@ -8,5 +8,6 @@ body {
 
 .remark-code, .remark-inline-code {
   font-family: 'Fira Code', 'Lucida Console', Monaco, monospace;
-  font-size: 80%;
+  font-size: 65%;
+  color: #23373B;
 }

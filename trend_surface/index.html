@@ -6,6 +6,7 @@
     <meta name="author" content="F. Guillaume Blanchet &amp; Steve Vissault" />
     <link href="assets/remark-css/default.css" rel="stylesheet" />
     <link href="assets/remark-css/hygge.css" rel="stylesheet" />
+    <link href="assets/font-awesome/css/fontawesome-all.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="pr.css" type="text/css" />
     <link rel="stylesheet" href="pr-fonts.css" type="text/css" />
   </head>
@@ -23,6 +24,17 @@ class: title-slide, middle
 .instructors[
   GSFE01 - F. Guillaume Blanchet &amp; Steve Vissault
 ]
+
+
+---
+
+class: clear, middle
+
+## <i class="fab  fa-slideshare "></i> Slides available at:
+https://steveviss.github.io/PR-GSFE01/trend_surface/index.html
+
+## <i class="fas  fa-tag "></i> Solutions of all practices:
+https://steveviss.github.io/PR-GSFE01/trend_surface/practice.html
 
 
 ---
@@ -121,7 +133,7 @@ Basis function can be
 
 # Example of trend surface analysis
 
-&lt;img src="index_files/figure-html/unnamed-chunk-1-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-1-1.png" width="864" style="display: block; margin: auto;" /&gt;
 
 **Note**: For illustration purposes let's assume that there are no error in the model. In other words, `\(\varepsilon(\mathbf{s}) = 0\)`
 
@@ -180,6 +192,8 @@ Using **generalized linear models**, trend surface models can be applied to many
 class: inverse, center, middle
 
 # Generalized additive models
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
+
 
 ---
 
@@ -192,29 +206,29 @@ class: inverse, center, middle
 
 Additive model were first proposed by
 
-&lt;div style='text-align:center;'&gt;
-&lt;img src="assets/img/presence_absence/Friedman_Stuetzle.png" height="200px"&gt;&lt;/img&gt;
-&lt;/div&gt;
+&lt;img src="assets/img/Friedman_Stuetzle.png" width="50%" /&gt;
 
-In the paper
-&lt;div style='text-align:center;'&gt;
-&lt;img src="assets/img/presence_absence/Additive_model_paper.png" height="100px"&gt;&lt;/img&gt;
-&lt;/div&gt;
-published in 1981 in the Journal of the American Statistical Association
+In the paper published in 1981 in the Journal of the American Statistical Association
 
+&lt;img src="assets/img/Additive_model_paper.png" width="80%" /&gt;
 
 ---
 
 # Generalized additive model
 ## A bit of history
 
+.pull-left[
 As for generalized additive models, it was developped by
 
-&lt;img src="assets/img/presence_absence/Hastie_Tibshirani.png" width="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="assets/img/Hastie_Tibshirani.png" width="100%" style="display: block; margin: auto;" /&gt;
+]
 
+.pull-right[
 In the book published in 1990
 
-&lt;img src="assets/img/presence_absence/GAM_book_TH.jpeg" width="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="assets/img/GAM_book_TH.jpeg" width="60%" style="display: block; margin: auto;" /&gt;
+]
+
 
 ---
 
@@ -238,9 +252,8 @@ where
 
 This is some pretty dense theory...
 
-&lt;div style='text-align:center;'&gt;
-&lt;img src="assets/img/presence_absence/grinning-face-with-one-large-and-one-small-eye_1f92a.png" height="100px"&gt;&lt;/img&gt;
-&lt;/div&gt;
+&lt;img src="assets/img/grinning-face-with-one-large-and-one-small-eye_1f92a.png" width="20%" style="display: block; margin: auto;" /&gt;
+
 
 ---
 
@@ -248,9 +261,8 @@ This is some pretty dense theory...
 
 This is some pretty dense theory...
 
-&lt;div style='text-align:center;'&gt;
-&lt;img src="assets/img/presence_absence/grinning-face-with-one-large-and-one-small-eye_1f92a.png" height="100px"&gt;&lt;/img&gt;
-&lt;/div&gt;
+
+&lt;img src="assets/img/grinning-face-with-one-large-and-one-small-eye_1f92a.png" width="20%" style="display: block; margin: auto;" /&gt;
 
 Let's clarify what `\(f(x)\)` is about.
 
@@ -277,7 +289,7 @@ which can be rewritten as
 
 Visually this can be represented as
 
-&lt;img src="index_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-8-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
@@ -287,9 +299,8 @@ As mentionned before, the polynomial base function is one a many base function u
 
 Ones more commonly used is the cubic regression splines
 
-&lt;div style='text-align:center;'&gt;
-  &lt;img src="assets/img/presence_absence/cubic_spline.png" height="350px"&gt;&lt;/img&gt;
-&lt;/div&gt;
+&lt;img src="assets/img/cubic_spline.png" width="100%" style="display: block; margin: auto;" /&gt;
+
 
 ---
 
@@ -309,7 +320,7 @@ Ones more commonly used is the cubic regression splines
 
 On our data a cubic regression spline results in
 
-&lt;img src="index_files/figure-html/unnamed-chunk-5-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-10-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
@@ -366,13 +377,7 @@ What can we do with an elastic mosquito mesh to fit to an object?
 
 On our data a thin plate regression spline results in
 
-&lt;img src="index_files/figure-html/unnamed-chunk-6-1.png" style="display: block; margin: auto;" /&gt;
-
----
----
----
----
-
+&lt;img src="index_files/figure-html/unnamed-chunk-11-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 class: inverse, center, middle
@@ -508,7 +513,7 @@ If the observed value is as extreme or more extreme than the value of the refere
 ## Decision in statistical testing
 ### Two-tailed test
 
-![](index_files/figure-html/unnamed-chunk-7-1.png)&lt;!-- --&gt;
+![](index_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
 
 ---
 
@@ -516,7 +521,7 @@ If the observed value is as extreme or more extreme than the value of the refere
 ## Decision in statistical testing
 ### One-tailed test (right)
 
-![](index_files/figure-html/unnamed-chunk-8-1.png)&lt;!-- --&gt;
+![](index_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
 
 ---
 
@@ -524,7 +529,7 @@ If the observed value is as extreme or more extreme than the value of the refere
 ## Decision in statistical testing
 ### One-tailed test (left)
 
-![](index_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
+![](index_files/figure-html/unnamed-chunk-14-1.png)&lt;!-- --&gt;
 
 ---
 
@@ -586,7 +591,7 @@ If we construct many (e.g. 99, 999 or 9999) random permutations of "Var.2", we c
 # Principal of permutation testing
 ## Interpretation of a permutation test
 
-![](index_files/figure-html/unnamed-chunk-10-1.png)&lt;!-- --&gt;
+![](index_files/figure-html/unnamed-chunk-15-1.png)&lt;!-- --&gt;
 
 ---
 
@@ -609,7 +614,7 @@ If we construct many (e.g. 99, 999 or 9999) random permutations of "Var.2", we c
 ## Continuing the example of the Pearson's correlation ( `\(r\)` )
 ### Illustration of two-tailed test results
 
-&lt;img src="index_files/figure-html/unnamed-chunk-11-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-16-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
@@ -617,7 +622,7 @@ If we construct many (e.g. 99, 999 or 9999) random permutations of "Var.2", we c
 ## Continuing the example of the Pearson's correlation ( `\(r\)` )
 ### Illustration of one-tailed test, right tail results
 
-&lt;img src="index_files/figure-html/unnamed-chunk-12-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-17-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
@@ -625,7 +630,7 @@ If we construct many (e.g. 99, 999 or 9999) random permutations of "Var.2", we c
 ## Continuing the example of the Pearson's correlation ( `\(r\)` )
 ### Illustration of one-tailed test, right tail results
 
-&lt;img src="index_files/figure-html/unnamed-chunk-13-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-18-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
@@ -670,7 +675,24 @@ Say our test shows that there is autocorrelation in the model's residuals, what 
 
 .Large[.red[Build a more complex model!]]
 
-Proposing solutions to this problem is what this course is about!
+Proposing solutions to this problem is what this course is about! 
+
+
+---
+
+# Study case: Species distribution models 
+
+---
+
+class: clear, middle
+
+# Study case: Species distribution models 
+
+## <i class="fas  fa-tag "></i> with GLM:
+https://steveviss.github.io/PR-GSFE01/trend_surface/practiceGLM.html
+
+## <i class="fas  fa-tag "></i> with GAM:
+https://steveviss.github.io/PR-GSFE01/trend_surface/practiceGAM.html
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

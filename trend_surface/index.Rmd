@@ -28,6 +28,17 @@ class: title-slide, middle
 
 ---
 
+class: clear, middle
+
+## `r icon::fa("slideshare")` Slides available at:
+https://steveviss.github.io/PR-GSFE01/trend_surface/index.html
+
+## `r icon::fa("tag")` Solutions of all practices:
+https://steveviss.github.io/PR-GSFE01/trend_surface/practice.html
+
+
+---
+
 
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
@@ -126,7 +137,7 @@ Basis function can be
 
 # Example of trend surface analysis
 
-```{r, echo = FALSE, fig.align='center', fig.width=12}
+```{r, echo = FALSE, fig.align='center', fig.width=12, fig.retina = 2}
 par(mfrow = c(2,2))
 # Local basis function
 plot(0, 0, 
@@ -294,6 +305,8 @@ Using **generalized linear models**, trend surface models can be applied to many
 class: inverse, center, middle
 
 # Generalized additive models
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
 
 ---
 
@@ -306,33 +319,37 @@ class: inverse, center, middle
 
 Additive model were first proposed by
 
-<div style='text-align:center;'>
-<img src="assets/img/presence_absence/Friedman_Stuetzle.png" height="200px"></img>
-</div>
+```{r echo=FALSE, out.width="50%"}
+knitr::include_graphics("assets/img/Friedman_Stuetzle.png")
+```
 
-In the paper
-<div style='text-align:center;'>
-<img src="assets/img/presence_absence/Additive_model_paper.png" height="100px"></img>
-</div>
-published in 1981 in the Journal of the American Statistical Association
+In the paper published in 1981 in the Journal of the American Statistical Association
 
+```{r echo=FALSE, out.width="80%"}
+knitr::include_graphics("assets/img/Additive_model_paper.png")
+```
 
 ---
 
 # Generalized additive model
 ## A bit of history
 
+.pull-left[
 As for generalized additive models, it was developped by
 
-```{r echo=FALSE, out.width="50%", fig.align='center'}
-knitr::include_graphics("assets/img/presence_absence/Hastie_Tibshirani.png")
+```{r echo=FALSE, out.width="100%", fig.align='center'}
+knitr::include_graphics("assets/img/Hastie_Tibshirani.png")
 ```
+]
 
+.pull-right[
 In the book published in 1990
 
-```{r echo=FALSE, out.width="50%", fig.align='center'}
-knitr::include_graphics("assets/img/presence_absence/GAM_book_TH.jpeg")
+```{r echo=FALSE, out.width="60%", fig.align='center'}
+knitr::include_graphics("assets/img/GAM_book_TH.jpeg")
 ```
+]
+
 
 ---
 
@@ -356,9 +373,10 @@ $\beta_j(x)$ - $j^\text{th}$ parameters associated to the basis function of the 
 
 This is some pretty dense theory...
 
-<div style='text-align:center;'>
-<img src="assets/img/presence_absence/grinning-face-with-one-large-and-one-small-eye_1f92a.png" height="100px"></img>
-</div>
+```{r echo=FALSE, out.width="20%", fig.align='center'}
+knitr::include_graphics("assets/img/grinning-face-with-one-large-and-one-small-eye_1f92a.png")
+```
+
 
 ---
 
@@ -366,9 +384,10 @@ This is some pretty dense theory...
 
 This is some pretty dense theory...
 
-<div style='text-align:center;'>
-<img src="assets/img/presence_absence/grinning-face-with-one-large-and-one-small-eye_1f92a.png" height="100px"></img>
-</div>
+
+```{r echo=FALSE, out.width="20%", fig.align='center'}
+knitr::include_graphics("assets/img/grinning-face-with-one-large-and-one-small-eye_1f92a.png")
+```
 
 Let's clarify what $f(x)$ is about.
 
@@ -424,9 +443,10 @@ As mentionned before, the polynomial base function is one a many base function u
 
 Ones more commonly used is the cubic regression splines
 
-<div style='text-align:center;'>
-  <img src="assets/img/presence_absence/cubic_spline.png" height="350px"></img>
-</div>
+```{r echo=FALSE, out.width="100%", fig.align='center'}
+knitr::include_graphics("assets/img/cubic_spline.png")
+```
+
 
 ---
 
@@ -550,12 +570,6 @@ legend("left", legend = c("logit",
                "brown", "darkgreen", "darkolivegreen4"),
        lty = 1, lwd = 5, cex = 1.5)
 ```
-
----
----
----
----
-
 
 ---
 class: inverse, center, middle
@@ -958,3 +972,20 @@ Say our test shows that there is autocorrelation in the model's residuals, what 
 .Large[.red[Build a more complex model!]]
 
 Proposing solutions to this problem is what this course is about! 
+
+
+---
+
+# Study case: Species distribution models 
+
+---
+
+class: clear, middle
+
+# Study case: Species distribution models 
+
+## `r icon::fa("tag")` with GLM:
+https://steveviss.github.io/PR-GSFE01/trend_surface/practiceGLM.html
+
+## `r icon::fa("tag")` with GAM:
+https://steveviss.github.io/PR-GSFE01/trend_surface/practiceGAM.html
