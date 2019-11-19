@@ -235,22 +235,23 @@ where $c$ is a power coefficient that ranges from 0 to $+\infty$ that controls f
 
 ## Step 3 - Calculating weights
 
-```{r, echo = FALSE, fig.height = 6, fig.width = 6, fig.align = 'center', fig.retina=2}
+```{r, echo = FALSE, fig.height = 6, fig.width = 7, fig.align = 'center', fig.retina=2}
 # Different c
 par(mar = c(3, 3, 0.5, 0.5))
 plot(0,0, xlim = c(1,10), ylim = c(0,0.25), type = "n",
      xaxt = "n", yaxt = "n", xlab = "", ylab = "")
 
+axis(2, 0)
 mtext(text = "Distance (> 1)", 1, cex = 2, line = 1.5)
 mtext(text = "Weight", 2, cex = 2, line = 1)
 
 abline(h = 0, col = "grey")
-curve((1/x^4)/sum(1/x^4), xlim = c(1,10), lwd = 3, col = "orange", add= TRUE)
-curve((1/x^2)/sum(1/x^2), xlim = c(1,10), lwd = 3, col = "blue", add= TRUE)
-curve((1/x)/sum(1/x), xlim = c(1,10), lwd = 3, add= TRUE)
+curve((1/x^4)/sum(1/x^4), xlim = c(1,10), lwd = 5, col = "orange", add= TRUE)
+curve((1/x^2)/sum(1/x^2), xlim = c(1,10), lwd = 5, col = "blue", add= TRUE)
+curve((1/x)/sum(1/x), xlim = c(1,10), lwd = 5, add= TRUE)
 
 legend("topright", title = "value of c",
-       lty = 1, lwd = 3, col = c("black", "blue", "orange"), legend = c(1, 2, 4))
+       lty = 1, lwd = 5, col = c("black", "blue", "orange"), legend = c(4, 2, 1))
 ```
 
 ---
@@ -328,23 +329,24 @@ where $b > 0$.
 
 # Particularities
 
-```{r, echo = FALSE, fig.height = 6, fig.width = 6, fig.align = 'center', fig.retina=2}
+```{r, echo = FALSE, fig.height = 6, fig.width = 7, fig.align = 'center', fig.retina=2}
 # With a b value of 0.05
 par(mar = c(3, 3, 0.5, 0.5))
 plot(0,0, xlim = c(1,10), ylim = c(0,0.25), type = "n",
      xaxt = "n", yaxt = "n", xlab = "", ylab = "")
+axis(2, 0)
 
 mtext(text = "Distance (> 1)", 1, cex = 2, line = 1.5)
 mtext(text = "Weight", 2, cex = 2, line = 1)
 
 abline(h = 0, col = "grey")
 
-curve((1/x^4+ 0.05)/sum(1/x^4+ 0.05) , xlim = c(1,10), lwd = 3, col = "orange", add= TRUE)
-curve((1/x^2+ 0.05)/sum(1/x^2+ 0.05), xlim = c(1,10), lwd = 3, col = "blue", add= TRUE)
-curve((1/x+ 0.05)/sum(1/x+ 0.05), xlim = c(1,10), lwd = 3, add= TRUE)
+curve((1/x^4+ 0.05)/sum(1/x^4+ 0.05) , xlim = c(1,10), lwd = 5, col = "orange", add= TRUE)
+curve((1/x^2+ 0.05)/sum(1/x^2+ 0.05), xlim = c(1,10), lwd = 5, col = "blue", add= TRUE)
+curve((1/x+ 0.05)/sum(1/x+ 0.05), xlim = c(1,10), lwd = 5, add= TRUE)
 
 legend("topright", title = "value of c",
-       lty = 1, lwd = 3, col = c("black", "blue", "orange"), legend = c(1, 2, 4))
+       lty = 1, lwd = 5, col = c("black", "blue", "orange"), legend = c(4, 2,1))
 ```
 
 ---

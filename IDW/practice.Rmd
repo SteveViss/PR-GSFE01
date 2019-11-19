@@ -113,7 +113,8 @@ plot(idw5_mask, main = "c = 5", legend = FALSE)
 
 ### Exercice
 
-Based on what you have learned about inverse distance wieghting and `gstat` find a way to account for time in making an interpolation.
+1. Construct an inverse distance weighting map using another variable
+2. Construct an inverse distance weighting map using your own data
 
 ## Evaluate model quality
 
@@ -169,9 +170,9 @@ cost_fun <- function(const){
 }
 
 # Set the initial c parameter
-init_c <- 1
+init_c <- 2
 # Lauch optim function
-# optim(init_c, cost_fun)
+optim(init_c, cost_fun, method = "Brent", lower = 1, upper = 3)
 ```
 
 ### $K$-fold cross-validation
@@ -231,7 +232,7 @@ cv_k <- mean(vec_MSPE)
 
 ### Exercice
 
-1. Find the best value of $c$ using K-fold cross validation by changing the value of $c$ by increments of 0.1. 
+1. Find the best value of $c$ using K-fold cross validation by changing the value of $c$ by increments of 0.1 Between $c$ values of 1, and 3.
 
 2. How different is the "best" cross-validation value compared to the one obtained using `optim`. Why do you think this is different.
 
@@ -262,5 +263,7 @@ mapview(wgk_mask)
 ### Exercice
 
 Use a K-fold cross-validation to choose the best bandwitch value. Decide on
-  - The increment to use for the bandwitch
-  - The number of folds ($K$) to use in the cross-validation
+- The increment to use for the bandwitch
+- The number of folds ($K$) to use in the cross-validation
+
+By making these choices, you make a tradeoff between computation time and parameter estimation quality.
