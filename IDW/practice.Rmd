@@ -77,7 +77,7 @@ gs <- gstat(formula=avg_tp~1, locations=hml_avg_tp)
 gs_5 <- gstat(formula=avg_tp~1, locations=hml_avg_tp, set = list(idp = 5))
 ```
 
-## Build the predictions map
+### Build the predictions map
 
 Then, when the model is fitted, we want to make a predictions map. 
 We create the reference grid for model projection (using the extent of the `lake`).
@@ -111,7 +111,11 @@ plot(idw_mask, main = "c = 2")
 plot(idw5_mask, main = "c = 5", legend = FALSE)
 ```
 
-## Evaluate the model quality
+### Exercice
+
+Based on what you have learned about inverse distance wieghting and `gstat` find a way to account for time in making an interpolation.
+
+## Evaluate model quality
 
 The choice of the power function parameter (through `idp`) might be subjective.
 Let's perform quality evaluation through with Leave-one-out validation routine (LOOCV) with $c = 2$.
@@ -132,9 +136,9 @@ abline(lm(IDW_out ~ hml_avg_tp$avg_tp), col="red", lw=2,lty=2)
 abline(0,1)
 ```
 
-### Model quality metrics
+### Model quality statistics
 
-#### Quick reminder on the metrics
+#### Quick reminder of the statistics to use
 
 Using the vector `IDW_out`, we can compute the mean of squared prediction error (MSPE) for the IDW model (with $c = 2$)
 
@@ -225,7 +229,13 @@ for (i in 1:nfolds) {
 cv_k <- mean(vec_MSPE)
 ```
 
-## Using a weighted gaussian kernel
+### Exercice
+
+1. Find the best value of $c$ using K-fold cross validation by changing the value of $c$ by increments of 0.1. 
+
+2. How different is the "best" cross-validation value compared to the one obtained using `optim`. Why do you think this is different.
+
+## Weighted Gaussian kernel
 
 ```{r, warning=FALSE}
 # install.packages("spatialEco")
@@ -248,3 +258,9 @@ wgk_mask <- mask(wgk, lake)
 # Draw map
 mapview(wgk_mask)
 ```
+
+### Exercice
+
+Use a K-fold cross-validation to choose the best bandwitch value. Decide on
+  - The increment to use for the bandwitch
+  - The number of folds ($K$) to use in the cross-validation
