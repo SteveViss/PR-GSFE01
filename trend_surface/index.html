@@ -179,6 +179,204 @@ Using **generalized linear models**, trend surface models can be applied to many
 ---
 class: inverse, center, middle
 
+# Generalized additive models
+
+---
+
+# Generalized additive model
+
+---
+
+# Generalized additive model
+## A bit of history
+
+Additive model were first proposed by
+
+&lt;div style='text-align:center;'&gt;
+&lt;img src="assets/img/presence_absence/Friedman_Stuetzle.png" height="200px"&gt;&lt;/img&gt;
+&lt;/div&gt;
+
+In the paper
+&lt;div style='text-align:center;'&gt;
+&lt;img src="assets/img/presence_absence/Additive_model_paper.png" height="100px"&gt;&lt;/img&gt;
+&lt;/div&gt;
+published in 1981 in the Journal of the American Statistical Association
+
+
+---
+
+# Generalized additive model
+## A bit of history
+
+As for generalized additive models, it was developped by
+
+&lt;img src="assets/img/presence_absence/Hastie_Tibshirani.png" width="50%" style="display: block; margin: auto;" /&gt;
+
+In the book published in 1990
+
+&lt;img src="assets/img/presence_absence/GAM_book_TH.jpeg" width="50%" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Generalized additive model
+
+Additive models are a form of linear models.
+
+A logistic additive model with a single explanatory variable can be defined as:
+
+`$$\text{logit}(P(y_i = 1)) = f(x_i)$$`
+where
+`$$f(x) = \sum_{j = 1}^k b_j(x)\beta_j$$`
+
+`\(b_j(x)\)` - `\(j^\text{th}\)` basis function of the explanatory variable `\(x\)`
+
+`\(\beta_j(x)\)` - `\(j^\text{th}\)` parameters associated to the basis function of the explanatory variable `\(x\)`
+
+---
+
+# Generalized additive model
+
+This is some pretty dense theory...
+
+&lt;div style='text-align:center;'&gt;
+&lt;img src="assets/img/presence_absence/grinning-face-with-one-large-and-one-small-eye_1f92a.png" height="100px"&gt;&lt;/img&gt;
+&lt;/div&gt;
+
+---
+
+# Generalized additive model
+
+This is some pretty dense theory...
+
+&lt;div style='text-align:center;'&gt;
+&lt;img src="assets/img/presence_absence/grinning-face-with-one-large-and-one-small-eye_1f92a.png" height="100px"&gt;&lt;/img&gt;
+&lt;/div&gt;
+
+Let's clarify what `\(f(x)\)` is about.
+
+The `\(f(x)\)` function is a general way to representation many different formulations of an additive model.
+
+---
+
+# Generalized additive model
+
+An example of `\(f(x)\)` is a polynomial regression of degree 5, that is
+
+`$$\text{logit}(P(y_i = 1)) = f(x_i)$$`
+where
+`$$f(x) = \sum_{j = 0}^5 b_j(x)\beta_j$$`
+and
+`$$b_j(x) = x^j$$`
+which can be rewritten as
+
+`$$\text{logit}(P(y_i = 1)) = \beta_0 + x\beta_1 + x^2\beta_2 + x^3\beta_3 + x^4\beta_4 + x^5\beta_5$$`
+
+---
+
+# Generalized additive model
+
+Visually this can be represented as
+
+&lt;img src="index_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Generalized additive model
+
+As mentionned before, the polynomial base function is one a many base function used in generalized additive models, sadly it is actually not very good.
+
+Ones more commonly used is the cubic regression splines
+
+&lt;div style='text-align:center;'&gt;
+  &lt;img src="assets/img/presence_absence/cubic_spline.png" height="350px"&gt;&lt;/img&gt;
+&lt;/div&gt;
+
+---
+
+# Generalized additive model
+## Cubic regression spline
+### Advantage
+- More flexible than a polynomial regression
+
+### Disadvantage
+- Deciding how many knots to place is subjective
+- Deciding where to place the knots is subjective
+- It can only be applied to a single variable
+
+---
+
+# Generalized additive model
+
+On our data a cubic regression spline results in
+
+&lt;img src="index_files/figure-html/unnamed-chunk-5-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Generalized additive model
+## Thin plate regression spline
+
+The thin plate regression spline can be understood by thinking of an elastic mosquito mesh...
+
+What can we do with an elastic mosquito mesh to fit to an object?
+
+---
+
+# Generalized additive model
+## Thin plate regression spline
+
+The thin plate regression spline can be understood by thinking of an elastic mosquito mesh...
+
+What can we do with an elastic mosquito mesh to fit to an object?
+- Translate
+- Rotate
+- Stretch (scale, compression, dilation)
+- Shear
+
+---
+
+# Generalized additive model
+## Thin plate regression spline
+
+The thin plate regression spline can be understood by thinking of an elastic mosquito mesh...
+
+What can we do with an elastic mosquito mesh to fit to an object?
+- Translate
+- Rotate
+- Stretch (scale, compression, dilation)
+- Shear
+
+---
+
+# Generalized additive model
+## Thin plate regression spline
+
+### Advantage
+- More flexible than a polynomial regression
+- No knots are needed
+- Can be applied to multiple variables at once
+- Computationally efficient... ish
+
+### Disadvantage
+- Interpreting the meaning of each thin plate spline is challenging
+
+---
+
+# Generalized additive model
+
+On our data a thin plate regression spline results in
+
+&lt;img src="index_files/figure-html/unnamed-chunk-6-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+---
+---
+---
+
+
+---
+class: inverse, center, middle
+
 # Model diagnostics
 
 &lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#EB811B' size=1px width=720px&gt;&lt;/html&gt; 
@@ -310,7 +508,7 @@ If the observed value is as extreme or more extreme than the value of the refere
 ## Decision in statistical testing
 ### Two-tailed test
 
-![](index_files/figure-html/unnamed-chunk-2-1.png)&lt;!-- --&gt;
+![](index_files/figure-html/unnamed-chunk-7-1.png)&lt;!-- --&gt;
 
 ---
 
@@ -318,7 +516,7 @@ If the observed value is as extreme or more extreme than the value of the refere
 ## Decision in statistical testing
 ### One-tailed test (right)
 
-![](index_files/figure-html/unnamed-chunk-3-1.png)&lt;!-- --&gt;
+![](index_files/figure-html/unnamed-chunk-8-1.png)&lt;!-- --&gt;
 
 ---
 
@@ -326,7 +524,7 @@ If the observed value is as extreme or more extreme than the value of the refere
 ## Decision in statistical testing
 ### One-tailed test (left)
 
-![](index_files/figure-html/unnamed-chunk-4-1.png)&lt;!-- --&gt;
+![](index_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
 
 ---
 
@@ -388,7 +586,7 @@ If we construct many (e.g. 99, 999 or 9999) random permutations of "Var.2", we c
 # Principal of permutation testing
 ## Interpretation of a permutation test
 
-![](index_files/figure-html/unnamed-chunk-5-1.png)&lt;!-- --&gt;
+![](index_files/figure-html/unnamed-chunk-10-1.png)&lt;!-- --&gt;
 
 ---
 
@@ -411,7 +609,7 @@ If we construct many (e.g. 99, 999 or 9999) random permutations of "Var.2", we c
 ## Continuing the example of the Pearson's correlation ( `\(r\)` )
 ### Illustration of two-tailed test results
 
-&lt;img src="index_files/figure-html/unnamed-chunk-6-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-11-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
@@ -419,7 +617,7 @@ If we construct many (e.g. 99, 999 or 9999) random permutations of "Var.2", we c
 ## Continuing the example of the Pearson's correlation ( `\(r\)` )
 ### Illustration of one-tailed test, right tail results
 
-&lt;img src="index_files/figure-html/unnamed-chunk-7-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-12-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
@@ -427,7 +625,7 @@ If we construct many (e.g. 99, 999 or 9999) random permutations of "Var.2", we c
 ## Continuing the example of the Pearson's correlation ( `\(r\)` )
 ### Illustration of one-tailed test, right tail results
 
-&lt;img src="index_files/figure-html/unnamed-chunk-8-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-13-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
