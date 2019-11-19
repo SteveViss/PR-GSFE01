@@ -1,5 +1,5 @@
 ---
-title: "GSFE01"
+title: "Spatial variogram modelling"
 author: "Guillaume Blanchet & Steve Vissault"
 date: "2018/02/16"
 output:
@@ -19,7 +19,7 @@ class: title-slide, middle
 <img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"></img>
 <img src="assets/img/UdeS_blanc.png" width="350px" ></img>
 
-# Variogram
+# Spatial variogram modelling
 
 .instructors[
   GSFE01 - F. Guillaume Blanchet & Steve Vissault
@@ -84,15 +84,6 @@ We will see different types of (co)variogram today
 ---
 class: inverse, center, middle
 
-
-# Spatial variogram
-
-<html><div style='float:left'></div><hr color='#EB811B' size=3px width=720px></html> 
-<html><div style='float:left'></div><hr color='#EB811B' size=3px width=720px></html> 
-
----
-class: inverse, center, middle
-
 # Cloud variogram
 
 <html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
@@ -128,9 +119,15 @@ where
 # Focus on 2005
 ham2005 <- ham[which(ham$Year.Année == 2005),]
 
+# Select depth
+depth <- ham2005[ham2005$Variable == "Depth-Lake",]
+depthNoDup <- depth[!duplicated(depth$Site.Site),]
+
 # Select TP
 tp <- ham2005[ham2005$Variable == "TP",]
-tpSP <- as(tp, "Spatial")
+tpNoDup <- tp[!duplicated(tp$Site.Site),]
+tpNoDup$depth <- depthNoDup$Value.Valeur
+tpSP <- as(tpNoDup, "Spatial")
 
 maxDist <- max(dist(coordinates(tpSP)))
 varioCloud <- variogram(Value.Valeur ~ 1,
@@ -215,11 +212,11 @@ plot(varioCloud$dist, varioCloud$gamma,
      cex.lab = 2, las = 1)
 mtext(text = "Variance",side = 2, cex = 2, line = 4)
 
-bin <- c(0,((varioEmp$dist[-1] - varioEmp$dist[-15])/2 + varioEmp$dist[-15]), 3500)
+bin <- c(0,((varioEmp$dist[-1] - varioEmp$dist[-14])/2 + varioEmp$dist[-14]), 3500)
 
 abline(v = bin, col = "blue", lwd = 5)
 
-segments(x0 = bin[-16],
+segments(x0 = bin[-15],
          x1 = bin[-1],
          y0 = varioEmp$gamma,
          y1 = varioEmp$gamma,
@@ -283,7 +280,7 @@ hscat(Value.Valeur ~ 1,
       breaks = seq(0,2000, by = 100))
 ```
 
-This results confirms that there is some autocorrelation structure within 1000 m.  
+This results confirms that there is some autocorrelation structure within the first 1000 m.  
 
 ---
 
@@ -317,56 +314,15 @@ mtext(text = "Variance",side = 2, cex = 2, line = 4)
 outliers <- plot(varioCloud, digitize = TRUE)
 ```
 
-```{r echo=FALSE, out.width="100%"}
-knitr::include_graphics("assets/img/Outlier.png")
-```
-
 ---
 
 # Building an empirical variogram
 
-## Step 3 - Check for outliers
+## Step 4 - Remove outlier (if any)
 
-```{r, eval=FALSE}
-outliers
-```
-
-```{r, echo = FALSE}
-outliers <- data.frame(head = c(4, 5), tail = c(6, 6))
-outliers
-```
-
----
-
-# Building an empirical variogram
-
-## Step 3 - Check for outliers
-
-```{r echo=FALSE, out.width="70%", fig.align='center'}
-knitr::include_graphics("assets/img/OutlierPlot.png")
-```
-See something ? Look very carefully...
-
----
-
-# Building an empirical variogram 
-
-## Step 3 - Check for outliers
-
-.tiny[
-```{r}
-tpSP@data[4:6,]
-```
-]
-
----
-
-# Building an empirical variogram
-
-## Step 4 - Remove outlier
-
-```{r}
-tpSPClean <- tpSP[-6,]
+Here is an example of how to do this
+```{r, eval = FALSE}
+tpSP <- tpSP[-6,]
 ```
 
 ---
@@ -374,9 +330,8 @@ tpSPClean <- tpSP[-6,]
 
 ## Step 5 - Redraw the cloud variogram
 
-
 ```{r, echo = TRUE, eval = FALSE}
-varioCloud <- variogram(Value.Valeur ~ 1, data = tpSPClean,
+varioCloud <- variogram(Value.Valeur ~ 1, data = tpSP,
                    cloud= TRUE,cutoff = 1500)
 
 plot(varioCloud)
@@ -384,9 +339,9 @@ plot(varioCloud)
 
 ```{r, echo = FALSE, fig.align="center", fig.width=12, fig.height=5}
 varioCloud <- variogram(Value.Valeur ~ 1,
-                   data = tpSPClean,
+                   data = tpSP,
                    cloud= TRUE,
-                   cutoff = 1500)
+                   cutoff = 800)
 
 par(mar = c(5,6.5,0.5,0.5))
 plot(varioCloud$dist, varioCloud$gamma,
@@ -413,7 +368,7 @@ binLimit <- c(seq(0,1000,by = 100),
 
 # Construct variogram
 varioEmpGood <- variogram(Value.Valeur ~ 1,
-                          data = tpSPClean,
+                          data = tpSP,
                           cutoff = 1500,
                           boundaries = binLimit)
 ```
@@ -658,7 +613,7 @@ This approach is implemented in the package `geoR` in the function `eyefit`.
 
 There exist a few ways to fit a model variogram to an empirical variogram. In the `fit.variogram` function of the `gstat` package.
 
-## Weighing the importance of the bin
+## Weighting the importance of the bin
 Using as weight
 - The number of points per bin (`fit.method = 1`)
 $$n_{\mathbf{h}_j}$$
@@ -671,7 +626,7 @@ $$\frac{n_{\mathbf{h}_j}}{\gamma(\boldsymbol h_j)^2}$$
 
 There exist a few ways to fit a model variogram to an empirical variogram. In the `fit.variogram` function of the `gstat` package.
 
-## Weighing the importance of the bin
+## Weighting the importance of the bin
 Using as weight
 - The number of points per bin divided by the squared bin size (`fit.method=7`)
 $$\frac{n_{\mathbf{h}_j}}{\boldsymbol h_j^2}$$
@@ -760,21 +715,35 @@ For this example, we will use the **exponential** model variogram.
 ---
 # Fitting a model variogram in practice
 
-## Step 3 - Fitting the model variogram
+## .small[Step 3 - Choosing the way to fit the model variogram]
 
 Always keep in mind : 
 - The property of the variable we are modelling
 - The reasons **why** we want to model it
 
-Let's use REML
+Let's use REML !
+
+---
+# Fitting a model variogram in practice
+
+## Step 4 - Selecting good starting values
+
+```{r}
+modelIni <-  vgm(psill = 5.5e5, model = "Exp",
+                 range = 400, nugget = 100)
+
+plot(varioCloud, model = modelIni, lwd = 3)
+```
+
+---
+# Fitting a model variogram in practice
+
+## Step 5 - Fitting the model variogram
 
 ```{r, eval = TRUE}
-tpDF <- data.frame(x = coordinates(tpSPClean)[,1],
-                   y = coordinates(tpSPClean)[,2],
-                   tpSPClean@data)
-
-modelIni <-  vgm(psill = 4e5, model = "Exp",
-                 range = 800, nugget = 50000)
+tpDF <- data.frame(x = coordinates(tpSP)[,1],
+                   y = coordinates(tpSP)[,2],
+                   tpSP@data)
 
 modelVario <- fit.variogram.reml(Value.Valeur ~ 1,
                                  ~ x + y, 
@@ -785,57 +754,165 @@ modelVario <- fit.variogram.reml(Value.Valeur ~ 1,
 ---
 # Fitting a model variogram in practice
 
-## Step 4 - Visualization
+## Step 6 - Visualization
+
+```{r, echo = FALSE, fig.align='center', fig.height=5, fig.width=12}
+plot(varioCloud, model = modelVario, lwd = 3)
+```
+---
+class: inverse, center, middle
+
+# Spatial kriging
+
+---
+
+# Definition
+
+.content-box-green[
+**Kriging**
+
+A form of linear interpolation that guaranties the minimum variance in the estimation. It is also known as *Gaussian process regression*.
+]
+
+## Types of kriging
+
+There are three different form of kriging
+- Simple kriging
+- Ordinary kriging
+- Universal kriging
+
+---
+
+# .footnotesize[General mathematical definition of kriging]
+$$\widehat{Z}(\mathbf{s}_\alpha, t_\phi) = \mathbf{X}(\mathbf{s}_\alpha, t_\phi)\widehat{\boldsymbol\beta} + \boldsymbol{v}\mathbf{V}^{-1}(Z(\mathbf{s}, t) - \mathbf{X}\widehat{\boldsymbol\beta})$$
+where
+- $Z(\mathbf{s}, t)$ the values at all sampled locations in space and through time
+- $\widehat{Z}(\mathbf{s}_\alpha, t_\phi)$ is the kriging estimation at location $\mathbf{s}_\alpha$ at time $t_\phi$
+- $\mathbf{X}(\mathbf{s}_\alpha, t_\phi)$ is an explanatory variable gathered at location $\mathbf{s}_\alpha$ at time $t_\phi$
+- $\widehat{\boldsymbol\beta}$ is an *estimated* regression parameter
+- $\boldsymbol{v}$ is a vector of *estimated* covariance of 
+  - $Z(\mathbf{s}_\alpha, t_\phi)$ the value at location $\mathbf{s}_\alpha$ at time $t_\phi$
+  - $Z(\mathbf{s}, t)$ the values at all sampled locations 
+- $\mathbf{V}^{-1}$ is the inverse of covariance matrix obtained from the model variogram
+
+---
+
+# Simple kriging
+
+$$\widehat{Z}(\mathbf{s}_\alpha, t_\phi) = \mathbf{X}(\mathbf{s}_\alpha, t_\phi)\widehat{\boldsymbol\beta} + \boldsymbol{v}\mathbf{V}^{-1}(Z(\mathbf{s}, t) - \mathbf{X}\widehat{\boldsymbol\beta})$$
+
+In the previous equation, if $\widehat{\boldsymbol\beta}$ is known and it represents, we have a **simple kriging**.
+
+The reason for this terminology is that many aspects of the equation above simplifies
+
+$$\begin{align}
+\widehat{Z}(\mathbf{s}_\alpha, t_\phi) &= \mathbf{X}(\mathbf{s}_\alpha, t_\phi)\widehat{\boldsymbol\beta} + \boldsymbol{v}\mathbf{V}^{-1}(Z(\mathbf{s}, t) - \mathbf{X}\widehat{\boldsymbol\beta})\\
+&= \widehat{\boldsymbol\beta} + \boldsymbol{v}\mathbf{V}^{-1}(Z(\mathbf{s}, t) - \widehat{\boldsymbol\beta})\\&= \text{constant}_1 + \boldsymbol{v}\mathbf{V}^{-1}\text{constant}_2
+\end{align}$$
+
+In short, in simple kriging, we make the interpolation using solely a weighted covariance.
+
+---
+
+# Ordinary kriging
+
+$$\widehat{Z}(\mathbf{s}_\alpha, t_\phi) = \mathbf{X}(\mathbf{s}_\alpha, t_\phi)\widehat{\boldsymbol\beta} + \boldsymbol{v}\mathbf{V}^{-1}(Z(\mathbf{s}, t) - \mathbf{X}\widehat{\boldsymbol\beta})$$
+
+In ordinary kriging, we also assume that there is only a single regression parameter $\widehat{\boldsymbol\beta}$ that accounts for the model intercept, but it is estimated.
+
+
+$$\begin{align}
+\widehat{Z}(\mathbf{s}_\alpha, t_\phi) &= \mathbf{X}(\mathbf{s}_\alpha, t_\phi)\widehat{\boldsymbol\beta} + \boldsymbol{v}\mathbf{V}^{-1}(Z(\mathbf{s}, t) - \mathbf{X}\widehat{\boldsymbol\beta})\\
+&= \widehat{\boldsymbol\beta} + \boldsymbol{v}\mathbf{V}^{-1}(Z(\mathbf{s}, t) - \widehat{\boldsymbol\beta})\\
+\end{align}$$
+
+
+---
+
+# Universal kriging
+
+$$\widehat{Z}(\mathbf{s}_\alpha, t_\phi) = \mathbf{X}(\mathbf{s}_\alpha, t_\phi)\widehat{\boldsymbol\beta} + \boldsymbol{v}\mathbf{V}^{-1}(Z(\mathbf{s}, t) - \mathbf{X}\widehat{\boldsymbol\beta})$$
+
+In universal kriging, $\mathbf{X}(\mathbf{s}_\alpha, t_\phi)$ and $\mathbf{X}$ can represent one (or a few explanatory) and as such $\widehat{\boldsymbol\beta}$ will represent at least two regression parameters (the intercept and one or a few "slopes"), all of which are estimated.
+
+This is known as *universal* kriging because it is very flexible and thus more universal.
+
+---
+# .footnotesize[How to perform a kriging interpolation ?]
+
+## Step 1 - Build model variogram
+
+We need to use everything we learned on the variogram because kriging relies on the model variogram.
 
 ```{r, echo = FALSE, fig.align='center', fig.height=5, fig.width=12}
 plot(varioCloud, model = modelVario, lwd = 3)
 ```
 
 ---
-class: inverse, center, middle
+# .footnotesize[How to perform a kriging interpolation ?]
 
-# Spatiotemporal variogram
+## Step 2 - Define a grid
 
-<html><div style='float:left'></div><hr color='#EB811B' size=3px width=720px></html> 
-<html><div style='float:left'></div><hr color='#EB811B' size=3px width=720px></html> 
+```{r, eval = TRUE, echo = TRUE}
+library(sf)
+library(raster)
+lake <- st_read("../data/raw/hamilton_harbor.gdb", layer="waterbody_2", quiet = TRUE)
+
+# Align the projections
+lake <- st_transform(lake, st_crs(tpSP))
+
+# Create the reference grid for model projection (using the lake extent)
+r_ref <- raster(lake,res=100)
+r_ref
+```
+As for inverse distance weighting, we build a grid of $100 \times 100$ m.
 
 ---
-class: inverse, center, middle
+# .footnotesize[How to perform a kriging interpolation ?]
+## Step 3 - Interpolate !
+### Simple kriging
 
-# Empirical variogram
+```{r}
+# Simple kriging
+skModel <- gstat(formula = Value.Valeur ~ 1, location = tpSP,
+            model = modelVario, beta = 2)
 
-<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
-
----
-# Spatiotemporal empirical variogram
-
-Spatiotemporal empirical variogram are technically exactly the same as their spatial counterpart. The only difference is that time needs to be accounted. 
-
-As such, time and space needs to be bin following the same rules as for spatial empirical variograms.
-
-```{r echo=FALSE, out.width="50%", fig.align='center'}
-knitr::include_graphics("assets/img/STempiricalVario.png")
+# Build interpolation map
+skMap <- interpolate(object = r_ref, model = skModel, debug = 0)
 ```
 
 ---
-class: inverse, center, middle
+# .footnotesize[How to perform a kriging interpolation ?]
+## Step 3 - Interpolate !
+### Ordinary kriging
+```{r}
+# Ordinary kriging
+okModel <- gstat(formula = Value.Valeur ~ 1, location = tpSP,
+            model = modelVario)
 
-# Model variogram
-
-<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
-
----
-# Spatiotemporal model variogram
-
-As for the spatial model variogram, we need to decide the type of model variogram to use. 
-
-In addition, we need to decide how to link space and time. This is done througth the `vgmST` function in `gstat`
-
-In short, space and time can be modelled seperately or jointly and weights can be given to the relationship.
+# Build interpolation map
+okMap <- interpolate(object = r_ref, model = okModel, debug = 0)
+```
 
 ---
-# Spatiotemporal model variogram
+# .footnotesize[How to perform a kriging interpolation ?]
+## Step 4 - Visualize
+### Simple kriging
 
-```{r echo=FALSE, out.width="60%", fig.align='center'}
-knitr::include_graphics("assets/img/STmodelVario.png")
+```{r, echo = FALSE, fig.align='center', fig.width=5, fig.width=10}
+# Mask 
+skMapMask <- mask(skMap, lake) 
+mapview(skMapMask)
+```
+
+---
+
+# .footnotesize[How to perform a kriging interpolation ?]
+## Step 4 - Visualize
+### Ordinary kriging
+
+```{r, echo = FALSE, fig.align='center', fig.width=5,  fig.width=10}
+# Mask 
+okMapMask <- mask(okMap, lake) 
+mapview(okMapMask)
 ```
