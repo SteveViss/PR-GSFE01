@@ -206,7 +206,6 @@ modelVario <- fit.variogram.reml(Value.Valeur ~ 1,
 plot(varioCloud, model = modelVario, lwd = 3)
 ```
 
-
 # Spatiotemporal variogram
 
 ## Load the data
@@ -238,3 +237,5 @@ varioEmpST <- variogram(PM10 ~1, data = rural)
 Use the flexibility of the 
 
 ## Model variogram
+
+
