@@ -1,5 +1,5 @@
 ---
-title: "Species distribution model - GLM"
+title: "Species distribution model with GAM"
 author: Guillaume Blanchet & Steve Vissault
 date: November 19th, 2019
 output:
@@ -21,24 +21,17 @@ library(raster)
 
 # Load the data
 
-The data is available at: 
+Download the data at: 
 
-[https://github.com/SteveViss/PR-GSFE01/Trend_surface/assets/data/birdAll.RDS](BirdAll.RDS)
+1. [Birds data](assets/data/birdAll.rds)
+2. [Climate](assets/data/climate_Present.rds)
+3. [Roads](assets/data/road_Distance.rds)
 
-[https://github.com/SteveViss/PR-GSFE01/Trend_surface/assets/data/climate_Present.RDS](climate_Present.RDS)
-
-[https://github.com/SteveViss/PR-GSFE01/Trend_surface/assets/data/road_Distance.RDS](road_Distance.RDS)
 
 ```{r, echo = FALSE}
-bird <- readRDS("assets/data/birdAll.RDS")
-climatePresent <- readRDS("assets/data/climate_Present.RDS")
-road <- readRDS("assets/data/road_Distance.RDS")
-```
-
-```{r, eval = FALSE}
-bird <- readRDS("birdAll.RDS")
-climatePresent <- readRDS("climate_Present.RDS")
-road <- readRDS("road_Distance.RDS")
+bird <- readRDS("assets/data/birdAll.rds")
+climatePresent <- readRDS("assets/data/climate_Present.rds")
+road <- readRDS("assets/data/road_Distance.rds")
 ```
 
 # Extract and organize the data

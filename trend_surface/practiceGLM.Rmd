@@ -1,5 +1,5 @@
 ---
-title: "Species distribution model - GLM"
+title: "Species distribution model with GLM"
 author: Guillaume Blanchet & Steve Vissault
 date: November 19th, 2019
 output:
@@ -19,20 +19,19 @@ In the present document, we will focus on the distribution of *Acanthis flammea*
 library(raster)
 ```
 
+
 # Load the data
 
-The data is available at: [https://github.com/SteveViss/PR-GSFE01/Trend_surface/assets/data](https://github.com/SteveViss/PR-GSFE01/Trend_surface/assets/data)
+Download the data at: 
 
-```{r, echo = FALSE}
-bird <- readRDS("assets/data/birdAll.RDS")
-climatePresent <- readRDS("assets/data/climate_Present.RDS")
-road <- readRDS("assets/data/road_Distance.RDS")
-```
+1. [Birds data](assets/data/birdAll.rds)
+2. [Climate](assets/data/climate_Present.rds)
+3. [Roads](assets/data/road_Distance.rds)
 
-```{r, eval = FALSE}
-bird <- readRDS("birdAll.RDS")
-climatePresent <- readRDS("climate_Present.RDS")
-road <- readRDS("road_Distance.RDS")
+```{r}
+birds <- readRDS("assets/data/birdAll.rds")
+climatePresent <- readRDS("assets/data/climate_Present.rds")
+road <- readRDS("assets/data/road_Distance.rds")
 ```
 
 # A bit of data visualization
@@ -41,7 +40,7 @@ It is always a good idea to look at the data a little before you start building 
 
 ## *Acanthis flammea*
 ```{r, fig.align="center"}
-sp <- bird$Acanthis.flammea
+sp <- birds$Acanthis.flammea
 plot(sp)
 ```
 
