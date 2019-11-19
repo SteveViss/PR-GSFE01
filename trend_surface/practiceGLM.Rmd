@@ -1,0 +1,246 @@
+---
+title: "Species distribution model - GLM"
+author: Guillaume Blanchet & Steve Vissault
+date: November 19th, 2019
+output:
+  html_document:
+    highlight: tango
+    toc: true
+    toc_float: true
+---
+
+# Introduction
+
+In the present document, we will focus on the distribution of *Acanthis flammea*.
+
+# Load R packages
+
+```{r}
+library(raster)
+```
+
+# Load the data
+
+The data is available at: [https://github.com/SteveViss/PR-GSFE01/Trend_surface/assets/data](https://github.com/SteveViss/PR-GSFE01/Trend_surface/assets/data)
+
+```{r, echo = FALSE}
+bird <- readRDS("assets/data/birdAll.RDS")
+climatePresent <- readRDS("assets/data/climate_Present.RDS")
+road <- readRDS("assets/data/road_Distance.RDS")
+```
+
+```{r, eval = FALSE}
+bird <- readRDS("birdAll.RDS")
+climatePresent <- readRDS("climate_Present.RDS")
+road <- readRDS("road_Distance.RDS")
+```
+
+# A bit of data visualization
+
+It is always a good idea to look at the data a little before you start building models.
+
+## *Acanthis flammea*
+```{r, fig.align="center"}
+sp <- bird$Acanthis.flammea
+plot(sp)
+```
+
+## Climate
+```{r,}
+climatePresent
+```
+
+## Distance to major road
+```{r, fig.align="center"}
+plot(road)
+```
+
+# Build the model
+
+Let's first start building a logistic regression for *Acanthis flammea* that includes only the climatic variable.
+
+To do this, we must first extract the data from the raster files.
+
+```{r}
+spDat <- values(sp)
+climateAll <- values(climatePresent)
+```
+
+Because climate variables use different units, it is good practice to scale them (center and divid by their standard deviation) before using them in a model.
+```{r}
+climateDat <- scale(climateAll)
+```
+
+Also, it is useful for the climate data to be in a `data.frame`
+
+```{r}
+climateDat <- as.data.frame(climateDat)
+```
+
+Now we can perform a logistic regression
+
+```{r}
+spClimate <- glm(spDat ~ ., data = climateDat,
+                     family = binomial(link = "logit"))
+```
+
+Studying the regression parameters can be very informative to understand the environmental component that structure *Acanthis flammea*
+
+```{r}
+summary(spClimate)
+```
+
+It may also be useful to project the model on map. 
+
+Two steps are necessary to do this task.
+
+1. Estimate the model over the entire survey area
+2. Project the estimation on a map
+
+## Estimate the model over the entire survey area
+
+```{r}
+spClimatePred <- predict(spClimate,
+                             newdata = climateDat,
+                             type = "response")
+```
+
+## Project the estimation on a map
+
+This amounts essentially to formatting the data for it to be nicely projected. To do this, we will have to delve a little bit into the `raster` package. 
+
+```{r}
+# Build raster
+spClimateRaster <- raster(climatePresent)
+
+# Find where to place the model values in the raster
+values(spClimateRaster) <- spClimatePred
+```
+
+Now that the values have been organized, we can draw the map
+
+```{r, fig.align="center"}
+plot(spClimateRaster, zlim = c(0,1))
+```
+
+## Question
+
+Does this result make sence?
+
+Can we do better ecologically speaking? 
+
+The short answer is : Probably...  
+
+# Model accounting for roads
+
+Let's see if using *only* distance to major roads gives a good model.
+
+```{r}
+# As before we scale the distance to road data
+roadDat <- as.data.frame(scale(values(road)))
+
+spRoad <- glm(spDat ~., data = roadDat,
+                  family = binomial(link = "logit"))
+```
+
+Let's study the results
+
+```{r}
+summary(spRoad)
+```
+
+Now, let's draw a map of this result to better visualise the importance of the road for this species.
+
+```{r}
+# Make prediction
+spRoadPred <- predict(spRoad,
+                          newdata = roadDat,
+                          type = "response")
+
+# Build raster
+spRoadRaster <- raster(climatePresent)
+
+# Find where to place the model values in the raster
+locPix <- as.numeric(names(spRoadPred))
+values(spRoadRaster)[locPix] <- spRoadPred
+
+# Draw a map
+plot(spRoadRaster, zlim = c(0,1))
+```
+
+For this species and actually for the whole bird data (because of the way the data was gathered), it makes sense that distance to major roads is so important. 
+So, let's use only pixels within 50 km of major roads
+
+```{r}
+roadDat <- values(road)
+road50 <- which(roadDat < 50000)
+```
+
+Geographically, we will focus on a subset of the full study area to estimate our models.
+
+```{r}
+# Build the raster for the subset region
+roadSub <- raster(road)
+values(roadSub)[road50] <- values(road)[road50]
+
+# Make sure only land pixels are considered
+roadSub <- mask(roadSub, climatePresent[[1]])
+
+# Draw the map
+plot(roadSub)
+```
+
+## Logistic regression while trying to control for sampling bias
+
+In this model we will take the distance to major roads into account by focusing only the pixels that are within 50 km of major roads.
+
+Let's first isolate the pixels of interest to build the model and format the data for it to be used within our model.
+```{r}
+# Find pixels with values
+locPixRoad <- which(!is.na(values(roadSub)))
+
+# For the species
+spSub <- spDat[locPixRoad]
+
+# For the climate
+climateSub <- climateDat[locPixRoad,]
+colnames(climateSub) <- colnames(climateDat)
+climateSub <- as.data.frame(climateSub)
+```
+
+```{r}
+spClimateRoad <- glm(spSub ~ ., data = climateSub,
+                         family = binomial(link = "logit"))
+```
+
+We can then study the results
+
+```{r}
+summary(spClimateRoad)
+```
+
+and project the model estimate on map.
+
+```{r, warning=FALSE}
+# Prediction
+spClimateRoadPred <- predict(spClimateRoad,
+                                 newdata = as.data.frame(climateDat),
+                                 type = "response")
+
+# Build raster
+spClimateRoadRaster <- raster(climatePresent)
+values(spClimateRoadRaster) <- spClimateRoadPred
+
+# Draw the map
+plot(spClimateRoadRaster, zlim = c(0,1))
+```
+
+# Exercice
+
+- Model the distribution for another bird species
+
+# To keep in mind
+- This is not only model fitting, have an ecological perspective
+- The data has particularities, be aware of it
+- Remember the assumptions that you make when building your model
+- Remember that the reason why you are modelling a species may skew the way you build and interpret the model.

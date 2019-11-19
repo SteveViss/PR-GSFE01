@@ -1,0 +1,144 @@
+---
+title: "Species distribution model - GLM"
+author: Guillaume Blanchet & Steve Vissault
+date: November 19th, 2019
+output:
+  html_document:
+    highlight: tango
+    toc: true
+    toc_float: true
+---
+
+# Introduction
+
+In the present document, we will focus on the distribution of *Acanthis flammea*.
+
+# Load R packages
+
+```{r}
+library(raster)
+```
+
+# Load the data
+
+The data is available at: 
+
+[https://github.com/SteveViss/PR-GSFE01/Trend_surface/assets/data/birdAll.RDS](BirdAll.RDS)
+
+[https://github.com/SteveViss/PR-GSFE01/Trend_surface/assets/data/climate_Present.RDS](climate_Present.RDS)
+
+[https://github.com/SteveViss/PR-GSFE01/Trend_surface/assets/data/road_Distance.RDS](road_Distance.RDS)
+
+```{r, echo = FALSE}
+bird <- readRDS("assets/data/birdAll.RDS")
+climatePresent <- readRDS("assets/data/climate_Present.RDS")
+road <- readRDS("assets/data/road_Distance.RDS")
+```
+
+```{r, eval = FALSE}
+bird <- readRDS("birdAll.RDS")
+climatePresent <- readRDS("climate_Present.RDS")
+road <- readRDS("road_Distance.RDS")
+```
+
+# Extract and organize the data
+
+Let's organize the data based on what we learned from logistic regression.
+
+```{r}
+# Species data
+sp <- bird$Acanthis.flammea
+spDat <- values(sp)
+
+# Climate data
+climateAll <- values(climatePresent)
+climateDat <- scale(climateAll)
+climateDat <- as.data.frame(climateDat)
+
+# Pixels within 50 km of roads
+roadDat <- values(road)
+road50 <- which(roadDat < 50000)
+
+# Build the raster for the subset region
+roadSub <- raster(road)
+values(roadSub)[road50] <- values(road)[road50]
+
+# Make sure only land pixels are considered
+roadSub <- mask(roadSub, climatePresent[[1]])
+
+# Find pixels with values
+locPixRoad <- which(!is.na(values(roadSub)))
+
+# For the species
+spSub <- spDat[locPixRoad]
+
+# For the climate
+climateSub <- climateDat[locPixRoad,]
+colnames(climateSub) <- colnames(climateDat)
+climateSub <- as.data.frame(climateSub)
+```
+
+# Build the model
+
+To perform generalized additive model you need to load the R package `mgcv`.
+
+```{r, message = FALSE}
+library(mgcv)
+```
+
+Generalized additive models can be very useful to account for the non-linearity of space in the response variable.
+
+To do this tensor splines are required and since it is not clear how our species of interest *Acanthis flammea* reacts to spatial forcing, let's use penalisation when building our model.
+
+```{r}
+# Extract coordinates
+xyAll <- coordinates(sp)
+xySub <- xyAll[locPixRoad,]
+
+explanaAll <- as.data.frame(cbind(climateDat, xyAll))
+explanaSub <- explanaAll[locPixRoad,]
+
+# Build formula
+formu <- as.formula(paste0("spSub ~ ",
+                           paste0("bio",1:19, collapse = "+"),
+                           "+ s(x,y, bs = 'tp')"))
+
+# Model estimation
+spGAM <- gam(formu,
+             data = explanaSub,
+             family = binomial(link = "logit"))
+```
+
+Let's now study the regression parameters to understand the environmental component that structure *Acanthis flammea*. Do they differ from the logistic regression? How?
+
+```{r}
+summary(spGAM)
+```
+
+## Project the estimation on a map
+
+```{r}
+# Calculate estimated values
+spGAMPred <- predict(spGAM,
+                         newdata = explanaAll,
+                         type = "response")
+
+# Build raster
+spGAM <- raster(climatePresent)
+
+# Find where to place the values in the raster
+values(spGAM) <- as.vector(spGAMPred)
+
+# Map
+plot(spGAM, zlim = c(0,1))
+```
+
+# Exercice
+
+- Model the distribution for another bird species
+
+# To keep in mind
+- This is not only model fitting, have an ecological perspective
+- The data has particularities, be aware of it
+- Remember the assumptions that you make when building your model
+- Remember that the reason why you are modelling a species may skew the way you build and interpret the model.
