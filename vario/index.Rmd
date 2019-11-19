@@ -35,12 +35,10 @@ options(htmltools.dir.version = FALSE)
 library(sp)
 library(gstat)
 library(sf)
-setwd("~/Documents/Recherche/Cours donnés/2019/geostatistics/PR-GSFE01/data/post_process/")
 
 # Load data
-hamiltonRaw <- readRDS("hamilton_habitat.rds")
-hamiltonSF <- st_as_sf(hamiltonRaw)
-ham <- st_transform(hamiltonSF,crs = 3161)
+hamilton <- readRDS("../data/post_process/hamilton_habitat.rds")
+ham <- st_transform(hamilton, crs = 3161)
 ```
 
 # Generalities about variograms
@@ -126,7 +124,7 @@ where
 
 ---
 # Visualization of the cloud variogram
-```{r,echo = FALSE, fig.height=5, fig.width=12, eval=TRUE}
+```{r,echo = FALSE, fig.height=5, fig.width=12, eval=TRUE, fig.retina =2}
 # Focus on 2005
 ham2005 <- ham[which(ham$Year.Année == 2005),]
 
@@ -320,7 +318,7 @@ outliers <- plot(varioCloud, digitize = TRUE)
 ```
 
 ```{r echo=FALSE, out.width="100%"}
-knitr::include_graphics("assets/img/outlier.png")
+knitr::include_graphics("assets/img/Outlier.png")
 ```
 
 ---
@@ -351,7 +349,7 @@ See something ? Look very carefully...
 
 ---
 
-# Building an empirical variogram
+# Building an empirical variogram 
 
 ## Step 3 - Check for outliers
 
