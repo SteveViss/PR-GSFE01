@@ -16,9 +16,7 @@ output:
 First, we download the spatial data:
 
 1. [The GeoDatabase containing all shapefiles for the study area](https://github.com/SteveViss/PR-GSFE01/raw/master/data/raw/hamilton_harbor.gdb.zip)
-2. [The CABIN data for Hamilton Harbour](https://github.com/SteveViss/PR-GSFE01/raw/master/data/post_process/hamilton_sites.rds)
-
-2. [The CABIN data for Hamilton Harbour - Habitat](https://github.com/SteveViss/PR-GSFE01/raw/master/data/post_process/hamilton_habitat.rds)
+2. [The CABIN data for Hamilton Harbour](https://github.com/SteveViss/PR-GSFE01/raw/master/data/post_process/hamilton_habitat.rds)
 
 Import the data in R.
 
@@ -154,11 +152,11 @@ mean((hml_avg_tp$avg_tp - IDW_out)^2)
 #### Define the cost function
 
 `optim()` is general-purpose optimization function. `optim()` will cover the
-parameter space (here $c$) in order to minimize the sum of squared prediction
-error (SSPE). Once the minimum sum of squared prediction error (SSPE) found,
+parameter space (here $c$) in order to minimize the mean squared prediction
+error (MSPE). Once the minimum MSPE found,
 `optim` returns the best corresponding $c$ value. For this purpose, you need to
 provide a cost function to `optim`. This function `cost_fun` takes the $c$
-parameter as an argument and compute the SSPE with the Leave-one-out validation
+parameter as an argument and compute the MSPE with the Leave-one-out validation
 routine (LOOCV).
 
 ```{r}
