@@ -104,6 +104,8 @@ In a spatiotemporal context, explanatory variables can have different characteri
 - Be a purely spatial or temporal construction (e.g. xy-coordinates)
 - Be a purely temporal construction (e.g. day of the year)
 
+[Painting Species distribution model paper](paper/Fourcade_et_al_2018.pdf)
+
 ---
 
 # Basis functions
