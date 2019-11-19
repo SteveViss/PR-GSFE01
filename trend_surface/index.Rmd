@@ -33,7 +33,7 @@ class: clear, middle
 ## `r icon::fa("slideshare")` Slides available at:
 https://steveviss.github.io/PR-GSFE01/trend_surface/index.html
 
-## `r icon::fa("tag")` Solutions of all practices:
+## `r icon::fa("tag")` Practical:
 https://steveviss.github.io/PR-GSFE01/trend_surface/practice.html
 
 
@@ -101,8 +101,8 @@ In a spatiotemporal context, explanatory variables can have different characteri
 - Represent spatial variations but be temporally invariant (e.g. elevation)
 - Represent temporal variations but be spatially invariant (e.g. seasonality)
 - Represent spatial *and* temporal variations (e.g. humidity)
-- Be a purely spatial or temporal construction (e.g. Moran's eigenvector maps)
-- Be a purely temporal construction (e.g. Asymmetric eigenvector maps)
+- Be a purely spatial or temporal construction (e.g. xy-coordinates)
+- Be a purely temporal construction (e.g. day of the year)
 
 ---
 
@@ -311,10 +311,6 @@ class: inverse, center, middle
 ---
 
 # Generalized additive model
-
----
-
-# Generalized additive model
 ## A bit of history
 
 Additive model were first proposed by
@@ -355,6 +351,7 @@ knitr::include_graphics("assets/img/GAM_book_TH.jpeg")
 
 # Generalized additive model
 
+.footnotesize[
 Additive models are a form of linear models.
 
 A logistic additive model with a single explanatory variable can be defined as:
@@ -366,32 +363,20 @@ $$f(x) = \sum_{j = 1}^k b_j(x)\beta_j$$
 $b_j(x)$ - $j^\text{th}$ basis function of the explanatory variable $x$
 
 $\beta_j(x)$ - $j^\text{th}$ parameters associated to the basis function of the explanatory variable $x$
-
----
-
-# Generalized additive model
+]
+--
 
 This is some pretty dense theory...
 
-```{r echo=FALSE, out.width="20%", fig.align='center'}
+```{r echo=FALSE, out.width="10%", fig.align='center'}
 knitr::include_graphics("assets/img/grinning-face-with-one-large-and-one-small-eye_1f92a.png")
 ```
 
-
----
-
-# Generalized additive model
-
-This is some pretty dense theory...
-
-
-```{r echo=FALSE, out.width="20%", fig.align='center'}
-knitr::include_graphics("assets/img/grinning-face-with-one-large-and-one-small-eye_1f92a.png")
-```
-
+.footnotesize[
 Let's clarify what $f(x)$ is about.
 
 The $f(x)$ function is a general way to representation many different formulations of an additive model.
+]
 
 ---
 
@@ -439,7 +424,7 @@ legend("left", legend = c("logit", "GAM - Polynomial"),
 
 # Generalized additive model
 
-As mentionned before, the polynomial base function is one a many base function used in generalized additive models, sadly it is actually not very good.
+The polynomial base function is one of many base function used in generalized additive models, sadly it is actually not very good.
 
 Ones more commonly used is the cubic regression splines
 
@@ -496,19 +481,6 @@ legend("left", legend = c("logit",
 The thin plate regression spline can be understood by thinking of an elastic mosquito mesh...
 
 What can we do with an elastic mosquito mesh to fit to an object?
-
----
-
-# Generalized additive model
-## Thin plate regression spline
-
-The thin plate regression spline can be understood by thinking of an elastic mosquito mesh...
-
-What can we do with an elastic mosquito mesh to fit to an object?
-- Translate
-- Rotate
-- Stretch (scale, compression, dilation)
-- Shear
 
 ---
 
@@ -598,27 +570,6 @@ Samples are not independent among each other.]]
 
 ---
 
-# Checking for temporal dependence
-.small[
-The *Durbin-Watson statistics* can be defined as follow:
-
-$$d=\frac{\sum_{t=2}^T\left(\widehat{\varepsilon}_t - \widehat{\varepsilon}_{t-1}\right)^2}{\sum_{t=1}^T\widehat{\varepsilon}_t^2}$$
-where $\widehat{\varepsilon}_t = Z_t - \widehat{Z}_t$, which represents the  model's residuals.
-
-In words, $d$, the Durbin-Watson test measures the degree of autocorrelations in a time serie.
-]
-
-## Properties of the Durbin-Watson test
-.small[
-- If $d$ is small (close to 0), there is evidence of positive autocorrelation (serial dependence) in the time series
-  - A general "rule of thumb" is that a value smaller than 1 represent strong positive serial dependence
-- As $d$ gets larger, it suggest no positive serial dependence.
-- The value of $d$ ranges theoretically from 0 to 4
-]
-
-
----
-
 # Checking for spatial dependence
 .footnotesize[
 The *Moran's $I$ statistics* can be defined as follow:
@@ -640,31 +591,6 @@ In words, Moran's $I$, is a weighted form of Pearson's correlation.
 - If $I$ is negative, it suggest there is negative spatial autocorrelation
 - As $I$ is close to 0, it suggest there no spatial autocorrelation
 - The value of $I$ ranges theoretically from -1 to 1
-]
-
----
-
-# Checking for space-time dependence
-
-.footnotesize[
-The *space-time index* (STI) is a type of Moran's $I$ statistics for spatiotemporal data. It can be defined as follow:
-
-$$\text{STI}=\frac{m(T-1)\sum_{t=2}^T\sum_{i=1}^m\sum_{j=1}^mw_{i,j,t-1}\left(Z_i(\mathbf{s}_i,t) - \overline{Z}(\mathbf{s},t)\right)\left(Z_j(\mathbf{s}_i,t) - \overline{Z}(\mathbf{s},t)\right)}{\left(\sum_{t=2}^T\sum_{i=1}^m\sum_{j=1}^mw_{i,j,t-1}\right)\left(\sum_{t=1}^T\sum_{i=1}^m\left(Z_i(\mathbf{s}_i,t) - \overline{Z}(\mathbf{s},t)\right)^2\right)}$$
-
-where 
-- $Z_i(\mathbf{s}_i,t)$ is the spatiotemporal data (it could also be the residuals)
-- $\overline{Z}(\mathbf{s},t)$ is the mean of the data (or of the residuals) across the full data
-- $w_{i,j,t-1}$ is the strength of the relation between samples $i$ and $j$ at time $t-1$
-]
-
-## Properties of the space-time index (STI)
-.footnotesize[
-It has similar properties as Moran's $I$
-
-- If $STI$ is positive, it suggest there is positive spatial autocorrelation
-- If $STI$ is negative, it suggest there is negative spatial autocorrelation
-- As $STI$ is close to 0, it suggest there no spatial autocorrelation
-- The value of $STI$ ranges theoretically from -1 to 1
 ]
 
 ---
@@ -898,7 +824,7 @@ $$P = \dfrac{\sum(\text{perm} \ge |\text{observation}|)}{n_\text{perm}+1}$$
 ---
 
 # Principal of permutation testing
-## Continuing the example of the Pearson's correlation ( $r$ )
+## .footnotesize[Continuing the example of the Pearson's correlation] $(r)$
 ### Illustration of two-tailed test results
 
 ```{r fig.width=12, fig.height=4, fig.align="center",echo=FALSE}
@@ -909,7 +835,7 @@ grid.raster(img)
 ---
 
 # Principal of permutation testing
-## Continuing the example of the Pearson's correlation ( $r$ )
+## .footnotesize[Continuing the example of the Pearson's correlation] $(r)$
 ### Illustration of one-tailed test, right tail results
 
 ```{r fig.width=12, fig.height=4, fig.align="center",echo=FALSE}
@@ -920,8 +846,8 @@ grid.raster(img)
 ---
 
 # Principal of permutation testing
-## Continuing the example of the Pearson's correlation ( $r$ )
-### Illustration of one-tailed test, right tail results
+## .footnotesize[Continuing the example of the Pearson's correlation] $(r)$
+### Illustration of one-tailed test, left tail results
 
 ```{r fig.width=12, fig.height=4, fig.align="center",echo=FALSE}
 img <- readPNG("assets/img/Permtest1tailL.png")
@@ -973,10 +899,6 @@ Say our test shows that there is autocorrelation in the model's residuals, what 
 
 Proposing solutions to this problem is what this course is about! 
 
-
----
-
-# Study case: Species distribution models 
 
 ---
 

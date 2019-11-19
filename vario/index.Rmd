@@ -839,3 +839,65 @@ In short, space and time can be modelled seperately or jointly and weights can b
 ```{r echo=FALSE, out.width="60%", fig.align='center'}
 knitr::include_graphics("assets/img/STmodelVario.png")
 ```
+
+
+---
+
+---
+
+---
+
+---
+
+
+---
+
+# Checking for temporal dependence
+.small[
+The *Durbin-Watson statistics* can be defined as follow:
+
+$$d=\frac{\sum_{t=2}^T\left(\widehat{\varepsilon}_t - \widehat{\varepsilon}_{t-1}\right)^2}{\sum_{t=1}^T\widehat{\varepsilon}_t^2}$$
+where $\widehat{\varepsilon}_t = Z_t - \widehat{Z}_t$, which represents the  model's residuals.
+
+In words, $d$, the Durbin-Watson test measures the degree of autocorrelations in a time serie.
+]
+
+## Properties of the Durbin-Watson test
+.small[
+- If $d$ is small (close to 0), there is evidence of positive autocorrelation (serial dependence) in the time series
+  - A general "rule of thumb" is that a value smaller than 1 represent strong positive serial dependence
+- As $d$ gets larger, it suggest no positive serial dependence.
+- The value of $d$ ranges theoretically from 0 to 4
+]
+
+---
+
+---
+
+
+---
+---
+
+# Checking for space-time dependence
+
+.footnotesize[
+The *space-time index* (STI) is a type of Moran's $I$ statistics for spatiotemporal data. It can be defined as follow:
+
+$$\text{STI}=\frac{m(T-1)\sum_{t=2}^T\sum_{i=1}^m\sum_{j=1}^mw_{i,j,t-1}\left(Z_i(\mathbf{s}_i,t) - \overline{Z}(\mathbf{s},t)\right)\left(Z_j(\mathbf{s}_i,t) - \overline{Z}(\mathbf{s},t)\right)}{\left(\sum_{t=2}^T\sum_{i=1}^m\sum_{j=1}^mw_{i,j,t-1}\right)\left(\sum_{t=1}^T\sum_{i=1}^m\left(Z_i(\mathbf{s}_i,t) - \overline{Z}(\mathbf{s},t)\right)^2\right)}$$
+
+where 
+- $Z_i(\mathbf{s}_i,t)$ is the spatiotemporal data (it could also be the residuals)
+- $\overline{Z}(\mathbf{s},t)$ is the mean of the data (or of the residuals) across the full data
+- $w_{i,j,t-1}$ is the strength of the relation between samples $i$ and $j$ at time $t-1$
+]
+
+## Properties of the space-time index (STI)
+.footnotesize[
+It has similar properties as Moran's $I$
+
+- If $STI$ is positive, it suggest there is positive spatial autocorrelation
+- If $STI$ is negative, it suggest there is negative spatial autocorrelation
+- As $STI$ is close to 0, it suggest there no spatial autocorrelation
+- The value of $STI$ ranges theoretically from -1 to 1
+]
+
