@@ -28,7 +28,7 @@ class: title-slide, middle
 ---
 class: clear, middle, center
 
-.Large[[https://steveviss.github.io/PR-GSFE01/IDW/](https://steveviss.github.io/PR-GSFE01/IDW/)]
+.Large[[https://steveviss.github.io/PR-GSFE01/IDW/index.html](https://steveviss.github.io/PR-GSFE01/IDW/index.html)]
 
 ---
 class: inverse, middle, center

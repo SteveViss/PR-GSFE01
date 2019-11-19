@@ -28,6 +28,17 @@ class: title-slide, middle
 
 ---
 
+class: clear, middle
+
+## `r icon::fa("slideshare")` Slides available at:
+https://steveviss.github.io/PR-GSFE01/trend_surface/index.html
+
+## `r icon::fa("tag")` Solutions of all practices:
+https://steveviss.github.io/PR-GSFE01/trend_surface/practice.html
+
+
+---
+
 
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
@@ -961,3 +972,20 @@ Say our test shows that there is autocorrelation in the model's residuals, what 
 .Large[.red[Build a more complex model!]]
 
 Proposing solutions to this problem is what this course is about! 
+
+
+---
+
+# Study case: Species distribution models 
+
+---
+
+class: clear, middle
+
+# Study case: Species distribution models 
+
+## `r icon::fa("tag")` with GLM:
+https://steveviss.github.io/PR-GSFE01/trend_surface/practiceGLM.html
+
+## `r icon::fa("tag")` with GAM:
+https://steveviss.github.io/PR-GSFE01/trend_surface/practiceGAM.html
