@@ -1,0 +1,240 @@
+---
+title: "Spatial variogram"
+author: Guillaume Blanchet & Steve Vissault
+date: November 21th, 2019
+output:
+  html_document:
+    highlight: tango
+    toc: true
+    toc_float: true
+---
+
+# Prepare the R environment
+
+We load the packages needed for this practice.
+
+```{r}
+library(gstat)
+library(sf)
+library(sp) # for some analysis
+library(dplyr)
+```
+
+# Spatial variogram
+## Cloud variogram
+
+The first step is to load the data from the the CABIN Canadian Aquatic Biomonitoring Network in the Hamilton Harbour.
+We then want to project in the NAD83 / Ontario MNR Lambert (more accurate and suitable for the study area).
+If you want to read more about it: http://epsg.io/3161
+
+#### Load data
+
+The `.rds` can be load in the R environment using the function `readRDS()`. The file contains an R object: the CABIN data for the Hamilton Harbour.
+
+```{r}
+hamilton <- readRDS("../data/post_process/hamilton_habitat.rds")
+# Reproject the spatial data in NAD83 / Ontario MNR Lambert
+ham_sf <- st_transform(hamilton, crs = 3161)
+```
+
+#### Filter the data 
+
+Here, we focus on the dependant variable TP and the year 2007.
+
+```{r, fig.height=5, fig.width=12, eval=TRUE, fig.retina =2}
+ham_sf_2005 <- ham_sf %>% 
+        filter(Year.Année == 2005 & Variable == "TP")
+
+# Transform into an sp object needed for the variogram function
+ham_SP_2005 <- as(ham_sf_2005, "Spatial")
+```
+
+### Build the cloud variogram
+
+```{r}
+maxDist <- max(dist(coordinates(ham_SP_2005)))
+varioCloud <- variogram(Value.Valeur ~ 1,
+                   data = ham_SP_2005,
+                   cloud= TRUE,
+                   cutoff = maxDist)
+```
+
+#### Plot the cloud variogram
+
+```{r}
+par(mar = c(5,6.5,0.5,0.5))
+plot(varioCloud$dist, varioCloud$gamma,
+     xlab = "Distance (m)",
+     ylab = "Variance",
+     las = 1)
+```
+
+#### Directional variogram 
+
+To convert the variogram into a directional one, we have to set the argument `alpha`.
+We pass a vector of angles through the `alpha` parameters: `c(0, 45, 90, 135)`.
+
+```{r,echo = FALSE, fig.height=5, fig.width=12, eval=TRUE}
+varioCloud <- variogram(Value.Valeur ~ 1,
+                   data = ham_SP_2005,
+                   cloud= TRUE,
+                   cutoff = maxDist,
+                   alpha = c(0, 45, 90, 135))
+
+plot(varioCloud)
+```
+
+## Empirical variogram 
+
+Emprical sometimes referred to sample variogram.
+
+#### Step 1 - Study spatial autocorrelation
+
+```{r}
+plot(varioCloud$dist, varioCloud$gamma,
+     xlab = "Distance (m)",
+     ylab = "Variance",
+     las = 1)
+```
+
+##### Visual autocorrelation check
+
+```{r, fig.align="center", fig.width=12}
+hscat(Value.Valeur ~ 1,
+      data = ham_SP_2005,
+      breaks = seq(0,maxDist, by = 500))
+```
+
+#### Step 2 - Cloud variogram 
+
+Construct a cloud variogram with a maximum distance of 1500m.
+
+```{r, echo = FALSE, fig.align="center", fig.width=12, fig.height=5}
+varioCloud <- variogram(Value.Valeur ~ 1,
+                   data = ham_SP_2005,
+                   cloud= TRUE,
+                   cutoff = 1500)
+
+plot(varioCloud$dist, varioCloud$gamma,
+     xlab = "Distance (m)",
+     ylab = "Variance",
+     cex.lab = 1, las = 1)
+```
+
+#### Step 3 - Check for outliers
+
+Select point pairs by digitizing a region with the mouse (left mouse button adds a point, right mouse button ends)
+
+```{r, eval=FALSE}
+outliers <- plot(varioCloud, digitize = TRUE)
+outliers
+```
+
+Ids of the row for the pair of points 
+
+```{r, echo = FALSE}
+outliers <- data.frame(head = c(4, 5), tail = c(6, 6))
+outliers
+```
+
+#### Step 4 - Remove outlier
+
+```{r}
+ham_SP_2005_clean <- ham_SP_2005[-6,]
+```
+
+#### Step 5 - Redraw the cloud variogram
+
+```{r}
+varioCloud <- variogram(Value.Valeur ~ 1, data = tpSPClean,
+                   cloud= TRUE,cutoff = 1500)
+plot(varioCloud)
+```
+
+#### Step 6 -  Define bin limits
+
+```{r}
+binLimit <- c(seq(0,1000,by = 100),
+              seq(1200,1500, by = 200))
+```
+
+```{r}
+# Construct variogram
+varioEmpGood <- variogram(Value.Valeur ~ 1,
+                          data = tpSPClean,
+                          cutoff = 1500,
+                          boundaries = binLimit)
+```
+
+```{r}
+plot(varioEmpGood, cex = 1, pch = 19)
+```
+
+#### Residual empirical variogram
+
+It is also possible to study the autocorrelation structure in the data **after** accounting for one or more covariates.
+
+In the example below, we evaluate the autocorrelation structure after accounting for sampling effort.
+
+```{r}
+varioEmpResid <- variogram(Value.Valeur ~ SampleNumber.Numérod.échantillon.,
+                           data = tpSPClean,
+                           cutoff = 1500,
+                          boundaries = binLimit)
+
+plot(varioEmpResid, cex = 1, pch = 19, col = "orange")
+```
+
+
+## Model variogram
+
+In regard to step 1 and step 2, we choose to fit an exponential model variogram
+with the restricted maximum likelihood (REML).
+
+```{r, eval = TRUE}
+modelIni <-  vgm(psill = 4e5, model = "Exp",
+                 range = 800, nugget = 50000)
+
+modelVario <- fit.variogram.reml(Value.Valeur ~ 1,
+                                 data = ham_SP_2005_clean,
+                                 model = modelIni)
+```
+
+#### Model visualization
+
+```{r}
+plot(varioCloud, model = modelVario, lwd = 3)
+```
+
+
+# Spatiotemporal variogram
+
+## Load the data
+
+The data we will use for this analysis is the daily averages (1998-2009) air quality data PM10 in Germany rural background.
+```{r}
+library(spacetime)
+data(air)
+```
+
+## Organise the data
+
+This data is rather large, which is why "only" the two years of data (that is the first 730 days) were considered
+```{r}
+rural <- STFDF(stations, dates[1:730], data.frame(PM10 = as.vector(air[,1:730])))
+```
+
+## Empirical variogram
+For details on how to parameterize the empirical variogram
+```{r, eval = FALSE}
+?variogramST
+```
+
+```{r}
+varioEmpST <- variogram(PM10 ~1, data = rural)
+```
+### Exercice
+
+Use the flexibility of the 
+
+## Model variogram
