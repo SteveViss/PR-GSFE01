@@ -167,7 +167,9 @@ varResidAM <- RSSAM/(m - ncoef)
 varResidAM
 ```
 
-### Question : Which model is the "best" one based on this statistics ?
+### Question : 
+
+Which model is the "best" one based on this statistics ?
 
 # Moran's $I$
 
@@ -183,6 +185,11 @@ MoranI <- moran.mc(tp, nb2listw(dnn), nsim = 999,  alternative = "greater", zero
 MoranI
 ```
 
-### Exercice : Recalculating the Moran's $I$ at different distances. 
+### Exercice : 
 
-### Think of the number of permutations to use
+Recalculating the Moran's $I$ at different distances. Think of the number of permutations to use
+
+
+
+
+
