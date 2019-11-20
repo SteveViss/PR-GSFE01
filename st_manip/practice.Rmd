@@ -15,11 +15,13 @@ But manipulating such structure un R could be complicated.
 library(devtools)
 devtools::install_github("iobis/robis")
 library(robis)
+library(mapview)
+library(sf)
 
 halibut <- occurrence(scientificname = "Hippoglossus hippoglossus")
 unique(my_occs$datasetName)
-sf_halibut <- st_as_sf(my_occs, coords = c("decimalLongitude","decimalLatitude"), crs = 4326)
-
+sf_halibut <- st_as_sf(halibut, coords = c("decimalLongitude","decimalLatitude"), crs = 4326)
+mapview(sf_halibut)
 
 ## Dealing with dates
 

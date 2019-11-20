@@ -1,0 +1,49 @@
+---
+title: "GSFE01"
+author: "Guillaume Blanchet & Steve Vissault"
+date: "2018/02/16"
+output:
+  xaringan::moon_reader:
+    css: [default, pr.css, pr-fonts.css, "hygge"]
+    lib_dir: assets
+    seal: false
+    nature:
+      highlightStyle: monokai
+      highlightLines: true
+      countIncrementalSlides: false
+      beforeInit: "macros.js"
+---
+
+
+class: title-slide, middle
+
+<img src="assets/img/pr.png" width="80px" style="padding-right:10px; border-right: 2px solid #FAFAFA;"></img>
+<img src="assets/img/UdeS_blanc.png" width="250px" ></img>
+
+# Handling and visualizing spatial-temporal data with R
+
+.instructors[
+  GSFE01 - F. Guillaume Blanchet & Steve Vissault
+]
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+---
+class: clear, middle
+
+## `r icon::fa("slideshare")` Slides available at:
+https://steveviss.github.io/PR-GSFE01/basics
+
+## `r icon::fa("tag")` Solutions of all practices:
+https://steveviss.github.io/PR-GSFE01/basics/practice.html
+
+---
+class: inverse, center, middle
+
+# Review basic R instructions
+
+<html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
+
+
