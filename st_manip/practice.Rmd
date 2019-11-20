@@ -188,6 +188,13 @@ these objects, the best way is to use the `stConstruct` function in the
 
 ## `spacetime` classes
 
+- full grid (STF), a combination of any sp object and any xts object to represent all
+possible locations on the implied space-time lattice;
+- sparse grid (STS), as STF, but contains only the non-missing space-time combinations on a space-time lattice;
+- irregular (STI), an irregular space-time data structure, where each point is allocated a spatial coordinate and a time stamp;
+- simple trajectories (STT), a sequence of space-time points that form trajectories.
+
+
 ```{r}
 library(spacetime)
 
@@ -198,13 +205,6 @@ spaceTime_air <- stConstruct(raw_air, c("lng","lat"),"dates", crs = CRS("+init=e
 class(spaceTime_air)
 ```
 
-Class of `spacetime`
-
-- full grid (STF), a combination of any sp object and any xts object to represent all
-possible locations on the implied space-time lattice;
-- sparse grid (STS), as STF, but contains only the non-missing space-time combinations on a space-time lattice;
-- irregular (STI), an irregular space-time data structure, where each point is allocated a spatial coordinate and a time stamp;
-- simple trajectories (STT), a sequence of space-time points that form trajectories.
 
 ```{r}
 # subset 
