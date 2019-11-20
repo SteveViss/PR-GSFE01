@@ -23,15 +23,11 @@ library(dplyr)
 library(gstat)
 ```
 
-# Spatial variogram
-
-## Cloud variogram
-
 The first step is to load the data from the the CABIN Canadian Aquatic Biomonitoring Network in the Hamilton Harbour.
 We then want to project in the NAD83 / Ontario MNR Lambert (more accurate and suitable for the study area).
 If you want to read more about it: http://epsg.io/3161
 
-#### Load data
+# Load data
 
 The `.rds` can be load in the R environment using the function `readRDS()`. The file contains an R object: the CABIN data for the Hamilton Harbour.
 
@@ -41,19 +37,21 @@ hamilton <- readRDS("../data/post_process/hamilton_habitat.rds")
 ham_sf <- st_transform(hamilton, crs = 3161)
 ```
 
-#### Filter the data 
+# Filter the data 
 
 Here, we focus on the dependant variable TP and the year 2007.
 
 ```{r, fig.height=5, fig.width=12, eval=TRUE, fig.retina =2}
 ham_sf_2005 <- ham_sf %>% 
         filter(Year.Année == 2005 & Variable == "TP")
+ham_sf_2005_NoDup <- ham_sf_2005[!duplicated(ham_sf_2005$Site.Site),]
 
 # Transform into an sp object needed for the variogram function
-ham_SP_2005 <- as(ham_sf_2005, "Spatial")
+ham_SP_2005 <- as(ham_sf_2005_NoDup, "Spatial")
 ```
 
-### Build the cloud variogram
+# Cloud variogram
+## Build the cloud variogram
 
 ```{r}
 maxDist <- max(dist(coordinates(ham_SP_2005)))
@@ -63,7 +61,7 @@ varioCloud <- variogram(Value.Valeur ~ 1,
                    cutoff = maxDist)
 ```
 
-#### Plot the cloud variogram
+## Plot the cloud variogram
 
 ```{r}
 par(mar = c(5,6.5,0.5,0.5))
@@ -73,7 +71,7 @@ plot(varioCloud$dist, varioCloud$gamma,
      las = 1)
 ```
 
-#### Directional variogram 
+## Directional variogram 
 
 To convert the variogram into a directional one, we have to set the argument `alpha`.
 We pass a vector of angles through the `alpha` parameters: `c(0, 45, 90, 135)`.
@@ -88,11 +86,11 @@ varioCloud <- variogram(Value.Valeur ~ 1,
 plot(varioCloud)
 ```
 
-## Empirical variogram 
+# Empirical variogram 
 
 Emprical sometimes referred to sample variogram.
 
-#### Step 1 - Study spatial autocorrelation
+## Step 1 - Study spatial autocorrelation
 
 ```{r}
 plot(varioCloud$dist, varioCloud$gamma,
@@ -101,7 +99,7 @@ plot(varioCloud$dist, varioCloud$gamma,
      las = 1)
 ```
 
-##### Visual autocorrelation check
+### Visual autocorrelation check
 
 ```{r, fig.align="center", fig.width=12}
 hscat(Value.Valeur ~ 1,
@@ -109,7 +107,7 @@ hscat(Value.Valeur ~ 1,
       breaks = seq(0,maxDist, by = 500))
 ```
 
-#### Step 2 - Cloud variogram 
+## Step 2 - Cloud variogram 
 
 Construct a cloud variogram with a maximum distance of 1500m.
 
@@ -125,7 +123,7 @@ plot(varioCloud$dist, varioCloud$gamma,
      cex.lab = 1, las = 1)
 ```
 
-#### Step 3 - Check for outliers
+## Step 3 - Check for outliers
 
 Select point pairs by digitizing a region with the mouse (left mouse button adds a point, right mouse button ends)
 
@@ -141,13 +139,17 @@ outliers <- data.frame(head = c(4, 5), tail = c(6, 6))
 outliers
 ```
 
-#### Step 4 - Remove outlier
+## Step 4 - Remove outlier
 
-```{r}
+```{r, eval= FALSE}
 ham_SP_2005_clean <- ham_SP_2005[-6,]
 ```
 
-#### Step 5 - Redraw the cloud variogram
+```{r, echo= FALSE}
+ham_SP_2005_clean <- ham_SP_2005
+```
+
+## Step 5 - Redraw the cloud variogram
 
 ```{r}
 varioCloud <- variogram(Value.Valeur ~ 1, data = ham_SP_2005_clean,
@@ -155,7 +157,7 @@ varioCloud <- variogram(Value.Valeur ~ 1, data = ham_SP_2005_clean,
 plot(varioCloud)
 ```
 
-#### Step 6 -  Define bin limits
+## Step 6 -  Define bin limits
 
 ```{r}
 binLimit <- c(seq(0,1000,by = 100),
@@ -174,7 +176,7 @@ varioEmpGood <- variogram(Value.Valeur ~ 1,
 plot(varioEmpGood, cex = 1, pch = 19)
 ```
 
-#### Residual empirical variogram
+# Residual empirical variogram
 
 It is also possible to study the autocorrelation structure in the data **after** accounting for one or more covariates.
 
@@ -189,8 +191,7 @@ varioEmpResid <- variogram(Value.Valeur ~ SampleNumber.Numérod.échantillon.,
 plot(varioEmpResid, cex = 1, pch = 19, col = "orange")
 ```
 
-
-## Model variogram
+# Model variogram
 
 In regard to step 1 and step 2, we choose to fit an exponential model variogram
 with the restricted maximum likelihood (REML).
@@ -204,12 +205,89 @@ modelVario <- fit.variogram.reml(Value.Valeur ~ 1,
                                  model = modelIni)
 ```
 
-#### Model visualization
+## Model visualization
 
 ```{r}
 plot(varioCloud, model = modelVario, lwd = 3)
 ```
 
+# Exercice
+
+1. Build a model variogram using the empirical variogram
+  - This means using another model variogram fitting method
+2. Build a model variogram with another variable
+  - This may require using another model variogram
+3. Build a model variogram on your own data
+  - Think of the question you want to answer
+  - The size of your data will influence the choice of model fitting procedure
+
 # Krigging
 
-TODO
+Using the model variogram defined above we can now build kriging maps
+
+## Step 1 -  Define a grid
+
+```{r, eval = TRUE, echo = TRUE}
+library(sf)
+library(raster)
+lake <- st_read("../data/raw/hamilton_harbor.gdb", layer="waterbody_2", quiet = TRUE)
+
+# Align the projections
+lake <- st_transform(lake, st_crs(ham_SP_2005_clean))
+
+# Create the reference grid for model projection (using the lake extent)
+r_ref <- raster(lake,res=100)
+r_ref
+```
+As for inverse distance weighting, we build a grid of $100 \times 100$ m.
+
+## Simple kriging
+
+```{r}
+# Simple kriging
+skModel <- gstat(formula = Value.Valeur ~ 1, location = ham_SP_2005_clean,
+            model = modelVario, beta = 2)
+
+# Build interpolation map
+skMap <- interpolate(object = r_ref, model = skModel, debug = 0)
+```
+
+### Draw the map
+
+```{r}
+library(mapview)
+# Mask 
+skMapMask <- mask(skMap, lake) 
+mapview(skMapMask)
+```
+
+## Ordinary kriging
+```{r}
+# Ordinary kriging
+okModel <- gstat(formula = Value.Valeur ~ 1, location = ham_SP_2005_clean,
+            model = modelVario)
+
+# Build interpolation map
+okMap <- interpolate(object = r_ref, model = okModel, debug = 0)
+```
+
+### Draw the map
+
+```{r}
+library(mapview)
+# Mask 
+okMapMask <- mask(okMap, lake) 
+mapview(okMapMask)
+```
+
+# Exercice
+
+1. Build a kriging maps with another variable
+  - This means using another model variogram
+2. Perform universal kriging
+3. Build a kriging maps on your own data
+  - Think of the question you want to answer
+  - The size of your data will influence the choice of model fitting procedure
+
+
+

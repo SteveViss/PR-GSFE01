@@ -56,6 +56,7 @@ We need to transform the `sf` spatial object to `sp`, because the `gstat` packag
 ```{r, warnings = FALSE}
 hml_avg_tp <- as(hamilton_avg_tp, "Spatial")
 lake <- as(lake, "Spatial")
+plot(lake)
 ```
 
 The data is now ready for analysis. 
@@ -84,12 +85,18 @@ We create the reference grid for model projection (using the extent of the `lake
 
 ```{r}
 r_ref <- raster(lake,res=100)
+
+
+r_ref <- raster(extent(hml_avg_tp),
+                crs = crs((hml_avg_tp)),
+                res = 100)
+
 ```
 And we project the model on the reference grid
 
 ```{r}
 idw <- interpolate(r_ref, gs)
-plot(idw)
+mapview(idw)
 ```
 
 As you can see, the model estimates the values for the entire extent of the reference grid.

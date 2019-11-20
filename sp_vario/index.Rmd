@@ -49,10 +49,6 @@ ham <- st_transform(hamilton, crs = 3161)
 
 A variogram displays the variance of a variable measured at two different location in space.]
 
-.content-box-green[**Covariogram**
-
-A covariogram displays the variance of a variable measured at two different location in space across time.]
-
 ---
 
 # Variogram or semivariogram?
@@ -69,17 +65,12 @@ Bachmaier and Backes (2008) discussed this confusion and they showed that the te
 
 # Types of variogram
 
-We will see different types of (co)variogram today
+We will see different types of variograms today
 
-## Spatial variogram
 - Cloud variogram
 - Empirical variogram (sometimes referred to as *sample variogram*)
 - Model variogram
 - Directional variogram
-
-## Spatiotemporal variogram
-- Empirical variogram
-- Model variogram
 
 ---
 class: inverse, center, middle
@@ -728,7 +719,7 @@ Let's use REML !
 
 ## Step 4 - Selecting good starting values
 
-```{r}
+```{r, fig.align='center', fig.height=5, fig.width=10}
 modelIni <-  vgm(psill = 5.5e5, model = "Exp",
                  range = 400, nugget = 100)
 
@@ -899,7 +890,7 @@ okMap <- interpolate(object = r_ref, model = okModel, debug = 0)
 ## Step 4 - Visualize
 ### Simple kriging
 
-```{r, echo = FALSE, fig.align='center', fig.width=5, fig.width=10}
+```{r, echo = FALSE, fig.align='center', out.height="55%", out.width="100%"}
 # Mask 
 skMapMask <- mask(skMap, lake) 
 mapview(skMapMask)
@@ -911,7 +902,7 @@ mapview(skMapMask)
 ## Step 4 - Visualize
 ### Ordinary kriging
 
-```{r, echo = FALSE, fig.align='center', fig.width=5,  fig.width=10}
+```{r, echo = FALSE, fig.align='center',out.height="55%", out.width="100%"}
 # Mask 
 okMapMask <- mask(okMap, lake) 
 mapview(okMapMask)
