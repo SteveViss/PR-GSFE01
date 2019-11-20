@@ -8,3 +8,15 @@ ggplot2
 ggmap
 sp
 raster
+spacetime
+gstat
+maps
+STRbook
+gridExtra
+tidyr
+zoo
+ncdf4
+lattice
+RColorBrewer
+latticeExtra
+rasterVis

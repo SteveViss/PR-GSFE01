@@ -9,125 +9,185 @@ output:
     toc_float: true
 ---
 
-# Handling and visualizing spatiotemporal data
 
-## Handling spatiotemporal data
+# Visualizing spatio-temporal data
 
-### Dealing with spacetime
-
-The mutlidimensionnality problem.
-
-But manipulating such structure un R could be complicated.
-
-### Spatial Vectors: CSV / Shapefiles
-
-## OBIS data 
+## install & load packages 
 
 ```{r}
-library(devtools)
-devtools::install_github("iobis/robis")
 library(robis)
-library(mapview)
 library(sf)
+library(dplyr)
+library(ggplot2)
+library(raster)
+library(sf)
+library(spacetime)
+library(sp)
+library(mapview)
 
-halibut <- occurrence(scientificname = "Hippoglossus hippoglossus")
-unique(my_occs$datasetName)
-sf_halibut <- st_as_sf(halibut, coords = c("decimalLongitude","decimalLatitude"), crs = 4326)
+# if needed
+# install.packages(c("robis","sf","dplyr","ggplot2","raster","sf","spacetime","sp"))
+# install_github("andrewzm/STRbook")
+```
+
+## Gathering occurrences from OBIS
+
+Explore [OBIS database](https://obis.org/) and get species occurrences for
+Halibut (*Hippoglossus hippoglossus*).
+
+```{r}
+halibut <- robis::occurrence(scientificname = "Hippoglossus hippoglossus", 
+               geometry="POLYGON((-64.84626027288095 48.91641792598304,-64.01129933538095 50.49356505646415,-68.82331105413095 50.11464395818477,-71.04254933538095 46.80876488134784,-64.84626027288095 48.91641792598304))"
+          )
+```
+
+## Convert `halibut` dataframe to a sf object
+
+```{r}
+sf_halibut <- st_as_sf(halibut, 
+                    coords = c("decimalLongitude","decimalLatitude"),
+                    crs = 4326)
+```
+
+The [OBIS database](https://obis.org/) provide a lot of context on the records.
+
+```{r}
+names(sf_halibut)
+```
+We perform a visual check of the occurrences.
+
+```{r}
 mapview(sf_halibut)
 ```
 
-## Dealing with dates
+## Visual representation per year
 
-You also have to know the projection and make sure the time column has been converted to a `date` format.
+We can now build a representation of the occurrences per year.
 
-```{r}
-TODO
+```{r, fig.retina = 2, echo = FALSE, fig.align="center", fig.height = 6, fig.width = 10}
+ggplot() + 
+     geom_sf(data = sf_estuary, fill = "grey50", col = "white") + 
+     geom_sf(data = filter(sf_halibut, year > 2006), aes(col = depth)) + 
+     facet_wrap(~year)
 ```
 
-## Raster 
+## Produce count grids
 
-- NetCDF
-- RasterStack structure
-- Date in layer names
+If you have a large dataset with a high density of points, it is a good idea to
+summarize the informations using a grid of abundance counts.
 
-## Visualizing spatiotemporal data
+```{r, infos = FALSE}
+# get number of years
+years <- unique(sf_halibut$year)
 
-## Plot points
+# Create a reference grid
+ref_grid <- raster(sf_halibut, res=0.05)
 
-Spatial points through time
+# Open empty stack
+stack_count <- stack()
 
-## Points to raster
+for(i in 1:length(years)){
+     # Filter for one year (years[i])
+     sf_halibut_yr <- filter(sf_halibut, year == years[i])
+     
+     # Prepare the geometry
+     sp_halibut_yr <- as(st_geometry(sf_halibut_yr), "Spatial")
 
-Offers more readibility (especialy with large number of points)
-rasterize with count
+     # Count points per cell
+     rs_count <- rasterize(sp_halibut_yr, ref_grid, fun = 'count')
 
-### Interactive Maps to compare year through space
-
-m1 <- mapview(breweries, zcol = "village", map.types = "Esri.WorldImagery")
-m2 <- mapview(breweries, zcol = "brewery", col.regions = heat.colors)
-m3 <- mapview(breweries, zcol = "founded", legend = TRUE)
-sync(m1, m2, m3)
-
-## Studying variablity on points
-
-Taking advantage of continous surface 
-
-Spatial variability
-
-
-Times variobility
-
-
-### Statics Maps
-
-## Plot gridded data
-
-http://iridl.ldeo.columbia.edu/SOURCES/.CAC/.sst/data.nc
-
-```{r}
-download.file('http://iridl.ldeo.columbia.edu/SOURCES/.CAC/.sst/data.nc', destfile = 'SST.nc')
-SST <- stack('./assets/data/SST.nc')
-idx <- seq(as.Date('1970-01-01'), as.Date('2003-03-01'), by='month')
-tt <- as.yearmon(idx)
-SST <- setZ(SST, tt)
-names(SST) <- as.character(tt)
-
-## Extract month value from a Date or yearmon object
-month <- function(x)format(x, '%m')
-## Compute anomaly using monthly grouping with ave  
-anomaly <- function(x){
-    ## Monthly means
-    mm <- ave(x, month(tt), FUN = mean)
-    ## Monthly standard deviation
-    msd <- ave(x, month(tt), FUN = sd)
-    ## anomaly
-    (x - mm)/msd
+     # Add the layer to the stack
+     stack_count <- addLayer(stack_count,rs_count)
 }
-## Use anomaly with calc
-SSTanom <- calc(SST, anomaly)
-SSTanom <- setZ(SSTanom, tt)
 
-## Ok, let's see the result
-hovmoller(SSTanom,
-          at = seq(-3, 3, .25),
-          panel = panel.levelplot.raster,
-          interpolate = TRUE,
-          yscale.components = yscale.raster.subticks,
-          par.settings = BuRdTheme)
+names(stack_count) <- years
 ```
 
-## Organize the spacetime data
+## Practice
 
-### `spacetime` analysis in R
+1. Collect the occurences of your favorite species on OBIS.
+     - `robis::occurrence(scientificname = "Hippoglossus hippoglossus")`
+2. Visualize the distribution of this species across several years using `ggplot2`.
+3. Produce count grids per year for this species.
 
-Exploring the spatio-temporal data aspect will require to construct a space-time object
-with the function `stConstruct` (`spacetime package`). The data structure that we will use as an input
-for the function has to be in a similar way (see below) where each row
-corresponds to a sample taken at a specific time and location.
+
+# Spatial variability
+
+**Hovmöller plot**
+
+```{r, fig.retina = 2, fig.align = 'center'}
+data("NOAA_df_1990", package = "STRbook")
+
+Tmax <- filter(NOAA_df_1990,     # subset the data
+              proc == "Tmax" &   # only max temperature
+              month %in% 5:9 &   # May to September
+              year == 1993)      # year of 1993
+
+lim_lat <- range(Tmax$lat)        # latitude range
+
+lat_axis <- seq(lim_lat[1],       # latitude axis
+                lim_lat[2],
+                length=25)
+
+Tmax$t <- Tmax$julian - 728049     # create a new time variable
+Tmax_grid <- Tmax
+dists <- abs(outer(Tmax$lat, lat_axis, "-"))
+Tmax_grid$lat <- lat_axis[apply(dists, 1, which.min)]
+
+Tmax_lat_Hov <- group_by(Tmax_grid, lat, t) %>%
+                summarise(z = mean(z))
+
+library(STRbook)
+Hovmoller_lat <- ggplot(Tmax_lat_Hov) +            # take data
+        geom_tile(aes(x = lat, y = t, fill = z)) + # plot
+        fill_scale(name = "degF") +     # add color scale
+        scale_y_reverse() +             # rev y scale
+        ylab("Day number (days)") +     # add y label
+        xlab("Latitude (degrees)") +    # add x label
+        theme_bw()                      # change theme
+
+Hovmoller_lat
+```
+
+# Temporal variability
+
+**Trends plots by stations**
+
+```{r, fig.retina = 2, fig.align = 'center'}
+data("NOAA_df_1990", package = "STRbook")
+
+Tmax <- filter(NOAA_df_1990,     # subset the data
+              proc == "Tmax" &   # only max temperature
+              month %in% 5:9 &   # May to September
+              year == 1993)      # year of 1993
+
+Tmax_av <- group_by(Tmax, date) %>%
+           summarise(meanTmax = mean(z))
+
+gTmaxav <-
+    ggplot() +
+    geom_line(data = Tmax,aes(x = date, y = z, group = id),
+              colour = "blue", alpha = 0.04) +
+    geom_line(data = Tmax_av, aes(x = date, y = meanTmax)) +
+    xlab("Month") + ylab("Maximum temperature (degF)") +
+    theme_bw()
+
+gTmaxav
+```
+
+# Transform your data into `spacetime` class
+
+To perform spatio-temporal variograms with `gstat`, we need to convert our data
+into one of the following different `spacetime` classes of object. To build
+these objects, the best way is to use the `stConstruct` function in the
+`spacetime` package.
+
 
 ```{r}
 library(spacetime)
-library(sp)
+
+raw_air <- readRDS("./assets/data/air.rds")
+head(raw_air)
 
 spaceTime_air <- stConstruct(raw_air, c("lng","lat"),"dates", crs = CRS("+init=epsg:4326"))
 class(spaceTime_air)
@@ -142,13 +202,20 @@ possible locations on the implied space-time lattice;
 - simple trajectories (STT), a sequence of space-time points that form trajectories.
 
 ```{r}
-raw_air_2005_2010 <- subset(raw_air, dates > as.Date("2005-01-01") & dates < as.Date("2010-12-31"))
+# subset 
+raw_air_062005 <- subset(raw_air, dates > as.Date("2005-06-01") & dates < as.Date("2005-06-30"))
 
-STIDF_air_2005_2010 <- stConstruct(raw_air_2005_2010, c("lng","lat"),"dates", crs = CRS("+init=epsg:4326"))
-STFDF_air_2005_2010 <- as(STIDF_air_2005_2010, "STFDF")
-summary(STFDF_air_2005_2010)
+raw_air_062005 <- stConstruct(raw_air_062005, c("lng","lat"),"dates", crs = CRS("+init=epsg:4326"))
 
-stplot(STFDF_air_2005_2010)
+# Coerce the STI class to STF
+STFDF_air_062005 <- as(raw_air_062005, "STFDF")
+summary(STFDF_air_062005)
+
+# Hovmöller plot
+stplot(STFDF_air_062005, mode = "xt")
+
+# Temporal-space variability
+stplot(STFDF_air_062005[,,"pm10"], mode = "xy")
 ```
 
 
