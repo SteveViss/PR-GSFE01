@@ -1,5 +1,5 @@
 ---
-title: "GSFE01"
+title: "Temporal data"
 author: "Guillaume Blanchet & Steve Vissault"
 date: "2018/02/16"
 output:
@@ -59,7 +59,7 @@ knitr::include_graphics("./assets/img/data_cube.png")
 
 # Multi-dimensionality problem
 
-**The problem** - not easy to store and handle biological informations through all of these dimensions. 
+**The problem** - It is not easy to store and handle biological informations through all of these dimensions. 
 
 --
 
@@ -72,7 +72,7 @@ knitr::include_graphics("./assets/img/data_cube.png")
      - Samples attached to field stations
      - Observations attached to samples
 
-**Take home** - Having the right format can help to solve that problem, and thus
+**Take home** - Having the right format can help solve that problem, and thus
 make your life easier when comes the time to play and analyze the data.
 
 ???
@@ -110,14 +110,16 @@ data.frame(
 )
 ```
 
-The problem comes when you want to conduct spatio-temporal analysis. You might want
-the date information to be recognize as a `Date` column type by R.
+When performing spatio-temporal analysis, we need this temporal information to be recognized properly.
+
+This is where the `Date` format comes in handy.
 
 ---
 # Situation 1
 
 Dates entries might have different format (hopefully not in the same column).
-**Solution:** `as.Date()` will coerce the strings vector to a proper vector of dates.
+
+**Solution:** the function `as.Date()` will coerce the character vector to a vector of class `Date` allowing dates to be handle properly.
 
 ```{r}
 d1 <- as.Date(c("1990-01-04","1990-05-01","1990-08-07"))
@@ -130,8 +132,8 @@ d2
 ---
 # Situation 1
 
-If your input dates are not in the standard format, a format string can be
-composed using the elements shown in Table. 
+If your input dates are not in a standard format, the `format` argument can be
+used to force a specific structure on the dates. 
 
 .pull-left[
 .code60[
@@ -158,7 +160,7 @@ as.Date('22JUN01',format='%d%b%y')
 ---
 # Situation 1
 
-Even more...
+A lot effort as been place in R to account for the diversity of data structure
 
 .tiny[
 | Code |	Meaning |	Code	 | Meaning |
@@ -179,9 +181,17 @@ Even more...
 ---
 # Situation 1
 
-If you have several dates formats in one column... deep breath... and have a look at
-this nice package [`lubridate`](https://lubridate.tidyverse.org/).
+If you have several dates formats... 
 
+--
+
+deep breath... 
+
+--
+
+Have a look at the [`lubridate`](https://lubridate.tidyverse.org/) package.
+
+--
 
 In the R universe, you're never alone... 
 
@@ -245,7 +255,7 @@ table(d_y)
 ```
 
 ???
-Now, that the time have been briefly covered in R. It's time to visualize 
+Now, that time have been briefly covered in R. It's time to visualize date in a spatiotemporal context
 
 ---
 class: inverse, center, middle
@@ -257,8 +267,10 @@ class: inverse, center, middle
 ---
 # Import Halibut occurences 
 
-Let's play with the [OBIS database](https://obis.org/). I want to know where
-Halibut (*Hippoglossus hippoglossus*) occurs in the St-Lawrence estuary.
+Let's play with the [OBIS database](https://obis.org/). 
+
+In this illustration, we want to know where the
+Halibut (*Hippoglossus hippoglossus*) occurs in the St. Lawrence estuary.
 
 ```{r, cache = TRUE}
 library(robis)
@@ -276,7 +288,7 @@ sf_halibut <- st_as_sf(halibut,
 ---
 # Import Halibut occurences 
 
-```{r, out.width = "100%", out.height = "70%"}
+```{r}
 nrow(sf_halibut) # number of occurrences
 ```
 
@@ -299,6 +311,10 @@ table(sf_halibut$institutionCode)
 # Explore occurrences through times
 
 Select the date informations
+
+```{r, echo = FALSE,, message = FALSE}
+library(dplyr)
+```
 
 ```{r, infos = FALSE}
 head(names(sf_halibut))
@@ -330,6 +346,9 @@ ggplot(sf_halibut) + geom_sf() + facet_wrap(~year)
 # Explore occurrences through times
 
 **Some aesthetics**
+```{r, echo = FALSE,, message = FALSE}
+library(dplyr)
+```
 
 ```{r, fig.retina = 2, fig.align="center", fig.height = 6, fig.width = 10}
 ggplot() + 
@@ -371,8 +390,8 @@ ggplot() +
 ---
 # Produce count grids
 
-If you have a large dataset with highly density points, it might appropriate to
-summarize the informations into a count grid.
+If you have a large dataset with a high density of points, it is a good idea to
+summarize the informations using a grid of abundance counts.
 
 ```{r, infos = FALSE}
 library(raster)
@@ -386,10 +405,11 @@ ref_grid <- raster(sf_halibut, res=0.05)
 ---
 # Produce count grids
 
-If you have a large dataset with highly density points, it might appropriate to
-summarize the informations into a count grid.
+If you have a large dataset with a high density of points, it is a good idea to
+summarize the informations using a grid of abundance counts.
 
 ```{r, infos = FALSE}
+library(sf)
 # Open empty stack
 stack_count <- stack()
 
@@ -437,10 +457,17 @@ class: inverse, middle, center
 
 ```{r, echo =FALSE, fig.retina = 2, fig.align = 'center'}
 data("NOAA_df_1990", package = "STRbook")
+
 Tmax <- filter(NOAA_df_1990,     # subset the data
               proc == "Tmax" &   # only max temperature
               month %in% 5:9 &   # May to September
               year == 1993)      # year of 1993
+
+lim_lat <- range(Tmax$lat)        # latitude range
+
+lat_axis <- seq(lim_lat[1],       # latitude axis
+                lim_lat[2],
+                length=25)
 
 Tmax$t <- Tmax$julian - 728049     # create a new time variable
 Tmax_grid <- Tmax
@@ -450,6 +477,7 @@ Tmax_grid$lat <- lat_axis[apply(dists, 1, which.min)]
 Tmax_lat_Hov <- group_by(Tmax_grid, lat, t) %>%
                 summarise(z = mean(z))
 
+library("STRbook")
 Hovmoller_lat <- ggplot(Tmax_lat_Hov) +            # take data
         geom_tile(aes(x = lat, y = t, fill = z)) + # plot
         fill_scale(name = "degF") +     # add color scale
@@ -468,6 +496,11 @@ Hovmoller_lat
 **Trends plots by stations**
 
 ```{r, echo =FALSE, fig.retina = 2, fig.align = 'center'}
+Tmax <- filter(NOAA_df_1990,     # subset the data
+              proc == "Tmax" &   # only max temperature
+              month %in% 5:9 &   # May to September
+              year == 1993)      # year of 1993
+
 Tmax_av <- group_by(Tmax, date) %>%
            summarise(meanTmax = mean(z))
 
@@ -486,34 +519,31 @@ gTmaxav
 ---
 class: inverse, center, middle
 
-# Quick note on organizing `spacetime` data
+# Spatio-temporal data organisation
 
 <html><div style='float:left'></div><hr color='#EB811B' size=1px width=720px></html> 
 
 ---
 
-# Spatio-temporal variograms with `gstat`
+# Spatio-temporal data organisation
 
 To perform spatio-temporal variograms with `gstat`, we need to convert our data
 into one of the following different `spacetime` classes of object.
 
-- full grid (STF), a combination of any sp object and any xts object to represent all
+- full grid (STF): a combination of any `sp` object and any `xts` object to represent all
 possible locations on the implied space-time lattice;
-- sparse grid (STS), as STF, but contains only the non-missing space-time combinations on a space-time lattice;
-- irregular (STI), an irregular space-time data structure, where each point is allocated a spatial coordinate and a time stamp;
+- sparse grid (STS): same as STF, but contains only the non-missing space-time combinations on a space-time lattice;
+- irregular (STI): an irregular space-time data structure, where each point is allocated a spatial coordinate and a time stamp;
 
-To do so, the quickest way to do it is to use the `stConstruct` function
+To build these objects, the best way is to use the `stConstruct` function in the `spacetime` package.
 
 ---
 
-# Spatio-temporal variograms with `gstat`
+# Spatio-temporal data organisation
 
-The data structure that we will use as an input for the function has to be in a
-similar way (see below) where each row corresponds to a sample taken at a
-specific time and a specific location.
+The original input when dealing with the `spacetime` pacakge has to be like the one in the following example.
 
-
-```{r, echo = FALSE}
+```{r, echo = FALSE, message= FALSE}
 library(spacetime)
 # load the data
 data(air)
@@ -540,9 +570,22 @@ names(raw_air)[4:5] <- c("lng","lat")
 head(raw_air)
 ```
 
+**Note**: each row corresponds to a sample taken at a specific location and at particular time point.
+
+
 ---
 
-# The `stConstruct` function
+# Spatio-temporal data organisation
+
+We can obtain the previously shown data structure with a few manipulation of `sf` object.
+
+## Manipulation de code ici
+## Manipulation de code ici
+## Manipulation de code ici
+
+---
+
+# Playing with the `stConstruct` function
 
 ```{r}
 library(spacetime)
@@ -554,8 +597,7 @@ class(spaceTime_air)
 
 ---
 
-# Spatio-temporal variograms with `gstat`
-
+# Playing with the `stConstruct` function
 
 ```{r}
 raw_air_2005_2010 <- subset(raw_air, dates > as.Date("2005-01-01") 
