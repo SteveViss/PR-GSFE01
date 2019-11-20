@@ -305,6 +305,12 @@ mtext(text = "Variance",side = 2, cex = 2, line = 4)
 outliers <- plot(varioCloud, digitize = TRUE)
 ```
 
+
+```{r echo=FALSE, out.width="90%"}
+knitr::include_graphics("assets/img/Outlier.png")
+```
+
+
 ---
 
 # Building an empirical variogram
