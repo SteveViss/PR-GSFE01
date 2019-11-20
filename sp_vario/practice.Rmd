@@ -14,13 +14,17 @@ output:
 We load the packages needed for this practice.
 
 ```{r}
-library(gstat)
+# Spatial
 library(sf)
-library(sp) # for some analysis
+library(sp) 
+# Manipulation
 library(dplyr)
+# Analysis
+library(gstat)
 ```
 
 # Spatial variogram
+
 ## Cloud variogram
 
 The first step is to load the data from the the CABIN Canadian Aquatic Biomonitoring Network in the Hamilton Harbour.
@@ -206,35 +210,6 @@ modelVario <- fit.variogram.reml(Value.Valeur ~ 1,
 plot(varioCloud, model = modelVario, lwd = 3)
 ```
 
+# Krigging
 
-# Spatiotemporal variogram
-
-## Load the data
-
-The data we will use for this analysis is the daily averages (1998-2009) air quality data PM10 in Germany rural background.
-```{r}
-library(spacetime)
-data(air)
-```
-
-## Organise the data
-
-This data is rather large, which is why "only" the two years of data (that is the first 730 days) were considered
-```{r}
-rural <- STFDF(stations, dates[1:730], data.frame(PM10 = as.vector(air[,1:730])))
-```
-
-## Empirical variogram
-For details on how to parameterize the empirical variogram
-```{r, eval = FALSE}
-?variogramST
-```
-
-```{r}
-varioEmpST <- variogram(PM10 ~1, data = rural)
-```
-### Exercice
-
-Use the flexibility of the 
-
-## Model variogram
+TODO
