@@ -1,141 +1,176 @@
-# Handling and visualizing spatiotemporal data
+---
+title: "Spatial variogram"
+author: Guillaume Blanchet & Steve Vissault
+date: November 21th, 2019
+output:
+  html_document:
+    highlight: tango
+    toc: true
+    toc_float: true
+---
 
-## Handling spatiotemporal data
+# Prepare the R environment
 
-### Dealing with spacetime
-
-The mutlidimensionnality problem.
-
-But manipulating such structure un R could be complicated.
-
-### Spatial Vectors: CSV / Shapefiles
-
-## OBIS data 
-
-library(devtools)
-devtools::install_github("iobis/robis")
-library(robis)
-
-halibut <- occurrence(scientificname = "Hippoglossus hippoglossus")
-unique(my_occs$datasetName)
-sf_halibut <- st_as_sf(my_occs, coords = c("decimalLongitude","decimalLatitude"), crs = 4326)
-
-
-## Dealing with dates
-
-You also have to now the projection and make sure the time column has been converted to a `date` format.
+We load the packages needed for this practice.
 
 ```{r}
-TODO
-```
-
-## Raster 
-
-- NetCDF
-- RasterStack structure
-- Date in layer names
-
-## Visualizing spatiotemporal data
-
-## Plot points
-
-Spatial points through time
-
-## Points to raster
-
-Offers more readibility (especialy with large number of points)
-rasterize with count
-
-### Interactive Maps to compare year through space
-
-m1 <- mapview(breweries, zcol = "village", map.types = "Esri.WorldImagery")
-m2 <- mapview(breweries, zcol = "brewery", col.regions = heat.colors)
-m3 <- mapview(breweries, zcol = "founded", legend = TRUE)
-sync(m1, m2, m3)
-
-## Studying variablity on points
-
-Taking advantage of continous surface 
-
-Spatial variability
-
-
-Times variobility
-
-
-### Statics Maps
-
-## Plot gridded data
-
-http://iridl.ldeo.columbia.edu/SOURCES/.CAC/.sst/data.nc
-
-```{r}
-download.file('http://iridl.ldeo.columbia.edu/SOURCES/.CAC/.sst/data.nc', destfile = 'SST.nc')
-SST <- stack('./assets/data/SST.nc')
-idx <- seq(as.Date('1970-01-01'), as.Date('2003-03-01'), by='month')
-tt <- as.yearmon(idx)
-SST <- setZ(SST, tt)
-names(SST) <- as.character(tt)
-
-## Extract month value from a Date or yearmon object
-month <- function(x)format(x, '%m')
-## Compute anomaly using monthly grouping with ave  
-anomaly <- function(x){
-    ## Monthly means
-    mm <- ave(x, month(tt), FUN = mean)
-    ## Monthly standard deviation
-    msd <- ave(x, month(tt), FUN = sd)
-    ## anomaly
-    (x - mm)/msd
-}
-## Use anomaly with calc
-SSTanom <- calc(SST, anomaly)
-SSTanom <- setZ(SSTanom, tt)
-
-## Ok, let's see the result
-hovmoller(SSTanom,
-          at = seq(-3, 3, .25),
-          panel = panel.levelplot.raster,
-          interpolate = TRUE,
-          yscale.components = yscale.raster.subticks,
-          par.settings = BuRdTheme)
-```
-
-## Organize the spacetime data
-
-### `spacetime` analysis in R
-
-Exploring the spatio-temporal data aspect will require to construct a space-time object
-with the function `stConstruct` (`spacetime package`). The data structure that we will use as an input
-for the function has to be in a similar way (see below) where each row
-corresponds to a sample taken at a specific time and location.
-
-```{r}
+# Spatial 
+library(sf)
+library(sp) # for some analysis
+library(dplyr) 
+# Analysis
+library(gstat)
 library(spacetime)
-library(sp)
-
-spaceTime_air <- stConstruct(raw_air, c("lng","lat"),"dates", crs = CRS("+init=epsg:4326"))
-class(spaceTime_air)
 ```
 
-Class of `spacetime`
+# Spatiotemporal variogram
 
-- full grid (STF), a combination of any sp object and any xts object to represent all
-possible locations on the implied space-time lattice;
-- sparse grid (STS), as STF, but contains only the non-missing space-time combinations on a space-time lattice;
-- irregular (STI), an irregular space-time data structure, where each point is allocated a spatial coordinate and a time stamp;
-- simple trajectories (STT), a sequence of space-time points that form trajectories.
+For this section, we will use the Air quality data obtained from the airBase
+European air quality data base. Daily averages for rural background stations in
+Germany, 1998-2009. Using a nationwide network of monitoring sites, EPA has
+developed ambient air quality trends for particle pollution, also called
+Particulate Matter (PM). PM10 used in this dataset describes inhalable
+particles, with diameters that are generally 10 micrometers and smaller. 
+
+```{r, echo = FALSE}
+library(spacetime)
+# load the data
+data(air)
+# melt the matrix
+colnames(air) <- 1:ncol(air)
+raw_air <- reshape2::melt(air, na.rm = TRUE)
+names(raw_air) <- c("station_id","time_id","pm10")
+
+# Add ids
+dates <- data.frame(time_id=1:length(dates) ,dates = dates)
+stations <- as.data.frame(stations, xy = TRUE)
+stations$station_id <- rownames(stations)
+
+# merge time
+raw_air <- merge(raw_air,dates)
+raw_air <- merge(raw_air,stations)
+
+# Clean the air df
+raw_air <- raw_air[,-2]
+names(raw_air)[4:5] <- c("lng","lat")
+
+saveRDS(raw_air,"./assets/data/pm10_germany.rds")
+```
+
+## Load the data
 
 ```{r}
-raw_air_2005_2010 <- subset(raw_air, dates > as.Date("2005-01-01") & dates < as.Date("2010-12-31"))
+pm10 <- readRDS("./assets/data/pm10_germany.rds")
+head(pm10)
+pm10_20090306 <- st_as_sf(subset(pm10, dates == "2009-03-06") ,coords = c("lng", "lat"), crs = 4326)
+mapview(pm10_20090306, zcol = "pm10")
+```
 
-STIDF_air_2005_2010 <- stConstruct(raw_air_2005_2010, c("lng","lat"),"dates", crs = CRS("+init=epsg:4326"))
-STFDF_air_2005_2010 <- as(STIDF_air_2005_2010, "STFDF")
-summary(STFDF_air_2005_2010)
+# Prepare the data
 
-stplot(STFDF_air_2005_2010)
+To reduce the computation time, we focus on the period 2005-2010.
+
+```{r}
+pm10_2005_2010 <- subset(pm10, dates > as.Date("2005-01-01") & 
+                                     dates < as.Date("2010-12-31"))
+
+STIDF_pm10_2005_2010 <- stConstruct(pm10_2005_2010, c("lng","lat"),"dates", crs = CRS("+init=epsg:4326"))
+STFDF_pm10_2005_2010 <- as(STIDF_pm10_2005_2010, "STFDF")
+summary(STFDF_pm10_2005_2010)
 ```
 
 
+# Build spatiotemporal variogram
+
+```{r}
+pm10_vario <- variogram(pm10~1, STFDF_pm10_2005_2010, width=20, cutoff = 200, tlags=0:5)
+plot(pm10_vario)
+plot(pm10_vario, wireframe = TRUE)
+```
+
+## Model variogram
+
+### Declare the model
+
+```{r echo=FALSE}
+knitr::include_graphics("https://aegis4048.github.io/jupyter_images/basic_variogram.png")
+```
+
+```{r}
+# Declare the model variogram 
+separableModel <- vgmST("separable", 
+                        method = "Nelder-Mead", # no lower & upper needed
+                        space = vgm(psill = 0.9, model = "Exp", range = 123, nugget = 0.1),
+                        time = vgm(psill = 0.9, model = "Exp", range = 2.9, nugget = 0.1),
+                        sill = 100)
+
+```
+
+The function `fit.StVariogram` will use the `optim` function to optimize and
+find the best set of parameters for the model variogram using the mean squared
+errors. 
+
+```{r, warnings = FALSE}
+# fit the separableModel variogram 
+separableModel <- fit.StVariogram(pm10_vario, separableModel,
+                                  method="BFGS")
+
+# visual check on the fit
+plot(pm10_vario, separableModel, wireframe =  TRUE)
+plot(pm10_vario, wireframe = TRUE)
+```
 
 
+```{r}
+# metric model
+metricModel <- vgmST("metric",
+                     method = "Nelder-Mead", # no lower & upper needed
+                     joint=vgm(0.9, "Exp", 123, 0.1),
+                     stAni=100)
+
+metricModel <- fit.StVariogram(pm10_vario, metricModel,
+                                  method="BFGS")
+
+plot(pm10_vario, metricModel, wireframe =  TRUE)
+plot(pm10_vario, wireframe = TRUE)
+```
+
+But many other models possible:
+
+```r
+# product sum model: spatial and temporal nugget will be ignored and kept
+# constant at 0. Only a joint nugget is used.
+prodSumModel <- vgmST("productSum",
+                      space=vgm(39, "Sph", 343, 0),
+                      time= vgm(36, "Exp",   3, 0), 
+                      k=15)
+
+# sum metric model: spatial, temporal and joint nugget will be estimated
+sumMetricModel <- vgmST("sumMetric",
+                        space=vgm( 6.9, "Lin", 200, 3.0),
+                        time =vgm(10.3, "Lin",  15, 3.6),
+                        joint=vgm(37.2, "Exp",  84,11.7),
+                        stAni=77.7)
+                       
+# simplified sumMetric model, only a overall nugget is fitted. The spatial, 
+# temporal and jont nuggets are set to 0.
+simpleSumMetricModel <- vgmST("simpleSumMetric",
+                              space=vgm(20,"Lin", 150, 0),
+                              time =vgm(20,"Lin", 10,  0),
+                              joint=vgm(20,"Exp", 150, 0),
+                              nugget=1, stAni=15)
+```
+
+### Assess model quality
+
+You can get the mean squared errors within the output of the function
+`fit.StVariogram()` with the following command line and compare them. 
+
+```{r}
+attr(separableModel,"optim")$value
+attr(metricModel,"optim")$value
+```
+
+## Spatio-temporal krigging
+
+p.174
