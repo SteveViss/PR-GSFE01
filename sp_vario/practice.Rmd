@@ -128,6 +128,10 @@ plot(varioCloud$dist, varioCloud$gamma,
 Select point pairs by digitizing a region with the mouse (left mouse button adds a point, right mouse button ends)
 
 ```{r, eval=FALSE}
+# This is easier to run outside RStudio as such:
+# windows() # For windows users
+# quartz() # For mac users
+
 outliers <- plot(varioCloud, digitize = TRUE)
 outliers
 ```
@@ -197,18 +201,31 @@ In regard to step 1 and step 2, we choose to fit an exponential model variogram
 with the restricted maximum likelihood (REML).
 
 ```{r, eval = TRUE}
+# Fit using cloud variogram
 modelIni <-  vgm(psill = 4e5, model = "Exp",
                  range = 800, nugget = 50000)
 
 modelVario <- fit.variogram.reml(Value.Valeur ~ 1,
                                  data = ham_SP_2005_clean,
                                  model = modelIni)
+
+# Fit using empirical variogram
+modelIni <-  vgm(psill = 3.5e5, model = "Exp",
+                 range = 600, nugget = 1e5)
+
+# plot(varioEmpGood,model = modelIni)
+#Do this step a few times to make sure you have good starting values
+
+modelVarioEmp <- fit.variogram(varioEmpGood,
+                               model = modelIni,
+                               fit.method = 7)
 ```
 
 ## Model visualization
 
 ```{r}
 plot(varioCloud, model = modelVario, lwd = 3)
+plot(varioEmpGood, model = modelVarioEmp, lwd = 3)
 ```
 
 # Exercice
@@ -247,6 +264,28 @@ As for inverse distance weighting, we build a grid of $100 \times 100$ m.
 # Simple kriging
 skModel <- gstat(formula = Value.Valeur ~ 1, location = ham_SP_2005_clean,
             model = modelVario, beta = 2)
+
+
+# Organise raster into a dara.frame
+r_refDF<-as.data.frame(r_ref, xy = TRUE)
+
+# SpatialPointsDataFrame
+coordinates(r_refDF) <- ~ x+ y
+
+# SpatialPixelDataFrame
+gridded(r_refDF) <- TRUE
+
+# Add the projection
+proj4string(r_refDF) <- crs("+proj=lcc +lat_1=44.5 +lat_2=53.5 +lat_0=0 +lon_0=-85 +x_0=930000 +y_0=6430000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
+
+# Build our model
+skModelKrige <- krige(formula = Value.Valeur ~ 1, location = ham_SP_2005_clean, model = modelVario, beta = 2, newdata = r_refDF)
+
+# Plot prediction
+spplot(skModelKrige["var1.pred"])
+
+# Plot variation
+spplot(skModelKrige["var1.var"])
 
 # Build interpolation map
 skMap <- interpolate(object = r_ref, model = skModel, debug = 0)
@@ -288,6 +327,20 @@ mapview(okMapMask)
 3. Build a kriging maps on your own data
   - Think of the question you want to answer
   - The size of your data will influence the choice of model fitting procedure
+
+####
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
