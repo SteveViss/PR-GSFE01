@@ -27,6 +27,15 @@ class: title-slide, middle
 
 
 ---
+class: clear, center, middle
+
+## `r icon::fa("slideshare")` Slides available at:
+https://steveviss.github.io/PR-GSFE01/sp_vario/index.html
+
+## `r icon::fa("tag")` Practical:
+https://steveviss.github.io/PR-GSFE01/sp_vario/practice.html
+
+---
 
 
 ```{r setup, include=FALSE}
