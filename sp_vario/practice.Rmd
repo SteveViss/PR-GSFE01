@@ -150,7 +150,7 @@ ham_SP_2005_clean <- ham_SP_2005[-6,]
 #### Step 5 - Redraw the cloud variogram
 
 ```{r}
-varioCloud <- variogram(Value.Valeur ~ 1, data = tpSPClean,
+varioCloud <- variogram(Value.Valeur ~ 1, data = ham_SP_2005_clean,
                    cloud= TRUE,cutoff = 1500)
 plot(varioCloud)
 ```
@@ -165,7 +165,7 @@ binLimit <- c(seq(0,1000,by = 100),
 ```{r}
 # Construct variogram
 varioEmpGood <- variogram(Value.Valeur ~ 1,
-                          data = tpSPClean,
+                          data = ham_SP_2005_clean,
                           cutoff = 1500,
                           boundaries = binLimit)
 ```
@@ -182,7 +182,7 @@ In the example below, we evaluate the autocorrelation structure after accounting
 
 ```{r}
 varioEmpResid <- variogram(Value.Valeur ~ SampleNumber.Numérod.échantillon.,
-                           data = tpSPClean,
+                           data = ham_SP_2005_clean,
                            cutoff = 1500,
                           boundaries = binLimit)
 

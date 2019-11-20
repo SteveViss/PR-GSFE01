@@ -39,7 +39,7 @@ data(air)
 # melt the matrix
 colnames(air) <- 1:ncol(air)
 raw_air <- reshape2::melt(air, na.rm = TRUE)
-names(raw_air) <- c("station_id","time_id","quality")
+names(raw_air) <- c("station_id","time_id","pm10")
 
 # Add ids
 dates <- data.frame(time_id=1:length(dates) ,dates = dates)
@@ -54,39 +54,38 @@ raw_air <- merge(raw_air,stations)
 raw_air <- raw_air[,-2]
 names(raw_air)[4:5] <- c("lng","lat")
 
-saveRDS("./assest/data/pm10_germany.rds")
+saveRDS(raw_air,"./assets/data/pm10_germany.rds")
 ```
 
 ## Load the data
 
 ```{r}
-pm10 <- readRDS("./assest/data/pm10_germany.rds")
+pm10 <- readRDS("./assets/data/pm10_germany.rds")
 head(pm10)
-pm10_20090306 <- st_as_sf(subset(pm10, dates == "2009-03-06"), coords = c("lng", "lat"), crs = 4326)
-mapview(pm10_20090306)
+pm10_20090306 <- st_as_sf(subset(pm10, dates == "2009-03-06") ,coords = c("lng", "lat"), crs = 4326)
+mapview(pm10_20090306, zcol = "pm10")
 ```
-
 
 # Prepare the data
 
 To reduce the computation time, we focus on the period 2005-2010.
 
 ```{r}
-raw_air_2005_2010 <- subset(raw_air, dates > as.Date("2005-01-01") & 
+pm10_2005_2010 <- subset(pm10, dates > as.Date("2005-01-01") & 
                                      dates < as.Date("2010-12-31"))
 
-STIDF_air_2005_2010 <- stConstruct(raw_air_2005_2010, c("lng","lat"),"dates", crs = CRS("+init=epsg:4326"))
-STFDF_air_2005_2010 <- as(STIDF_air_2005_2010, "STFDF")
-summary(STFDF_air_2005_2010)
+STIDF_pm10_2005_2010 <- stConstruct(pm10_2005_2010, c("lng","lat"),"dates", crs = CRS("+init=epsg:4326"))
+STFDF_pm10_2005_2010 <- as(STIDF_pm10_2005_2010, "STFDF")
+summary(STFDF_pm10_2005_2010)
 ```
 
 
 # Build spatiotemporal variogram
 
 ```{r}
-air_vario <- variogram(PM10~1, spaceTime_air_2005_2010, width=20, cutoff = 200, tlags=0:5)
-plot(air_vario)
-plot(air_vario, wireframe = TRUE)
+pm10_vario <- variogram(pm10~1, STFDF_pm10_2005_2010, width=20, cutoff = 200, tlags=0:5)
+plot(pm10_vario)
+plot(pm10_vario, wireframe = TRUE)
 ```
 
 ## Model variogram
@@ -113,12 +112,12 @@ errors.
 
 ```{r, warnings = FALSE}
 # fit the separableModel variogram 
-separableModel <- fit.StVariogram(air_vario, separableModel,
+separableModel <- fit.StVariogram(pm10_vario, separableModel,
                                   method="BFGS")
 
 # visual check on the fit
-plot(air_vario, separableModel, wireframe =  TRUE)
-plot(air_vario, wireframe = TRUE)
+plot(pm10_vario, separableModel, wireframe =  TRUE)
+plot(pm10_vario, wireframe = TRUE)
 ```
 
 
@@ -129,11 +128,11 @@ metricModel <- vgmST("metric",
                      joint=vgm(0.9, "Exp", 123, 0.1),
                      stAni=100)
 
-metricModel <- fit.StVariogram(air_vario, metricModel,
+metricModel <- fit.StVariogram(pm10_vario, metricModel,
                                   method="BFGS")
 
-plot(air_vario, metricModel, wireframe =  TRUE)
-plot(air_vario, wireframe = TRUE)
+plot(pm10_vario, metricModel, wireframe =  TRUE)
+plot(pm10_vario, wireframe = TRUE)
 ```
 
 But many other models possible:
@@ -171,3 +170,7 @@ You can get the mean squared errors within the output of the function
 attr(separableModel,"optim")$value
 attr(metricModel,"optim")$value
 ```
+
+## Spatio-temporal krigging
+
+p.174
