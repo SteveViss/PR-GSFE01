@@ -64,7 +64,7 @@ mapview(sf_halibut)
 
 We can now build a representation of the occurrences per year.
 
-```{r, fig.retina = 2, echo = FALSE, fig.align="center", fig.height = 6, fig.width = 10}
+```{r, fig.retina = 2, fig.align="center"}
 ggplot() + 
      geom_sf(data = sf_estuary, fill = "grey50", col = "white") + 
      geom_sf(data = filter(sf_halibut, year > 2006), aes(col = depth)) + 
@@ -175,13 +175,18 @@ gTmaxav <-
 gTmaxav
 ```
 
-# Transform your data into `spacetime` class
+# Transform your data into `spacetime` classes
 
 To perform spatio-temporal variograms with `gstat`, we need to convert our data
 into one of the following different `spacetime` classes of object. To build
 these objects, the best way is to use the `stConstruct` function in the
 `spacetime` package.
 
+## Get access to the data
+
+[Download PM10 air quality data]("./assets/data/air.rds")
+
+## `spacetime` classes
 
 ```{r}
 library(spacetime)
