@@ -27,6 +27,26 @@ class: title-slide, middle
 
 
 ---
+class: clear, middle
+
+## `r icon::fa("slideshare")` Slides available at:
+https://steveviss.github.io/PR-GSFE01/INLA/index.html
+
+## `r icon::fa("tag")` Practices:
+
+### Building a mesh in INLA
+https://steveviss.github.io/PR-GSFE01/INLA/practiceMesh.html
+
+### Spatial modelling with INLA
+https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpace.html
+
+
+### Spatio-temporal modelling with INLA
+https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpaceTime.html
+
+
+
+---
 class: inverse, center, middle
 
 

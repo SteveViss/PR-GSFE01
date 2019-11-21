@@ -1,0 +1,10 @@
+base
+rmarkdown
+sf
+sp
+dplyr
+gstat
+spacetime
+mapview
+lattice
+raster
