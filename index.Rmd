@@ -42,25 +42,21 @@ output:
 
 # **Day 4**. Spatio-temporal data and modelling
 
-## Morning - Visualizing spatiotemporal data with R
+## Visualizing spatio-temporal data with R
 
 ### `r icon::fa("slideshare")` [Slides](https://steveviss.github.io/PR-GSFE01/st_manip/index.html)
 
 ### `r icon::fa("tag")` [Practice](https://steveviss.github.io/PR-GSFE01/st_manip/practice.html)
 
-## Morning - Spatio-temporal variogram practice
+## Spatio-temporal variogram practice
 
 ### `r icon::fa("tag")` [Practice](https://steveviss.github.io/PR-GSFE01/sp_time_vario/practice.html)
 
-## Afternoon
+## Spatial modelling with INLA
 
 ### `r icon::fa("slideshare")` [Slides](https://steveviss.github.io/PR-GSFE01/INLA/index.html)
 
-### `r icon::fa("tag")` Practice
-
-### [Building a mesh in INLA](https://steveviss.github.io/PR-GSFE01/INLA/practiceMesh.html)
-
-### [Spatial modelling with INLA](https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpace.html)
+### `r icon::fa("tag")` Practices: [Building a mesh in INLA](https://steveviss.github.io/PR-GSFE01/INLA/practiceMesh.html) & [Spatial modelling with INLA](https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpace.html)
 
 # **Day 5**. Spatio-temporal modelling with INLA
 
