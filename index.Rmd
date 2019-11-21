@@ -1,5 +1,5 @@
 ---
-title: Geostatistics – Handling Spatial and Spatial-temporal data Using R (GSFE01)
+title: Handling Spatial and Spatial-temporal data Using R (GSFE01)
 author: Guillaume Blanchet & Steve Vissault
 date: November 18-22th, 2019
 output:
@@ -7,6 +7,7 @@ output:
     theme: cayman
     highlight: github
 ---
+
 
 # **Day 1** 
 
