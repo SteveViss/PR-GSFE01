@@ -8,13 +8,13 @@ output:
     highlight: github
 ---
 
-# **Day 1** Introduction
+# **Day 1** 
 
-### `r icon::fa("slideshare")` Slides
-https://steveviss.github.io/PR-GSFE01/index.html
+## Introduction
 
+### `r icon::fa("slideshare")` [Slides](https://steveviss.github.io/PR-GSFE01/index.html)
 
-# **Day 1** Handling spatial data with R
+## Handling spatial data with R
 
 ### `r icon::fa("slideshare")` [Slides](https://steveviss.github.io/PR-GSFE01/basics)
 
@@ -42,13 +42,13 @@ https://steveviss.github.io/PR-GSFE01/index.html
 
 # **Day 4**. Spatio-temporal data and modelling
 
-## Morning 1 - Visualizing spatiotemporal data with R
+## Morning - Visualizing spatiotemporal data with R
 
 ### `r icon::fa("slideshare")` [Slides](https://steveviss.github.io/PR-GSFE01/st_manip/index.html)
 
 ### `r icon::fa("tag")` [Practice](https://steveviss.github.io/PR-GSFE01/st_manip/practice.html)
 
-## Morning 2 - Spatio-temporal variogram practice
+## Morning - Spatio-temporal variogram practice
 
 ### `r icon::fa("tag")` [Practice](https://steveviss.github.io/PR-GSFE01/sp_time_vario/practice.html)
 
@@ -58,11 +58,10 @@ https://steveviss.github.io/PR-GSFE01/index.html
 
 ### `r icon::fa("tag")` Practice
 
-#### [Building a mesh in INLA](https://steveviss.github.io/PR-GSFE01/INLA/practiceMesh.html)
+### [Building a mesh in INLA](https://steveviss.github.io/PR-GSFE01/INLA/practiceMesh.html)
 
-#### [Spatial modelling with INLA](https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpace.html)
-
+### [Spatial modelling with INLA](https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpace.html)
 
 # **Day 5**. Spatio-temporal modelling with INLA
 
-### [Practice](https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpaceTime.html)
+### `r icon::fa("tag")` [Practice](https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpaceTime.html)
