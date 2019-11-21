@@ -26,7 +26,6 @@ To illustrate how the models are constructed, sugar maple data will be used samp
 ```{r, message = FALSE, warning=FALSE}
 library(INLA)
 library(raster)
-library(vegan) # For the mite data
 library(sf)
 ```
 
@@ -36,11 +35,6 @@ library(sf)
 sugar <- readRDS("assets/data/tree.rds")
 climate <- readRDS("assets/data/climate_Present.rds")
 region <- readRDS("assets/data/region.rds")
-```
-
-## Organize data
-
-```{r}
 ```
 
 ## Extract climate variables for the sampled location
@@ -76,9 +70,8 @@ MeshSpace$n
 
 ### Temporal mesh
 
-
 ```{r}
-meshTime <- inla.mesh.1d(seq(min(sugar$yr), max(sugar$yr), length=5))
+MeshTime <- inla.mesh.1d(seq(min(sugar$yr), max(sugar$yr), length=5))
 ```
 
 ## Step 2 - Define the stochastic partial differential equation object
@@ -109,7 +102,8 @@ Here, we construct an "index matrix" used to extract the values of the latent sp
 
 ```{r}
 nyear <- length(unique(sugar$yr))
-Field <- inla.spde.make.index("field",n.spde=SPDE$n.spde, n.group = 10)
+Field <- inla.spde.make.index("field", n.spde=SPDE$n.spde,
+                              n.group = MeshTime$n)
 ```
 
 ### Step 5 - $A$ matrix
@@ -121,10 +115,14 @@ We need to construct $A$ matrices, one for estimation and another for prediction
 AEst<-inla.spde.make.A(MeshSpace,
                        loc=st_coordinates(sugar),
                        group = sugar$yr,
-                       group.mesh = meshTime)
+                       group.mesh = MeshTime)
 
 # For prediction
-APred<-inla.spde.make.A(MeshSpace)
+#APred <- inla.spde.make.A(MeshSpace)
+APred <- Diagonal(MeshSpace$n * MeshTime$n)
+
+# Combine both matrix
+A <- rbind(AEst, APred)
 ```
 
 ### Step 6 - Organise the $A$ matrix into a list
@@ -134,20 +132,25 @@ APred<-inla.spde.make.A(MeshSpace)
 AEstlist <- as.list(rep(1,ncol(X) + 2))
 AEstlist[[1]] <- AEst
 
+#Alist <-list(A, 1)
+
 # For prediction
-APredlist <- list(APred)
+#APredlist <- list(APred)
 ```
 
 ### Step 7 - Organise the effects (field and explanatory variables)
 
 ```{r}
 # Estimation
+effect <- list(Field, list(Intercept = rep(1, nrow(sugar)), X))
+
+
 effectEst <- as.list(as.data.frame(cbind(1,1,X)))
 effectEst[[1]] <- Field
-effectEst[[2]] <- list(b0=rep(1,nrow(sugar)))
+effectEst[[2]] <- list(Intercept = rep(1, nrow(sugar)))
 
 # Prediction
-effectPred <- list(i = 1:SPDE$n.spde)
+#effectPred <- list(i = 1:SPDE$n.spde)
 ```
 
 ### Step 7 - Build `stack`
@@ -155,28 +158,33 @@ effectPred <- list(i = 1:SPDE$n.spde)
 Here, we build a `stack` for estimation another for prediction and then we combine them together. Note that these are special version of `stack` especially designed for the INLA package.
 
 ```{r}
+Stack <- inla.stack(data=list(tree = sugar$n_occ),
+                    A = AEstlist,
+                    effects = effectEst,
+                    tag="est")
+
 # Stack for estimation
-StackEst <- inla.stack(data=list(tree = sugar$n_occ),
-                     A = AEstlist,
-                     effects = effectEst,
-                     tag="est")
+#StackEst <- inla.stack(data=list(tree = sugar$n_occ),
+#                     A = AEstlist,
+#                     effects = effectEst,
+#                     tag="est")
 
 # Stack for prediction
-StackPred <- inla.stack(data=list(tree = NA),
-                        A=APredlist,
-                        effects=effectPred,
-                        tag="pred")
+#StackPred <- inla.stack(data=list(tree = NA),
+#                        A=APredlist,
+#                        effects=effectPred,
+#                        tag="pred")
 
 # Organise StackEst and StackPred into a single stack
-Stack <- inla.stack(StackEst,StackPred)
+#Stack <- inla.stack(StackEst,StackPred)
 ```
 
 ### Step 8 - Building the model (Finally !)
 
 ```{r, warning = FALSE}
 # Formula
-form <- as.formula(paste("tree ~ 0 + b0 +",paste0("bio",1:19,collapse = "+"),
-                          " + f(i, model=SPDE, group=sugar$year, control.group=list(model='ar1', hyper=hSpec))"))
+form <- as.formula(paste("tree ~ 0 + Intercept +",paste0("bio",1:19,collapse = "+"),
+                          " + f(field, model=SPDE, group=sugar$year, control.group=list(model='ar1', hyper=hSpec))"))
 
 model <- inla(form,
               data = inla.stack.data(Stack),

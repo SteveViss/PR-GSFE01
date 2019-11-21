@@ -62,7 +62,16 @@ mapview(sf_halibut)
 
 ## Visual representation per year
 
-We can now build a representation of the occurrences per year.
+We can now build a representation of the occurrences per year, but firsts we have to extract the polygon for the area around the estuary.
+
+```{r, cache = TRUE, infos = FALSE, warnings = FALSE, messages = FALSE}
+poly_ca <- raster::getData('GADM', country='CA', level=1)
+sf_ca <- st_as_sf(poly_ca)
+sf_estuary <- st_crop(sf_ca, st_as_sfc(st_bbox(sf_halibut)))
+```
+
+Following, we can visualize the data
+
 
 ```{r, fig.retina = 2, fig.align="center"}
 ggplot() + 
