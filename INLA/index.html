@@ -6,6 +6,7 @@
     <meta name="author" content="Guillaume Blanchet &amp; Steve Vissault" />
     <link href="assets/remark-css/default.css" rel="stylesheet" />
     <link href="assets/remark-css/hygge.css" rel="stylesheet" />
+    <link href="assets/font-awesome/css/fontawesome-all.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="pr.css" type="text/css" />
     <link rel="stylesheet" href="pr-fonts.css" type="text/css" />
   </head>
@@ -23,6 +24,26 @@ class: title-slide, middle
 .instructors[
   GSFE01 - F. Guillaume Blanchet &amp; Steve Vissault
 ]
+
+
+---
+class: clear, middle
+
+## <i class="fab  fa-slideshare "></i> Slides available at:
+https://steveviss.github.io/PR-GSFE01/INLA/index.html
+
+## <i class="fas  fa-tag "></i> Practices:
+
+### Building a mesh in INLA
+https://steveviss.github.io/PR-GSFE01/INLA/practiceMesh.html
+
+### Spatial modelling with INLA
+https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpace.html
+
+
+### Spatio-temporal modelling with INLA
+https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpaceTime.html
+
 
 
 ---
@@ -408,7 +429,7 @@ resJAGS &lt;- coda.samples(JAGSmodel, params, n.iter=50000 )
 
 ```
 ##    user  system elapsed 
-##  16.642   4.134  20.783
+##  16.903   4.197  21.107
 ```
 ]
 
@@ -430,8 +451,15 @@ resINLA &lt;- inla(y~x,
 
 ```
 ##    user  system elapsed 
-##   0.712   0.513   1.302
+##   0.740   0.528   1.356
 ```
+
+---
+
+# How fast is INLA ?
+## Do the results match
+
+![](index_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
 
 ---
 
@@ -472,13 +500,6 @@ legend("topright",
        lty = c(1,1), lwd = c(6,3))
 ```
 ]
----
-
-# How fast is INLA ?
-## Do the results match
-
-![](index_files/figure-html/unnamed-chunk-10-1.png)&lt;!-- --&gt;
-
 ---
 class: inverse, center, middle
 
