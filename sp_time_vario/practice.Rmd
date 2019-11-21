@@ -27,7 +27,7 @@ library(mapview)
 
 ## Get access to the data
 
-[Download PM10 air quality data]("https://github.com/SteveViss/PR-GSFE01/raw/master/sp_time_vario/assets/data/air.rds")
+[Download PM10 air quality data]("assets/data/air.rds")
 
 
 # Load data
