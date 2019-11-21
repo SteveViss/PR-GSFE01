@@ -185,7 +185,7 @@ We subset 3 days within the STSDF in order to reduce the krigging computation ti
 STFDF_pm10_3d <- STFDF_pm10_2005_2010[,"2005-06-01::2005-06-03"]
 str(STFDF_pm10_3d)
 # Convert to STIDF class
-STIDF_pm10_3d <- as(STIDF_pm10_3d, "STIDF")
+STIDF_pm10_3d <- as(STFDF_pm10_3d, "STIDF")
 ```
 
 We create the empty spatial grid.
