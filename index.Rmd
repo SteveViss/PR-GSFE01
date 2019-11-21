@@ -1,0 +1,68 @@
+---
+title: Geostatistics – Handling Spatial and Spatial-temporal data Using R (GSFE01)
+author: Guillaume Blanchet & Steve Vissault
+date: November 18-22th, 2019
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+# **Day 1** Introduction
+
+### `r icon::fa("slideshare")` Slides
+https://steveviss.github.io/PR-GSFE01/index.html
+
+
+# **Day 1** Handling spatial data with R
+
+### `r icon::fa("slideshare")` [Slides](https://steveviss.github.io/PR-GSFE01/basics)
+
+### `r icon::fa("tag")` [Practice](https://steveviss.github.io/PR-GSFE01/basics/practice.html)
+
+# **Day 2**
+
+## Morning - Inverse Distance weigthing
+
+### `r icon::fa("slideshare")` [Slides](https://steveviss.github.io/PR-GSFE01/IDW/index.html)
+
+### `r icon::fa("tag")` [Practice](https://steveviss.github.io/PR-GSFE01/IDW/practice.html)
+
+## Afternoon - Trend surface estimation
+
+### `r icon::fa("slideshare")` [Slides](https://steveviss.github.io/PR-GSFE01/trend_surface/index.html)
+
+### `r icon::fa("tag")` [Practice](https://steveviss.github.io/PR-GSFE01/trend_surface/practice.html)
+
+# **Day 3**. Spatial variogram modelling
+
+### `r icon::fa("slideshare")` [Slides](https://steveviss.github.io/PR-GSFE01/sp_vario/index.html)
+
+### `r icon::fa("tag")` [Practice](https://steveviss.github.io/PR-GSFE01/sp_vario/practice.html)
+
+# **Day 4**. Spatio-temporal data and modelling
+
+## Morning 1 - Visualizing spatiotemporal data with R
+
+### `r icon::fa("slideshare")` [Slides](https://steveviss.github.io/PR-GSFE01/st_manip/index.html)
+
+### `r icon::fa("tag")` [Practice](https://steveviss.github.io/PR-GSFE01/st_manip/practice.html)
+
+## Morning 2 - Spatio-temporal variogram practice
+
+### `r icon::fa("tag")` [Practice](https://steveviss.github.io/PR-GSFE01/sp_time_vario/practice.html)
+
+## Afternoon
+
+### `r icon::fa("slideshare")` [Slides](https://steveviss.github.io/PR-GSFE01/INLA/index.html)
+
+### `r icon::fa("tag")` Practice
+
+#### [Building a mesh in INLA](https://steveviss.github.io/PR-GSFE01/INLA/practiceMesh.html)
+
+#### [Spatial modelling with INLA](https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpace.html)
+
+
+# **Day 5**. Spatio-temporal modelling with INLA
+
+### [Practice](https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpaceTime.html)
