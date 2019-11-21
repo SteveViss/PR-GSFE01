@@ -65,7 +65,7 @@ saveRDS(raw_air,"./assets/data/pm10_germany.rds")
 ```
 
 ```{r}
-pm10 <- readRDS("./assets/data/pm10_germany.rds")
+pm10 <- readRDS("./assets/data/air.rds")
 head(pm10)
 pm10_20090306 <- st_as_sf(subset(pm10, dates == "2009-03-06") ,coords = c("lng", "lat"), crs = 4326)
 mapview(pm10_20090306, zcol = "pm10")
