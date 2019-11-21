@@ -25,6 +25,11 @@ library(spacetime)
 library(mapview)
 ```
 
+## Get access to the data
+
+[Download PM10 air quality data]("assets/data/air.rds")
+
+
 # Load data
 
 For this section, we will use the Air quality data obtained from the airBase

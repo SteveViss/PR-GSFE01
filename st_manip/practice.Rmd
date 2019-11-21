@@ -193,7 +193,7 @@ these objects, the best way is to use the `stConstruct` function in the
 
 ## Get access to the data
 
-[Download PM10 air quality data]("./assets/data/air.rds")
+[Download PM10 air quality data]("assets/data/air.rds")
 
 ## `spacetime` classes
 
