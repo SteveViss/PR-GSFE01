@@ -170,7 +170,15 @@ model <- inla(PreAbs ~ 0 + SubsDens + WatrCont + f(i, model = SPDE),
               control.compute=list(waic=TRUE))
 ```
 
-### Plot the results
+
+### Study the output
+
+
+```{r}
+summary(model)
+```
+
+### Plot prediction maps
 
 ```{r}
 # dimention of the raster
@@ -211,19 +219,22 @@ raster.975 <- raster(t(map.975[,ncol(map.975):1]),
 par(mfrow = c(1,3))
 plot(raster.025, zlim = range(values(raster.025),
                               values(rasterMean),
-                              values(raster.975)))
+                              values(raster.975)),
+     main = "2.5%")
 
 points(mite.xy, pch = 19, col = ifelse(mite[,7] > 0, "black", "white"))
 
 plot(rasterMean, zlim = range(values(raster.025),
                               values(rasterMean),
-                              values(raster.975)))
+                              values(raster.975)),
+     main = "Mean")
 
 points(mite.xy, pch = 19, col = ifelse(mite[,7] > 0, "black", "white"))
 
 plot(raster.975, zlim = range(values(raster.025),
                               values(rasterMean),
-                              values(raster.975)))
+                              values(raster.975)),
+     main = "97.5%")
 
 points(mite.xy, pch = 19, col = ifelse(mite[,7] > 0, "black", "white"))
 ```

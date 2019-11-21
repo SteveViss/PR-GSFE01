@@ -408,7 +408,7 @@ resJAGS &lt;- coda.samples(JAGSmodel, params, n.iter=50000 )
 
 ```
 ##    user  system elapsed 
-##  17.484   4.540  22.076
+##  16.642   4.134  20.783
 ```
 ]
 
@@ -430,7 +430,7 @@ resINLA &lt;- inla(y~x,
 
 ```
 ##    user  system elapsed 
-##   0.817   0.663   1.648
+##   0.712   0.513   1.302
 ```
 
 ---
@@ -438,7 +438,46 @@ resINLA &lt;- inla(y~x,
 # How fast is INLA ?
 ## Do the results match
 
-![](index_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
+.scriptsize[
+
+```r
+par(mfrow = c(1,2), mar = c(2,3,4,1))
+
+plot(resINLA$marginals.fixed$`(Intercept)`,
+     type = "n", xlab = "", ylab = "",
+     main = expression(alpha), las = 1, cex.main = 4)
+
+hist(resJAGS[[1]][,1], breaks = 100,
+     freq = FALSE, add = TRUE, col = "lightblue", border = "white")
+
+lines(resINLA$marginals.fixed$`(Intercept)`, lwd = 3, col = "darkblue")
+
+legend("topright",
+       legend = c("JAGS", "INLA"), 
+       col = c("lightblue", "darkblue"),
+       lty = c(1,1), lwd = c(6,3))
+
+plot(resINLA$marginals.fixed$x,
+     type = "n", xlab = "", ylab = "",
+     main = expression(beta), las = 1, cex.main = 4)
+
+hist(resJAGS[[1]][,2], breaks = 100,
+     freq = FALSE, add = TRUE, col = "orange", border = "white")
+
+lines(resINLA$marginals.fixed$x, lwd = 3, col = "brown")
+
+legend("topright",
+       legend = c("JAGS", "INLA"), 
+       col = c("orange", "brown"),
+       lty = c(1,1), lwd = c(6,3))
+```
+]
+---
+
+# How fast is INLA ?
+## Do the results match
+
+![](index_files/figure-html/unnamed-chunk-10-1.png)&lt;!-- --&gt;
 
 ---
 class: inverse, center, middle
@@ -546,7 +585,7 @@ Gaussian Markov Random Field can be illustrated using the following transect
 
 # .small[Conceptual representation in 2D]
 
-&lt;img src="index_files/figure-html/unnamed-chunk-18-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-19-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
@@ -608,7 +647,7 @@ where
 ]
 ]
 .pull-right[
-![](index_files/figure-html/unnamed-chunk-19-1.png)&lt;!-- --&gt;
+![](index_files/figure-html/unnamed-chunk-20-1.png)&lt;!-- --&gt;
 ]
 
 ---
@@ -635,7 +674,7 @@ We can thus visually see the difference between the INLA approach and the classi
 # Constructing the mesh
 
 What we want is a mesh that looks like this
-&lt;img src="index_files/figure-html/unnamed-chunk-21-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-22-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 # Constructing the mesh
@@ -655,7 +694,7 @@ In INLA, estimation is performed at each point of the mesh and the interpolation
 ## A few example of bad mesh
 
 You should be careful about a mesh that looks like this
-&lt;img src="index_files/figure-html/unnamed-chunk-22-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-23-1.png" style="display: block; margin: auto;" /&gt;
 It is not wrong, but it will take longer to estimate
 
 ---
@@ -664,7 +703,7 @@ It is not wrong, but it will take longer to estimate
 ## A few example of bad mesh
 
 You should be careful about a mesh that looks like this
-&lt;img src="index_files/figure-html/unnamed-chunk-23-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-24-1.png" style="display: block; margin: auto;" /&gt;
 It is not wrong, but it will give a very (!) coarse interpolation
 
 ---
@@ -673,7 +712,7 @@ It is not wrong, but it will give a very (!) coarse interpolation
 ## A few example of bad mesh
 
 Mesh like this should not use! 
-&lt;img src="index_files/figure-html/unnamed-chunk-24-1.png" style="display: block; margin: auto;" /&gt;
+&lt;img src="index_files/figure-html/unnamed-chunk-25-1.png" style="display: block; margin: auto;" /&gt;
 The triangles are very different in size.
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>

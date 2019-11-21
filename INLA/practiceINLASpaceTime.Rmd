@@ -41,9 +41,6 @@ region <- readRDS("assets/data/region.rds")
 ## Organize data
 
 ```{r}
-sugarSP <- as(sugar, "Spatial")
-sugarClean <- data.frame(sugar[,c(4,2)], st_coordinates(sugar))
-sugarClean$geometry <- NULL
 ```
 
 ## Extract climate variables for the sampled location
@@ -61,7 +58,7 @@ For our illustration, let's use the following mesh.
 
 ### Spatial mesh
 ```{r}
-MeshSpace <- inla.mesh.2d(boundary = region, max.edge = 0.75,
+MeshSpace <- inla.mesh.2d(boundary = region, max.edge = 1,
                           min.angle = 20,
                           cutoff = 0.5,
                           offset = c(0.5,0.5),
@@ -81,7 +78,7 @@ MeshSpace$n
 
 
 ```{r}
-meshTime <- inla.mesh.1d(seq(min(sugar$yr), max(sugar$yr), length=10))
+meshTime <- inla.mesh.1d(seq(min(sugar$yr), max(sugar$yr), length=5))
 ```
 
 ## Step 2 - Define the stochastic partial differential equation object
@@ -111,7 +108,7 @@ precPrior <- list(prior='pc.prec', param=c(1, 0.01))
 Here, we construct an "index matrix" used to extract the values of the latent spatial field at the observation locations.
 
 ```{r}
-nyear <- length(unique(sugarClean$yr))
+nyear <- length(unique(sugar$yr))
 Field <- inla.spde.make.index("field",n.spde=SPDE$n.spde, n.group = 10)
 ```
 
@@ -159,7 +156,7 @@ Here, we build a `stack` for estimation another for prediction and then we combi
 
 ```{r}
 # Stack for estimation
-StackEst <- inla.stack(data=list(tree = sugarClean$n_occ),
+StackEst <- inla.stack(data=list(tree = sugar$n_occ),
                      A = AEstlist,
                      effects = effectEst,
                      tag="est")

@@ -466,6 +466,44 @@ resINLA <- inla(y~x,
 # How fast is INLA ?
 ## Do the results match
 
+.scriptsize[
+```{r, echo = TRUE, fig.width=12, eval=FALSE}
+par(mfrow = c(1,2), mar = c(2,3,4,1))
+
+plot(resINLA$marginals.fixed$`(Intercept)`,
+     type = "n", xlab = "", ylab = "",
+     main = expression(alpha), las = 1, cex.main = 4)
+
+hist(resJAGS[[1]][,1], breaks = 100,
+     freq = FALSE, add = TRUE, col = "lightblue", border = "white")
+
+lines(resINLA$marginals.fixed$`(Intercept)`, lwd = 3, col = "darkblue")
+
+legend("topright",
+       legend = c("JAGS", "INLA"), 
+       col = c("lightblue", "darkblue"),
+       lty = c(1,1), lwd = c(6,3))
+
+plot(resINLA$marginals.fixed$x,
+     type = "n", xlab = "", ylab = "",
+     main = expression(beta), las = 1, cex.main = 4)
+
+hist(resJAGS[[1]][,2], breaks = 100,
+     freq = FALSE, add = TRUE, col = "orange", border = "white")
+
+lines(resINLA$marginals.fixed$x, lwd = 3, col = "brown")
+
+legend("topright",
+       legend = c("JAGS", "INLA"), 
+       col = c("orange", "brown"),
+       lty = c(1,1), lwd = c(6,3))
+```
+]
+---
+
+# How fast is INLA ?
+## Do the results match
+
 ```{r, echo = FALSE, fig.width=12, eval=TRUE}
 par(mfrow = c(1,2), mar = c(2,3,4,1))
 
