@@ -1,0 +1,231 @@
+---
+title: "Building a mesh in INLA"
+author: Guillaume Blanchet & Steve Vissault
+date: November 21th, 2019
+output:
+  html_document:
+    highlight: tango
+    toc: true
+    toc_float: true
+---
+
+```{r, echo=FALSE, message=FALSE, results='hide', purl=FALSE}
+knitr::opts_chunk$set(cache=F,fig.width=5,fig.height=5,dpi=125)
+```
+
+# Introduction
+
+This particular document was written to explain how to build univariate spatially constrained model.
+
+Note, that in INLA can be used with a range of data type because many different likelihood and link functions have been implemented in INLA. The different likelihood functions already implemented in INLA can be found by typing `INLA::inla.list.models("likelihood")` while the link functions can be found by typing `INLA::inla.list.models("link")`.
+
+To illustrate how the models are constructed, the mite data will be used.
+
+# Load R package for the analysis
+
+```{r, message = FALSE, warning=FALSE}
+library(INLA)
+library(raster)
+library(vegan) # For the mite data
+```
+
+# Data
+
+```{r}
+data(mite)
+data(mite.xy)
+data(mite.env)
+```
+
+## Organize environmental data
+
+```{r}
+# Scale continuous variables
+X <- scale(mite.env[,1:2])
+```
+
+## Sampling region
+
+For our illustration, let's also build a `SpatialPolygons` outlining the sampling area. This will become handy for a few steps when performing the analysis.
+
+```{r}
+poly <- Polygon(matrix(c(0,0,2.6,2.6,0,0,10,10,0,0), 
+                       nrow = 5, ncol = 2))
+spacePoly <- SpatialPolygons(list(Polygons(list(poly),ID = 1)),
+                             proj4string = crs("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"))
+```
+
+## Step 1 - Building the mesh
+
+The first step that needs to be carried out to construct a spatially constrained model is to build a Delaunay triangulation, a mesh, that will serve as a basis to construct the spatial component of the model through an SPDE approach. 
+
+Properly choosing the structure of the mesh is essential for the model estimation to be carried out properly. Detailed explanation on the dos and don'ts of constructing a mesh is presented in section 1.3 of the  [R-INLA tutorial on SPDE models](http://inla.r-inla-download.org/r-inla.org/tutorials/spde/html/). For a quick overview, take a look at the *mesh* practical. 
+For our illustration, let's use the following mesh.
+
+```{r}
+Mesh <- inla.mesh.2d(loc.domain = mite.xy, max.edge = 0.5,
+                     min.angle = 20,
+                     cutoff = 0.5,
+                     offset = c(0.5,0.5),
+                     crs = crs(spacePoly))
+```
+
+```{r, fig.width = 3, fig.height=3}
+par(mar = c(1,1,1,1))
+
+plot(Mesh, main = "", asp = 1)
+points(mite.xy, pch = 19, col = "red")
+
+# Number of edges in the mesh
+Mesh$n
+```
+
+## Step 2 - Define the stochastic partial differential equation object
+
+This is important to define the structure of the field on which the spatial contrain is imposed. In some ways, this serves as our "model variogram". Recall that in INLA, it is the Matérn model variogram that is used. In this respect, in addition of the mesh, we have to define the scaling parameter (`alpha`), the prior range (`prior.range`) and the prior variance (`prior.sigma`).
+
+- `alpha`: This value needs to range between 0 and 2
+- `prior.range`: This is a vector of length 2 specifying the range (first) and the uncertainty around this range (second). Note that the uncertainty around the range needs to be smaller that the range itself.
+- `prior.sigma`: This is a vector of length 2 specifying the sill (first) and the uncertainty around this sill (second). Note that the uncertainty around the sill needs to be smaller that the range itself.
+
+```{r}
+SPDE <- inla.spde2.pcmatern(mesh=Mesh,
+                            alpha=2,
+                            prior.range=c(0.05, 0.01),
+                            prior.sigma=c(1, 0.01))
+```
+
+### Step 3 - Index matrix 
+
+Here, we construct an "index matrix" used to extract the values of the latent spatial field at the observation locations.
+
+```{r}
+Field <- inla.spde.make.index("field",n.spde=Mesh$n)
+```
+
+### Step 4 - $A$ matrix
+
+We need to construct $A$ matrices, one for estimation and another for predictions values. Recall from the lecture that the $A$ matrix is sometimes referred to as the *observation matrix* and includes the parameters used to construct model.
+
+```{r}
+# For estimation
+AEst<-inla.spde.make.A(Mesh,loc=as.matrix(mite.xy))
+
+# For prediction
+APred<-inla.spde.make.A(Mesh)
+```
+
+### Step 5 - Organise the $A$ matrix into a list
+
+```{r}
+# For estimation
+AEstlist <- list(AEst,1,1)
+
+# For prediction
+APredlist <- list(APred)
+```
+
+### Step 6 - Organise the effects (field and explanatory variables)
+
+```{r}
+# Estimation
+effectEst <- list(i = 1:SPDE$n.spde,
+                  SubsDens =  X[,1],
+                  WatrCont = X[,2])
+
+# Prediction
+effectPred <- list(i = 1:SPDE$n.spde)
+```
+
+### Step 7 - Build `stack`
+
+Here, we build a `stack` for estimation another for prediction and then we combine them together. Note that these are special version of `stack` especially designed for the INLA package.
+
+```{r}
+# Stack for estimation
+StackEst <- inla.stack(data=list(PreAbs = mite[,7]),
+                     A = AEstlist,
+                     effects = effectEst,
+                     tag="est")
+
+# Stack for prediction
+StackPred <- inla.stack(data=list(PreAbs = NA),
+                        A=APredlist,
+                        effects=effectPred,
+                        tag="pred")
+
+# Organise StackEst and StackPred into a single stack
+Stack <- inla.stack(StackEst,StackPred)
+```
+
+### Step 8 - Building the model (Finally !)
+
+```{r, warning = FALSE}
+model <- inla(PreAbs ~ 0 + SubsDens + WatrCont + f(i, model = SPDE),
+              data = inla.stack.data(Stack),
+              family="poisson",
+              control.family =list(link="log"),
+              control.predictor=list(A=inla.stack.A(Stack),
+										                 compute=TRUE, link = 1),
+              control.compute=list(waic=TRUE))
+```
+
+### Plot the results
+
+```{r}
+# dimention of the raster
+rasterDim <- c(2002, 520)
+
+# Define basis of the map
+mapBasis <- inla.mesh.projector(Mesh,
+                               dims = rasterDim,
+                               xlim = c(xmin(spacePoly), xmax(spacePoly)),
+                               ylim = c(ymin(spacePoly), ymax(spacePoly)),
+                               crs = crs(spacePoly))
+
+# Find the mesh edges on which predictions should be made
+ID <- inla.stack.index(Stack, tag="pred")$data
+  
+# Calculate prediction
+mapMean <- inla.mesh.project(mapBasis, 
+                             model$summary.fitted.values[["mean"]][ID])
+map.025 <- inla.mesh.project(mapBasis, 
+                             model$summary.fitted.values[["0.025quant"]][ID])
+map.975 <- inla.mesh.project(mapBasis, 
+                             model$summary.fitted.values[["0.975quant"]][ID])
+  
+# Transform map into a raster
+rasterMean <- raster(t(mapMean[,ncol(mapMean):1]),
+                     xmn = min(mapBasis$x), xmx = max(mapBasis$x), 
+                     ymn = min(mapBasis$y), ymx = max(mapBasis$y))
+
+raster.025 <- raster(t(map.025[,ncol(map.025):1]),
+                     xmn = min(mapBasis$x), xmx = max(mapBasis$x), 
+                     ymn = min(mapBasis$y), ymx = max(mapBasis$y))
+
+raster.975 <- raster(t(map.975[,ncol(map.975):1]),
+                     xmn = min(mapBasis$x), xmx = max(mapBasis$x), 
+                     ymn = min(mapBasis$y), ymx = max(mapBasis$y))
+
+# Plot the results
+par(mfrow = c(1,3))
+plot(raster.025, zlim = range(values(raster.025),
+                              values(rasterMean),
+                              values(raster.975)))
+
+points(mite.xy, pch = 19, col = ifelse(mite[,7] > 0, "black", "white"))
+
+plot(rasterMean, zlim = range(values(raster.025),
+                              values(rasterMean),
+                              values(raster.975)))
+
+points(mite.xy, pch = 19, col = ifelse(mite[,7] > 0, "black", "white"))
+
+plot(raster.975, zlim = range(values(raster.025),
+                              values(rasterMean),
+                              values(raster.975)))
+
+points(mite.xy, pch = 19, col = ifelse(mite[,7] > 0, "black", "white"))
+```
+
+
