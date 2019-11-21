@@ -21,8 +21,16 @@ projection(tree) <- CRS("+init=epsg:4326")
 
 # Load raster
 library(raster)
-rs_ref <- readRDS("/home/steve/Documents/Git/PRStats/PR-GSFE01/INLA/assets/data/climate_Present.rds")
+rs_ref <- readRDS("climate_Present.rds")
 tree <- crop(tree, extent(rs_ref))
 
+library(sf)
 sf_tree <- st_as_sf(tree)
-saveRDS(sf_tree, "/home/steve/Documents/Git/PRStats/PR-GSFE01/INLA/assets/data/tree.rds")
+saveRDS(sf_tree, "tree.rds")
+
+# Plot graphic
+library(ggplot2)
+region <- st_as_sf(readRDS("region.rds"))
+
+ggplot() + geom_sf(data = region, col = "grey50") + geom_sf(data = filter(sf_tree, yr >=1985), aes(color = log(n_occ))) + facet_wrap(~yr) + theme_bw()
+ggsave("maple_distribution.png", width = 20, height = 12, dpi = 300)
