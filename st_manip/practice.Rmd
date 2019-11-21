@@ -206,7 +206,7 @@ class(spaceTime_air)
 ```
 
 
-```{r}
+```{r, fig.width = 10}
 # subset 
 raw_air_062005 <- subset(raw_air, dates > as.Date("2005-06-01") & dates < as.Date("2005-06-30"))
 

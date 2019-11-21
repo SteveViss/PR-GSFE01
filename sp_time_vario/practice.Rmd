@@ -1,5 +1,5 @@
 ---
-title: "Spatial variogram"
+title: "Spatio-temporal variograms"
 author: Guillaume Blanchet & Steve Vissault
 date: November 21th, 2019
 output:
@@ -21,9 +21,11 @@ library(dplyr)
 # Analysis
 library(gstat)
 library(spacetime)
+# visualization
+library(mapview)
 ```
 
-# Spatiotemporal variogram
+# Load data
 
 For this section, we will use the Air quality data obtained from the airBase
 European air quality data base. Daily averages for rural background stations in
@@ -57,8 +59,6 @@ names(raw_air)[4:5] <- c("lng","lat")
 saveRDS(raw_air,"./assets/data/pm10_germany.rds")
 ```
 
-## Load the data
-
 ```{r}
 pm10 <- readRDS("./assets/data/pm10_germany.rds")
 head(pm10)
@@ -80,9 +80,9 @@ summary(STFDF_pm10_2005_2010)
 ```
 
 
-# Build spatiotemporal variogram
+# Build empricial spatio-temporal variogram
 
-```{r}
+```{r, cache = TRUE}
 pm10_vario <- variogram(pm10~1, STFDF_pm10_2005_2010, width=20, cutoff = 200, tlags=0:5)
 plot(pm10_vario)
 plot(pm10_vario, wireframe = TRUE)
@@ -92,11 +92,13 @@ plot(pm10_vario, wireframe = TRUE)
 
 ### Declare the model
 
-```{r echo=FALSE}
+```{r echo=FALSE, out.width="80%"}
 knitr::include_graphics("https://aegis4048.github.io/jupyter_images/basic_variogram.png")
 ```
 
-```{r}
+The argument `sill` that is supplied to `vgmST` (below) defines the joint spatio-temporal sill.
+
+```{r, cache = TRUE}
 # Declare the model variogram 
 separableModel <- vgmST("separable", 
                         method = "Nelder-Mead", # no lower & upper needed
@@ -110,18 +112,10 @@ The function `fit.StVariogram` will use the `optim` function to optimize and
 find the best set of parameters for the model variogram using the mean squared
 errors. 
 
-```{r, warnings = FALSE}
+```{r, warnings = FALSE, cache = TRUE}
 # fit the separableModel variogram 
 separableModel <- fit.StVariogram(pm10_vario, separableModel,
                                   method="BFGS")
-
-# visual check on the fit
-plot(pm10_vario, separableModel, wireframe =  TRUE)
-plot(pm10_vario, wireframe = TRUE)
-```
-
-
-```{r}
 # metric model
 metricModel <- vgmST("metric",
                      method = "Nelder-Mead", # no lower & upper needed
@@ -131,11 +125,9 @@ metricModel <- vgmST("metric",
 metricModel <- fit.StVariogram(pm10_vario, metricModel,
                                   method="BFGS")
 
-plot(pm10_vario, metricModel, wireframe =  TRUE)
-plot(pm10_vario, wireframe = TRUE)
 ```
 
-But many other models possible:
+But many other possibilities
 
 ```r
 # product sum model: spatial and temporal nugget will be ignored and kept
@@ -171,6 +163,41 @@ attr(separableModel,"optim")$value
 attr(metricModel,"optim")$value
 ```
 
+```{r, fig.width = 10}
+library(lattice)
+plot(pm10_vario, list(separableModel, metricModel), all=T, wireframe=T, zlim=c(0,120),
+    zlab=NULL,
+    xlab=list("distance (km)", rot=30),
+    ylab=list("time lag (days)", rot=-35),
+    scales=list(arrows=F, z = list(distance = 5)))
+```
+
 ## Spatio-temporal krigging
 
-p.174
+We subset 3 days within the STSDF in order to reduce the krigging computation time.
+
+```{r}
+STFDF_pm10_3d <- STFDF_pm10_2005_2010[,"2005-06-01::2005-06-03"]
+str(STFDF_pm10_3d)
+```
+
+We create the empty spatial grid.
+
+```{r}
+library(raster)
+sp_area <- STFDF_pm10_3d@sp
+proj <- proj4string(STFDF_pm10_3d@sp)
+rs_area <- raster(extent(sp_area), res = 0.05)
+sp_grid_area <- SpatialPoints(rasterToPoints(rs_area), CRS(proj))
+```
+
+Perform the krigging
+
+```{r, cache = TRUE}
+DE_pred <- STF(sp=sp_grid_area, time=STFDF_pm10_3d@time)
+DE_kriged <- krigeST(pm10~1, data=STIDF_pm10_3d, newdata=DE_pred,
+                    modelList=separableModel)
+
+stplot(DE_kriged)
+```
+

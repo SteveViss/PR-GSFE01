@@ -1,5 +1,5 @@
 ---
-title: "Spatial variogram"
+title: "Spatial variograms"
 author: Guillaume Blanchet & Steve Vissault
 date: November 21th, 2019
 output:

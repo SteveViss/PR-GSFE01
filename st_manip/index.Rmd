@@ -39,7 +39,6 @@ https://steveviss.github.io/PR-GSFE01/st_manip/index.html
 ## `r icon::fa("tag")` Solutions of all practices:
 https://steveviss.github.io/PR-GSFE01/st_manip/practice.html
 
-
 ---
 class: inverse, center, middle
 
@@ -641,3 +640,9 @@ summary(STFDF_air_2005_2010)
 ```
 ]
 
+---
+class: clear, middle
+
+
+## `r icon::fa("tag")` Spatio-temporal variograms
+https://steveviss.github.io/PR-GSFE01/sp_time_vario/practice.html
