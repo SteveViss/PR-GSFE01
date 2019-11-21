@@ -64,7 +64,7 @@ mapview(sf_halibut)
 
 We can now build a representation of the occurrences per year, but firsts we have to extract the polygon for the area around the estuary.
 
-```{r, cache = TRUE, infos = FALSE, warnings = FALSE, messages = FALSE}
+```{r}
 poly_ca <- raster::getData('GADM', country='CA', level=1)
 sf_ca <- st_as_sf(poly_ca)
 sf_estuary <- st_crop(sf_ca, st_as_sfc(st_bbox(sf_halibut)))
@@ -193,7 +193,7 @@ these objects, the best way is to use the `stConstruct` function in the
 
 ## Get access to the data
 
-[Download PM10 air quality data]("https://github.com/SteveViss/PR-GSFE01/raw/master/sp_time_vario/assets/data/air.rds")
+[Download PM10 air quality data](https://github.com/SteveViss/PR-GSFE01/raw/master/sp_time_vario/assets/data/air.rds)
 
 
 ## `spacetime` classes
