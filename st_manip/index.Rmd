@@ -63,14 +63,17 @@ knitr::include_graphics("./assets/img/data_cube.png")
 
 --
 
+.pull-left[
 **Storage formats**
-
-1. Tabular data (CSV / Attributes Table in shp)
-2. Hierarchical Data Format (NetCDF/HDF)
-3. Database SQL, splitting the dataset into multiples tables
-     - field stations metadata and locations
-     - Samples attached to field stations
-     - Observations attached to samples
+- 2-d: Tabular data CSV, shapefiles (.shp) / rasters (.grd)
+- 3-d: NetCDF, Hierarchical Data Format
+- n-d: Spatial SQL database, split the dataset into multiples tables (e.g. PostgreSQL)
+]
+.pull-right[
+   ```{r echo=FALSE, out.width="100%", fig.align='center'}
+knitr::include_graphics("./assets/img/netcdf.png")
+```  
+]
 
 **Take home** - Having the right format can help solve that problem, and thus
 make your life easier when comes the time to play and analyze the data.
@@ -186,9 +189,6 @@ If you have several dates formats...
 --
 
 deep breath... 
-
---
-
 Have a look at the [`lubridate`](https://lubridate.tidyverse.org/) package.
 
 --
@@ -346,15 +346,15 @@ ggplot(sf_halibut) + geom_sf() + facet_wrap(~year)
 # Explore occurrences through times
 
 **Some aesthetics**
-```{r, echo = FALSE,, message = FALSE}
-library(dplyr)
+
+Add a third dimension: color the points based on the depth.
+
+```{r, fig.retina = 2, fig.align="center", fig.height = 5, fig.width = 10}
+ggplot() + 
+     geom_sf(data = filter(sf_halibut, year > 2006), aes(col = depth)) + 
+     facet_wrap(~year)
 ```
 
-```{r, fig.retina = 2, fig.align="center", fig.height = 6, fig.width = 10}
-ggplot() + 
-     geom_sf(data = filter(sf_halibut, year > 2006)) +
-     facet_wrap(~year) 
-```
 
 ---
 # Explore occurrences through times
@@ -370,7 +370,7 @@ sf_estuary <- st_crop(sf_ca, st_as_sfc(st_bbox(sf_halibut)))
 ```{r, fig.retina = 2, eval = FALSE}
 ggplot() + 
      geom_sf(data = sf_estuary, fill = "grey50", col = "white") + 
-     geom_sf(data = filter(sf_halibut, year > 2006)) + 
+     geom_sf(data = filter(sf_halibut, year > 2006), aes(col = depth)) + 
      facet_wrap(~year)
 ```
 
@@ -383,7 +383,7 @@ ggplot() +
 ```{r, fig.retina = 2, echo = FALSE, fig.align="center", fig.height = 6, fig.width = 10}
 ggplot() + 
      geom_sf(data = sf_estuary, fill = "grey50", col = "white") + 
-     geom_sf(data = filter(sf_halibut, year > 2006)) + 
+     geom_sf(data = filter(sf_halibut, year > 2006), aes(col = depth)) + 
      facet_wrap(~year)
 ```
 
@@ -417,9 +417,13 @@ for(i in 1:length(years)){
      # Filter for one year (years[i])
      sf_halibut_yr <- filter(sf_halibut, year == years[i])
      
-     # Prepare 
+     # Prepare the geometry
      sp_halibut_yr <- as(st_geometry(sf_halibut_yr), "Spatial")
+
+     # Count points per cell
      rs_count <- rasterize(sp_halibut_yr, ref_grid, fun = 'count')
+
+     # Add the layer to the stack
      stack_count <- addLayer(stack_count,rs_count)
 }
 
@@ -477,7 +481,7 @@ Tmax_grid$lat <- lat_axis[apply(dists, 1, which.min)]
 Tmax_lat_Hov <- group_by(Tmax_grid, lat, t) %>%
                 summarise(z = mean(z))
 
-library("STRbook")
+library(STRbook)
 Hovmoller_lat <- ggplot(Tmax_lat_Hov) +            # take data
         geom_tile(aes(x = lat, y = t, fill = z)) + # plot
         fill_scale(name = "degF") +     # add color scale
@@ -504,7 +508,6 @@ Tmax <- filter(NOAA_df_1990,     # subset the data
 Tmax_av <- group_by(Tmax, date) %>%
            summarise(meanTmax = mean(z))
 
-## ------------------------------------------------------------------------
 gTmaxav <-
     ggplot() +
     geom_line(data = Tmax,aes(x = date, y = z, group = id),
@@ -570,18 +573,37 @@ names(raw_air)[4:5] <- c("lng","lat")
 head(raw_air)
 ```
 
-**Note**: each row corresponds to a sample taken at a specific location and at particular time point.
-
+Each row corresponds to an observation / sample taken at a specific location and at particular time point.
+The time, space and variables have distinct columns. 
 
 ---
 
 # Spatio-temporal data organisation
 
-We can obtain the previously shown data structure with a few manipulation of `sf` object.
+If each columns is a combination of years and variables (`wide` format), you might want to reshape the data into a `long` format.
+We can obtain this data structure with the function `gather()`.
 
-## Manipulation de code ici
-## Manipulation de code ici
-## Manipulation de code ici
+```{r echo=FALSE, out.width="60%", fig.align='center'}
+knitr::include_graphics("https://uc-r.github.io/public/images/dataWrangling/gather1.png")
+```
+
+Have a look at [this website](https://uc-r.github.io/tidyr), and [the tidyr sheet cheat](https://github.com/rstudio/cheatsheets/raw/master/data-import.pdf).
+
+---
+
+# Spatio-temporal data organisation
+
+Last bit of information: Convert `sf` object back to a complete `data.frame`.
+
+```{r}
+# Add the coordinates to the data.frame
+halibut <- data.frame(st_coordinates(sf_halibut), sf_halibut)
+head(halibut)
+# Drop the geometry column
+halibut$geometry <- NULL
+class(halibut)
+```
+
 
 ---
 
@@ -591,7 +613,10 @@ We can obtain the previously shown data structure with a few manipulation of `sf
 library(spacetime)
 library(sp)
 
-spaceTime_air <- stConstruct(raw_air, c("lng","lat"),"dates", crs = CRS("+init=epsg:4326"))
+spaceTime_air <- stConstruct(raw_air, 
+                              c("lng","lat"),
+                              "dates", 
+                              crs = CRS("+init=epsg:4326"))
 class(spaceTime_air)
 ```
 
@@ -605,10 +630,14 @@ raw_air_2005_2010 <- subset(raw_air, dates > as.Date("2005-01-01")
 STIDF_air_2005_2010 <- stConstruct(raw_air_2005_2010, c("lng","lat"),"dates", 
                               crs = CRS("+init=epsg:4326"))
 STFDF_air_2005_2010 <- as(STIDF_air_2005_2010, "STFDF")
+```
+---
 
+# Playing with the `stConstruct` function
+
+.small[
+```{r}
 summary(STFDF_air_2005_2010)
 ```
-
-
-
+]
 

@@ -44,10 +44,30 @@ Here, we focus on the dependant variable TP and the year 2007.
 ```{r, fig.height=5, fig.width=12, eval=TRUE, fig.retina =2}
 ham_sf_2005 <- ham_sf %>% 
         filter(Year.Année == 2005 & Variable == "TP")
+
+ham_sf_2005Depth <- ham_sf %>% 
+        filter(Year.Année == 2005 & Variable == "Depth-Lake")
+
 ham_sf_2005_NoDup <- ham_sf_2005[!duplicated(ham_sf_2005$Site.Site),]
 
 # Transform into an sp object needed for the variogram function
 ham_SP_2005 <- as(ham_sf_2005_NoDup, "Spatial")
+
+#---------------------------------------------------
+## Another way to work around the duplicated samples
+#---------------------------------------------------
+ham_sf_2005 <- ham_sf %>% 
+        filter(Year.Année == 2005 & Variable == "TP")
+
+ham_sf_2005Depth <- ham_sf %>% 
+        filter(Year.Année == 2005 & Variable == "Depth-Lake")
+
+ham_sf_2005_WithDepth <- ham_sf_2005
+ham_sf_2005_WithDepth$depth <- ham_sf_2005Depth$Value.Valeur
+
+# Transform into an sp object needed for the variogram function
+ham_SP_2005_DepthSP <- as(ham_sf_2005_WithDepth, "Spatial")
+ham_SP_2005_DepthSP@coords <- jitter(ham_SP_2005_DepthSP@coords,factor = 0.015)
 ```
 
 # Cloud variogram
@@ -238,7 +258,7 @@ plot(varioEmpGood, model = modelVarioEmp, lwd = 3)
   - Think of the question you want to answer
   - The size of your data will influence the choice of model fitting procedure
 
-# Krigging
+# Kriging
 
 Using the model variogram defined above we can now build kriging maps
 
@@ -261,10 +281,19 @@ As for inverse distance weighting, we build a grid of $100 \times 100$ m.
 ## Simple kriging
 
 ```{r}
+###
+# Performing kriging using the interpolate function
+###
 # Simple kriging
 skModel <- gstat(formula = Value.Valeur ~ 1, location = ham_SP_2005_clean,
             model = modelVario, beta = 2)
 
+# Build interpolation map
+skMap <- interpolate(object = r_ref, model = skModel, debug = 0)
+
+###
+# Performing kriging using the krige function
+###
 
 # Organise raster into a dara.frame
 r_refDF<-as.data.frame(r_ref, xy = TRUE)
@@ -287,8 +316,14 @@ spplot(skModelKrige["var1.pred"])
 # Plot variation
 spplot(skModelKrige["var1.var"])
 
-# Build interpolation map
-skMap <- interpolate(object = r_ref, model = skModel, debug = 0)
+# Building 95% confidence interval around the model
+sdsk <- sqrt(skModelKrige$var1.var)
+CI.025 <- qnorm(0.025) * sdsk + skModelKrige$var1.pred
+CI.975 <- qnorm(0.975) * sdsk + skModelKrige$var1.pred
+
+# Build raster for 95% confidence interval
+skMap$CI.025 <- CI.025
+skMap$CI.975 <- CI.975
 ```
 
 ### Draw the map
@@ -297,7 +332,9 @@ skMap <- interpolate(object = r_ref, model = skModel, debug = 0)
 library(mapview)
 # Mask 
 skMapMask <- mask(skMap, lake) 
-mapview(skMapMask)
+plot(skMapMask$CI.025, zlim = c(-2000, 4000))
+plot(skMapMask$var1.pred, zlim = c(-2000, 4000))
+plot(skMapMask$CI.975, zlim = c(-2000, 4000))
 ```
 
 ## Ordinary kriging
@@ -327,8 +364,6 @@ mapview(okMapMask)
 3. Build a kriging maps on your own data
   - Think of the question you want to answer
   - The size of your data will influence the choice of model fitting procedure
-
-####
 
 
 
