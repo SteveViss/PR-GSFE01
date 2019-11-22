@@ -125,7 +125,7 @@ AEstlist <- list(AEst,1,1)
 APredlist <- list(APred)
 ```
 
-### Step 6 - Organise the effects (field and explanatory variables)
+### Step 6 - Organise the effects (autocorrelation component and explanatory variables)
 
 ```{r}
 # Estimation
