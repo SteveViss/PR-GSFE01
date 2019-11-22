@@ -29,7 +29,11 @@ library(raster)
 library(sf)
 ```
 
-# Data
+# Download and load the data
+
+- [Sugar maple data](assets/data/tree.rds)
+- [Climate data](assets/data/climate_Present.rds)
+- [Spatial data of the study area](assets/data/region.rds)
 
 ```{r}
 sugarRaw <- readRDS("assets/data/tree.rds")
