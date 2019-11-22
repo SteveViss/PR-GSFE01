@@ -166,7 +166,7 @@ specific year. Because it's multiple layers, you have to transform the
 rasterStack to a `star` object to be able to plot it with `ggplot()`.
 
 
-#### Mapping rasterStack through times with package & `ggplot2`
+#### Mapping rasterStack through times with package `ggplot2`
 
 
 ```{r, infos = FALSE}
