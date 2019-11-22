@@ -41,7 +41,7 @@ climate <- readRDS("assets/data/climate_Present.rds")
 region <- readRDS("assets/data/region.rds")
 ```
 
-## Organize environmental data
+# Organize environmental data
 
 ```{r}
 # Focus only on the data between 2010 and 2012
@@ -54,6 +54,8 @@ climate2007 <- scale(climateSugar[,1:2])
 # Number of years
 nyear <- length(unique(sugar$yr))
 ```
+
+# Build the INLA spatio-temporal model
 
 ## Step 1 - Building the mesh
 
@@ -94,14 +96,14 @@ SPDE <- inla.spde2.pcmatern(mesh=MeshSpace,
                             prior.sigma=c(1, 0.01))
 ```
 
-### Step 3 - Priors and hyperparameters for temporal autocorrelation
+## Step 3 - Priors and hyperparameters for temporal autocorrelation
 
 ```{r}
 hSpec <- list(theta=list(prior='pccor1', param=c(0, 0.9)))
 precPrior <- list(prior='pc.prec', param=c(1, 0.01)) 
 ```
 
-### Step 4 - Index matrix 
+## Step 4 - Index matrix 
 
 Here, we construct an "index matrix" used to extract the values of the latent spatial field at the observation locations.
 
@@ -110,7 +112,7 @@ Field <- inla.spde.make.index("field", n.spde=SPDE$n.spde,
                               n.group = nyear)
 ```
 
-### Step 5 - $A$ matrix
+## Step 5 - $A$ matrix
 
 We need to construct an $A$ matrix. Recall from the lecture that the $A$ matrix is sometimes referred to as the *observation matrix* and includes the parameters used to construct model. The discrete temporal groups are defined here. 
 
@@ -123,14 +125,14 @@ A<-inla.spde.make.A(MeshSpace,
 
 **Important note** : The groups need to start at *1*. 
 
-### Step 6 - Organise the $A$ matrix into a list
+## Step 6 - Organise the $A$ matrix into a list
 
 ```{r}
 Alist <- as.list(rep(1,3))
 Alist[[1]] <- A
 ```
 
-### Step 7 - Organise the effects (spatial autocorrelation structure and explanatory variables)
+## Step 7 - Organise the effects (spatial autocorrelation structure and explanatory variables)
 
 ```{r}
 effect<- list(Field,
@@ -138,7 +140,7 @@ effect<- list(Field,
               bio2 = climate2007[,2])
 ```
 
-### Step 8 - Build `stack`
+## Step 8 - Build `stack`
 
 Here, we build a `stack` that will be passed to the `inla` function. Note that this is a special version of `stack` especially designed for the INLA package.
 
@@ -149,9 +151,9 @@ Stack <- inla.stack(data=list(tree = sugar$n_occ),
                     tag="basis")
 ```
 
-### Step 9 - Building the model (Finally !)
+## Step 9 - Building the model (Finally !)
 
-```{r, warning = FALSE}
+```{r, warning = FALSE, cache = TRUE}
 form <- tree ~ 0 + bio1 + bio2 +
         f(field, model=SPDE, group=field.group,
           control.group=list(model='ar1', hyper=hSpec))
@@ -167,14 +169,14 @@ model <- inla(form,
 
 **Important note** : the argument `group` of the function `f()` refers to `group` defined in the object `Field`.  As such, the "name" given in this object needs to be the name of the "field".
 
-### Study the output
+# Study the model output
 
 
 ```{r}
 summary(model)
 ```
 
-### Plot prediction maps
+# Plot prediction maps
 
 ```{r}
 # Dimention of the raster

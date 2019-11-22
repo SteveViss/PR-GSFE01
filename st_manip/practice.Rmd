@@ -80,7 +80,7 @@ ggplot() +
      facet_wrap(~year)
 ```
 
-## Produce count grids
+## Count observations per year with `rasterize`
 
 If you have a large dataset with a high density of points, it is a good idea to
 summarize the informations using a grid of abundance counts.
@@ -112,24 +112,31 @@ for(i in 1:length(years)){
 names(stack_count) <- years
 ```
 
-## Plot count grids with `ggplot2`
+## Compute mean values with `rasterize`
 
-library(stars)
-strs_halibut_count <- st_as_stars(stack_count)
+We load the air data [PM10 air quality data](https://github.com/SteveViss/PR-GSFE01/raw/master/sp_time_vario/assets/data/air.rds).
 
+```{r}
+raw_air <- readRDS("./assets/data/air.rds") 
+# Transforming data to sf
+sf_air <- st_as_sf(raw_air, coords=c("lng", "lat"), crs = 4326)
+```
 
-plot(stars)
-ggplot() + geom_stars(data = strs_halibut_count) +
-    coord_equal()
+We select the variable that we want to compute the mean.
 
-system.file("tif/L7_ETMs.tif", package = "stars") %>% read_stars() -> x
-library(ggplot2)
-ggplot() + geom_stars(data = x) +
-    coord_equal() +
-    facet_wrap(~band) +
-    theme_void() +
-    scale_x_discrete(expand=c(0,0))+
-    scale_y_discrete(expand=c(0,0))
+```{r}
+sf_air_pm10 <- sf_air[,"pm10"]
+# You can even subset for a specific year
+sf_air$year <- format(sf_air$dates, "%Y")
+sf_air_pm10_2003 <- subset(sf_air, year == 2003)
+```
+Then, we create the reference grid and perform the rasterize on the points data.
+
+```{r}
+ref_rs <- raster(sf_air, res = 0.1)
+rs_mean <- rasterize(sf_air, ref_rs, fun = mean)
+mapview::mapview(rs_mean[["pm10"]])
+```
 
 ## Practice
 
