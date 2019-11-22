@@ -14,7 +14,7 @@ output:
 
 ## install & load packages 
 
-```{r}
+```{r, infos = FALSE}
 library(robis)
 library(sf)
 library(dplyr)
@@ -131,12 +131,81 @@ We select the variable that we want to compute the mean.
 ```{r}
 sf_air_pm10 <- sf_air[,"pm10"]
 ```
-Then, we create the reference grid and perform the rasterize on the points data.
+Then, we create the reference grid and perform the rasterize on the points.
 
 ```{r}
 ref_rs <- raster(sf_air_pm10, res = 0.5)
 rs_mean <- rasterize(sf_air_pm10, ref_rs, fun = mean)
 mapview(rs_mean[["pm10"]])
+```
+
+We can now compute the mean values per year.
+
+```{r}
+# Create the year column
+sf_air$year <- format(sf_air$dates, "%Y")
+# Create vector of all year
+years <- unique(sf_air$year)
+
+# Create reference grid
+ref_rs <- raster(sf_air, res = 0.5)
+# create empty stack
+st_mean_by_yr <- stack()
+
+# Loop over year and compute the mean per cells
+for(y in 1:length(years)){
+     sf_air_yr <- subset(sf_air, year == years[y])[,"pm10"]
+     st_mean_by_yr <- addLayer(st_mean_by_yr,rasterize(sf_air_yr, ref_rs, fun = mean)[['pm10']])
+}
+```
+
+### Mapping rasterStack 
+
+So now, we have rasterStack where each layer is the mean values gridded for a
+specific year. Because it's multiple layers, you have to transform the
+rasterStack to a `star` object to be able to plot it with `ggplot()`.
+
+
+#### Mapping rasterStack through times with package & `ggplot2`
+
+
+```{r, infos = FALSE}
+library(raster)
+library(ggplot2)
+library(tidyr)
+
+# Convert the rasterStack to data.frame
+z <- as.data.frame(st_mean_by_yr)
+names(z) <- years
+# Merge coordinates with values
+df_mean_by_yr <- data.frame(coordinates(st_mean_by_yr), z)
+# Melt the data.frame to a tidy format
+df_mean_by_yr <- gather(df_mean_by_yr, year, pm10, -x, -y, na.rm = TRUE)
+head(df_mean_by_yr)
+
+# remove the X in the year column 
+df_mean_by_yr$year <- as.numeric(gsub("X", "", df_mean_by_yr$year))
+head(df_mean_by_yr)
+
+# Plot raster with ggplot
+ggplot() + geom_raster(data = df_mean_by_yr, aes(x = x, y = y, fill = pm10)) + facet_wrap(~year)
+```
+
+
+#### Mapping rasterStack through times with packages `stars` & `ggplot2`
+
+
+```{r, infos = FALSE}
+library(stars)
+
+# Before transforming the raster, you add the time as the Z value of the rasterStack
+st_mean_by_yr <- setZ(st_mean_by_yr,as.Date(paste(years,"01","01", sep="-")))
+
+# Convert rasterStack to stars object (x, y, time)
+strs_mean <- st_as_stars(st_mean_by_yr) 
+
+# Plot grids through time.
+ggplot() + geom_stars(data=strs_mean) + coord_equal() + facet_wrap("band") 
 ```
 
 ## Practice
@@ -218,11 +287,6 @@ into one of the following different `spacetime` classes of object. To build
 these objects, the best way is to use the `stConstruct` function in the
 `spacetime` package.
 
-## Get access to the data
-
-[Download PM10 air quality data](https://github.com/SteveViss/PR-GSFE01/raw/master/sp_time_vario/assets/data/air.rds)
-
-
 ## `spacetime` classes
 
 - full grid (STF), a combination of any sp object and any xts object to represent all
@@ -230,6 +294,10 @@ possible locations on the implied space-time lattice;
 - sparse grid (STS), as STF, but contains only the non-missing space-time combinations on a space-time lattice;
 - irregular (STI), an irregular space-time data structure, where each point is allocated a spatial coordinate and a time stamp;
 - simple trajectories (STT), a sequence of space-time points that form trajectories.
+
+## Get access to the data
+
+[Download PM10 air quality data](https://github.com/SteveViss/PR-GSFE01/raw/master/sp_time_vario/assets/data/air.rds)
 
 
 ```{r}
@@ -240,6 +308,7 @@ head(raw_air)
 
 spaceTime_air <- stConstruct(raw_air, c("lng","lat"),"dates", crs = CRS("+init=epsg:4326"))
 class(spaceTime_air)
+
 ```
 
 
