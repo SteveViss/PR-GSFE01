@@ -1,5 +1,5 @@
 ---
-title: Handling Spatial and Spatial-temporal data Using R (GSFE01)
+title: Handling Spatial and Spatio-temporal data Using R (GSFE01)
 author: Guillaume Blanchet & Steve Vissault
 date: November 18-22th, 2019
 output:
@@ -23,7 +23,7 @@ output:
 
 # **Day 2**
 
-## Morning - Inverse Distance weigthing
+## Morning - Inverse Distance weighting
 
 ### `r icon::fa("slideshare")` [Slides](https://steveviss.github.io/PR-GSFE01/IDW/index.html)
 
