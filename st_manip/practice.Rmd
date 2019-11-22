@@ -90,7 +90,7 @@ summarize the informations using a grid of abundance counts.
 years <- unique(sf_halibut$year)
 
 # Create a reference grid
-ref_grid <- raster(sf_halibut, res=0.05)
+ref_grid <- raster(sf_halibut, res=0.1)
 
 # Open empty stack
 stack_count <- stack()
@@ -112,6 +112,10 @@ for(i in 1:length(years)){
 names(stack_count) <- years
 ```
 
+```{r, infos = FALSE}
+mapview(stack_count[["X2011"]])
+```
+
 ## Compute mean values with `rasterize`
 
 We load the air data [PM10 air quality data](https://github.com/SteveViss/PR-GSFE01/raw/master/sp_time_vario/assets/data/air.rds).
@@ -126,16 +130,13 @@ We select the variable that we want to compute the mean.
 
 ```{r}
 sf_air_pm10 <- sf_air[,"pm10"]
-# You can even subset for a specific year
-sf_air$year <- format(sf_air$dates, "%Y")
-sf_air_pm10_2003 <- subset(sf_air, year == 2003)
 ```
 Then, we create the reference grid and perform the rasterize on the points data.
 
 ```{r}
-ref_rs <- raster(sf_air, res = 0.1)
-rs_mean <- rasterize(sf_air, ref_rs, fun = mean)
-mapview::mapview(rs_mean[["pm10"]])
+ref_rs <- raster(sf_air_pm10, res = 0.5)
+rs_mean <- rasterize(sf_air_pm10, ref_rs, fun = mean)
+mapview(rs_mean[["pm10"]])
 ```
 
 ## Practice
@@ -257,21 +258,6 @@ stplot(STFDF_air_062005, mode = "xt")
 
 # Temporal-space variability
 stplot(STFDF_air_062005[,,"pm10"], mode = "xy")
-```
-
-# Create metrics grid from points
-
-```
-library(sf)
-raw_air <- readRDS("./assets/data/air.rds")
-sf_air <- st_as_sf(raw_air, coords = c("lng","lat"), crs = 4326)
-plot(sf_air)
-
-grid <- st_make_grid(sf_air, 0.5)
-mapview::mapview(grid)
-inter <- st_intersects(grid, sf_air)
-
-
 ```
 
 
