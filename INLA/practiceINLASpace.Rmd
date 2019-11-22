@@ -125,7 +125,7 @@ AEstlist <- list(AEst,1,1)
 APredlist <- list(APred)
 ```
 
-### Step 6 - Organise the effects (field and explanatory variables)
+### Step 6 - Organise the effects (autocorrelation component and explanatory variables)
 
 ```{r}
 # Estimation
@@ -143,13 +143,13 @@ Here, we build a `stack` for estimation another for prediction and then we combi
 
 ```{r}
 # Stack for estimation
-StackEst <- inla.stack(data=list(PreAbs = mite[,7]),
+StackEst <- inla.stack(data=list(mite = mite[,7]),
                      A = AEstlist,
                      effects = effectEst,
                      tag="est")
 
 # Stack for prediction
-StackPred <- inla.stack(data=list(PreAbs = NA),
+StackPred <- inla.stack(data=list(mite = NA),
                         A=APredlist,
                         effects=effectPred,
                         tag="pred")
@@ -161,7 +161,7 @@ Stack <- inla.stack(StackEst,StackPred)
 ### Step 8 - Building the model (Finally !)
 
 ```{r, warning = FALSE}
-model <- inla(PreAbs ~ 0 + SubsDens + WatrCont + f(i, model = SPDE),
+model <- inla(mite ~ 0 + SubsDens + WatrCont + f(i, model = SPDE),
               data = inla.stack.data(Stack),
               family="poisson",
               control.family =list(link="log"),

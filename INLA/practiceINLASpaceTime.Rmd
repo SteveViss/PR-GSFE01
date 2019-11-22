@@ -1,5 +1,5 @@
 ---
-title: "Continuous time spatiotemporal model with INLA"
+title: "Spatiotemporal model with INLA"
 author: Guillaume Blanchet & Steve Vissault
 date: November 21th, 2019
 output:
@@ -15,11 +15,11 @@ knitr::opts_chunk$set(cache=F,fig.width=5,fig.height=5,dpi=125)
 
 # Introduction
 
-This document was written to explain how to build univariate spatiotemporal model using INLA.
+This document was written to explain how to build univariate spatiotemporal model with discrete time using INLA.
 
 Note that INLA can be used with a range of data type because many different likelihood and link functions have been implemented in INLA. The different likelihood functions already implemented in INLA can be found by typing `INLA::inla.list.models("likelihood")` while the link functions can be found by typing `INLA::inla.list.models("link")`.
 
-To illustrate how the models are constructed, sugar maple data will be used sampled across Eastern North America will be used.
+To illustrate how these models are constructed, sugar maple data from Eastern North America will be used.
 
 # Load R package for the analysis
 
@@ -32,21 +32,28 @@ library(sf)
 # Data
 
 ```{r}
-sugar <- readRDS("assets/data/tree.rds")
+sugarRaw <- readRDS("assets/data/tree.rds")
 climate <- readRDS("assets/data/climate_Present.rds")
 region <- readRDS("assets/data/region.rds")
 ```
 
-## Extract climate variables for the sampled location
+## Organize environmental data
 
 ```{r}
-X <- extract(climate, sugar)
+# Focus only on the data between 2010 and 2012
+sugar <- sugarRaw[which(sugarRaw$yr > 2007),]
+
+# Extract climate value for samples
+climateSugar <- extract(climate, st_coordinates(sugar))
+climate2007 <- scale(climateSugar[,1:2])
+
+# Number of years
+nyear <- length(unique(sugar$yr))
 ```
 
-## Step 1 - Building the meshs
+## Step 1 - Building the mesh
 
-The first step that needs to be carried out to construct a spatially constrained model is to build a Delaunay triangulation, a mesh, that will serve as a basis to construct the spatial component of the model through an SPDE approach. 
-
+The first step that needs to be carried out to construct a spatiotemporal model is to build a Delaunay triangulation, a mesh, that will serve as a basis to construct the spatial component of the model through an SPDE approach. 
 Properly choosing the structure of the mesh is essential for the model estimation to be carried out properly. Detailed explanation on the dos and don'ts of constructing a mesh is presented in section 1.3 of the  [R-INLA tutorial on SPDE models](http://inla.r-inla-download.org/r-inla.org/tutorials/spde/html/). For a quick overview, take a look at the *mesh* practical. 
 For our illustration, let's use the following mesh.
 
@@ -68,12 +75,6 @@ plot(MeshSpace, main = "", asp = 1)
 MeshSpace$n
 ```
 
-### Temporal mesh
-
-```{r}
-MeshTime <- inla.mesh.1d(seq(min(sugar$yr), max(sugar$yr), length=5))
-```
-
 ## Step 2 - Define the stochastic partial differential equation object
 
 This is important to define the structure of the field on which the spatial contrain is imposed. In some ways, this serves as our "model variogram". Recall that in INLA, it is the Matérn model variogram that is used. In this respect, in addition of the mesh, we have to define the scaling parameter (`alpha`), the prior range (`prior.range`) and the prior variance (`prior.sigma`).
@@ -89,7 +90,7 @@ SPDE <- inla.spde2.pcmatern(mesh=MeshSpace,
                             prior.sigma=c(1, 0.01))
 ```
 
-### Step 3 - Priors for temporal autocorrelation
+### Step 3 - Priors and hyperparameters for temporal autocorrelation
 
 ```{r}
 hSpec <- list(theta=list(prior='pccor1', param=c(0, 0.9)))
@@ -101,90 +102,55 @@ precPrior <- list(prior='pc.prec', param=c(1, 0.01))
 Here, we construct an "index matrix" used to extract the values of the latent spatial field at the observation locations.
 
 ```{r}
-nyear <- length(unique(sugar$yr))
 Field <- inla.spde.make.index("field", n.spde=SPDE$n.spde,
-                              n.group = MeshTime$n)
+                              n.group = nyear)
 ```
 
 ### Step 5 - $A$ matrix
 
-We need to construct $A$ matrices, one for estimation and another for predictions values. Recall from the lecture that the $A$ matrix is sometimes referred to as the *observation matrix* and includes the parameters used to construct model.
+We need to construct an $A$ matrix. Recall from the lecture that the $A$ matrix is sometimes referred to as the *observation matrix* and includes the parameters used to construct model. The discrete temporal groups are defined here. 
 
 ```{r}
 # For estimation
-AEst<-inla.spde.make.A(MeshSpace,
-                       loc=st_coordinates(sugar),
-                       group = sugar$yr,
-                       group.mesh = MeshTime)
-
-# For prediction
-#APred <- inla.spde.make.A(MeshSpace)
-APred <- Diagonal(MeshSpace$n * MeshTime$n)
-
-# Combine both matrix
-A <- rbind(AEst, APred)
+A<-inla.spde.make.A(MeshSpace,
+                    loc=st_coordinates(sugar),
+                    group = sugar$yr - 2007)
 ```
+
+**Important note** : The groups need to start at *1*. 
 
 ### Step 6 - Organise the $A$ matrix into a list
 
 ```{r}
-# For estimation
-AEstlist <- as.list(rep(1,ncol(X) + 2))
-AEstlist[[1]] <- AEst
-
-#Alist <-list(A, 1)
-
-# For prediction
-#APredlist <- list(APred)
+Alist <- as.list(rep(1,3))
+Alist[[1]] <- A
 ```
 
-### Step 7 - Organise the effects (field and explanatory variables)
+### Step 7 - Organise the effects (spatial autocorrelation structure and explanatory variables)
 
 ```{r}
-# Estimation
-effect <- list(Field, list(Intercept = rep(1, nrow(sugar)), X))
-
-
-effectEst <- as.list(as.data.frame(cbind(1,1,X)))
-effectEst[[1]] <- Field
-effectEst[[2]] <- list(Intercept = rep(1, nrow(sugar)))
-
-# Prediction
-#effectPred <- list(i = 1:SPDE$n.spde)
+effect<- list(Field,
+              bio1 =  climate2007[,1],
+              bio2 = climate2007[,2])
 ```
 
-### Step 7 - Build `stack`
+### Step 8 - Build `stack`
 
-Here, we build a `stack` for estimation another for prediction and then we combine them together. Note that these are special version of `stack` especially designed for the INLA package.
+Here, we build a `stack` that will be passed to the `inla` function. Note that this is a special version of `stack` especially designed for the INLA package.
 
 ```{r}
 Stack <- inla.stack(data=list(tree = sugar$n_occ),
-                    A = AEstlist,
-                    effects = effectEst,
-                    tag="est")
-
-# Stack for estimation
-#StackEst <- inla.stack(data=list(tree = sugar$n_occ),
-#                     A = AEstlist,
-#                     effects = effectEst,
-#                     tag="est")
-
-# Stack for prediction
-#StackPred <- inla.stack(data=list(tree = NA),
-#                        A=APredlist,
-#                        effects=effectPred,
-#                        tag="pred")
-
-# Organise StackEst and StackPred into a single stack
-#Stack <- inla.stack(StackEst,StackPred)
+                    A = Alist,
+                    effects = effect,
+                    tag="basis")
 ```
 
-### Step 8 - Building the model (Finally !)
+### Step 9 - Building the model (Finally !)
 
 ```{r, warning = FALSE}
-# Formula
-form <- as.formula(paste("tree ~ 0 + Intercept +",paste0("bio",1:19,collapse = "+"),
-                          " + f(field, model=SPDE, group=sugar$year, control.group=list(model='ar1', hyper=hSpec))"))
+form <- tree ~ 0 + bio1 + bio2 +
+        f(field, model=SPDE, group=field.group,
+          control.group=list(model='ar1', hyper=hSpec))
 
 model <- inla(form,
               data = inla.stack.data(Stack),
@@ -195,63 +161,76 @@ model <- inla(form,
               control.compute=list(waic=TRUE))
 ```
 
-# ICICICICICICIICICCICICI
-### Plot the results
+**Important note** : the argument `group` of the function `f()` refers to `group` defined in the object `Field`.  As such, the "name" given in this object needs to be the name of the "field".
+
+### Study the output
+
 
 ```{r}
-# dimention of the raster
-rasterDim <- c(2002, 520)
-
-# Define basis of the map
-mapBasis <- inla.mesh.projector(Mesh,
-                               dims = rasterDim,
-                               xlim = c(xmin(spacePoly), xmax(spacePoly)),
-                               ylim = c(ymin(spacePoly), ymax(spacePoly)),
-                               crs = crs(spacePoly))
-
-# Find the mesh edges on which predictions should be made
-ID <- inla.stack.index(Stack, tag="pred")$data
-  
-# Calculate prediction
-mapMean <- inla.mesh.project(mapBasis, 
-                             model$summary.fitted.values[["mean"]][ID])
-map.025 <- inla.mesh.project(mapBasis, 
-                             model$summary.fitted.values[["0.025quant"]][ID])
-map.975 <- inla.mesh.project(mapBasis, 
-                             model$summary.fitted.values[["0.975quant"]][ID])
-  
-# Transform map into a raster
-rasterMean <- raster(t(mapMean[,ncol(mapMean):1]),
-                     xmn = min(mapBasis$x), xmx = max(mapBasis$x), 
-                     ymn = min(mapBasis$y), ymx = max(mapBasis$y))
-
-raster.025 <- raster(t(map.025[,ncol(map.025):1]),
-                     xmn = min(mapBasis$x), xmx = max(mapBasis$x), 
-                     ymn = min(mapBasis$y), ymx = max(mapBasis$y))
-
-raster.975 <- raster(t(map.975[,ncol(map.975):1]),
-                     xmn = min(mapBasis$x), xmx = max(mapBasis$x), 
-                     ymn = min(mapBasis$y), ymx = max(mapBasis$y))
-
-# Plot the results
-par(mfrow = c(1,3))
-plot(raster.025, zlim = range(values(raster.025),
-                              values(rasterMean),
-                              values(raster.975)))
-
-points(mite.xy, pch = 19, col = ifelse(mite[,7] > 0, "black", "white"))
-
-plot(rasterMean, zlim = range(values(raster.025),
-                              values(rasterMean),
-                              values(raster.975)))
-
-points(mite.xy, pch = 19, col = ifelse(mite[,7] > 0, "black", "white"))
-
-plot(raster.975, zlim = range(values(raster.025),
-                              values(rasterMean),
-                              values(raster.975)))
-
-points(mite.xy, pch = 19, col = ifelse(mite[,7] > 0, "black", "white"))
+summary(model)
 ```
 
+### Plot prediction maps
+
+```{r}
+# Dimention of the raster
+rasterDim <- dim(climate)[1:2]
+
+# Define basis of the map
+mapBasis <- inla.mesh.projector(MeshSpace,
+                               dims = rasterDim,
+                               xlim = c(xmin(region), xmax(region)),
+                               ylim = c(ymin(region), ymax(region)),
+                               crs = crs(region))
+
+
+# Calculate prediction
+mapMean <- vector("list", length = 5)
+map.025 <- vector("list", length = 5)
+map.975 <- vector("list", length = 5)
+
+for(i in 1:5){
+  mapMean[[i]] <- inla.mesh.project(mapBasis, 
+                               model$summary.random$field$mean[Field$field.group == i])
+  map.025[[i]] <- inla.mesh.project(mapBasis, 
+                               model$summary.random$field$`0.025quant`[Field$field.group == i])
+  map.975[[i]] <- inla.mesh.project(mapBasis, 
+                               model$summary.random$field$`0.975quant`[Field$field.group == i])
+}
+  
+# Transform map into a raster
+rasterMean <- brick(climate, nl = 5)
+raster.025 <- brick(climate, nl = 5)
+raster.975 <- brick(climate, nl = 5)
+
+for(i in 1:5){
+  values(rasterMean)[,i] <- as.vector(t(mapMean[[i]]))
+  values(raster.025)[,i] <- as.vector(t(map.025[[i]]))
+  values(raster.975)[,i] <- as.vector(t(map.975[[i]]))
+}
+
+# Mask the region
+rasterMeanMask <- mask(rasterMean, region)
+raster.025Mask <- mask(raster.025, region)
+raster.975Mask <- mask(raster.975, region)
+
+# Plot the results
+for(i in 1:5){
+par(mfrow = c(1,3))
+plot(raster.025Mask[[i]], zlim = range(values(raster.025Mask[[i]]),
+                              values(rasterMeanMask[[i]]),
+                              values(raster.975Mask[[i]]), na.rm = TRUE),
+     main = "2.5%")
+
+plot(rasterMeanMask[[i]], zlim = range(values(raster.025Mask[[i]]),
+                              values(rasterMeanMask[[i]]),
+                              values(raster.975Mask[[i]]), na.rm = TRUE),
+     main = "Mean")
+
+plot(raster.975Mask[[i]], zlim = range(values(raster.025Mask[[i]]),
+                              values(rasterMeanMask[[i]]),
+                              values(raster.975Mask[[i]]), na.rm = TRUE),
+     main = "97.5%")
+}
+```
 
