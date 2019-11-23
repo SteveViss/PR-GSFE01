@@ -51,6 +51,17 @@ climate2007 <- scale(climateSugar[,1:2])
 nyear <- length(unique(sugar$yr))
 ```
 
+## Building a rough polygon of the study area
+
+```{r}
+# Extract extent of the sf data
+extentRegion <- extent(sugar)
+
+# Build polygon
+polyRegion <- as(extentRegion, 'SpatialPolygons')  
+```
+
+
 ## Step 1 - Building the mesh
 
 The first step that needs to be carried out to construct a spatiotemporal model is to build a Delaunay triangulation, a mesh, that will serve as a basis to construct the spatial component of the model through an SPDE approach. 
@@ -71,7 +82,7 @@ par(mar = c(1,1,1,1))
 
 plot(MeshSpace, main = "", asp = 1)
 
-# Number of edges in the mesh
+# Number of knots in the mesh
 MeshSpace$n
 ```
 
@@ -122,7 +133,7 @@ A<-inla.spde.make.A(MeshSpace,
 ### Step 6 - Organise the $A$ matrix into a list
 
 ```{r}
-Alist <- as.list(rep(1,3))
+Alist <- as.list(rep(23,4))
 Alist[[1]] <- A
 ```
 
@@ -131,7 +142,8 @@ Alist[[1]] <- A
 ```{r}
 effect<- list(Field,
               bio1 =  climate2007[,1],
-              bio2 = climate2007[,2])
+              bio2 = climate2007[,2],
+              Intercept = rep(1,nrow(climate2007)))
 ```
 
 ### Step 8 - Build `stack`
@@ -148,9 +160,11 @@ Stack <- inla.stack(data=list(tree = sugar$n_occ),
 ### Step 9 - Building the model (Finally !)
 
 ```{r, warning = FALSE}
-form <- tree ~ 0 + bio1 + bio2 +
-        f(field, model=SPDE, group=field.group,
-          control.group=list(model='ar1', hyper=hSpec))
+form <- tree ~ 0 + bio1 + bio2 + Intercept +
+        f(field, # Space
+          model=SPDE, # Space
+          group=field.group, # Time 
+          control.group=list(model='ar1', hyper=hSpec)) # Time 
 
 model <- inla(form,
               data = inla.stack.data(Stack),
@@ -185,11 +199,11 @@ mapBasis <- inla.mesh.projector(MeshSpace,
 
 
 # Calculate prediction
-mapMean <- vector("list", length = 5)
-map.025 <- vector("list", length = 5)
-map.975 <- vector("list", length = 5)
+mapMean <- vector("list", length = nyear)
+map.025 <- vector("list", length = nyear)
+map.975 <- vector("list", length = nyear)
 
-for(i in 1:5){
+for(i in 1:nyear){
   mapMean[[i]] <- inla.mesh.project(mapBasis, 
                                model$summary.random$field$mean[Field$field.group == i])
   map.025[[i]] <- inla.mesh.project(mapBasis, 
@@ -203,10 +217,10 @@ rasterMean <- brick(climate, nl = 5)
 raster.025 <- brick(climate, nl = 5)
 raster.975 <- brick(climate, nl = 5)
 
-for(i in 1:5){
-  values(rasterMean)[,i] <- as.vector(t(mapMean[[i]]))
-  values(raster.025)[,i] <- as.vector(t(map.025[[i]]))
-  values(raster.975)[,i] <- as.vector(t(map.975[[i]]))
+for(i in 1:nyear){
+  values(rasterMean)[,i] <- exp(as.vector(t(mapMean[[i]])))
+  values(raster.025)[,i] <- exp(as.vector(t(map.025[[i]])))
+  values(raster.975)[,i] <- exp(as.vector(t(map.975[[i]])))
 }
 
 # Mask the region
@@ -215,7 +229,7 @@ raster.025Mask <- mask(raster.025, region)
 raster.975Mask <- mask(raster.975, region)
 
 # Plot the results
-for(i in 1:5){
+for(i in 1:nyear){
 par(mfrow = c(1,3))
 plot(raster.025Mask[[i]], zlim = range(values(raster.025Mask[[i]]),
                               values(rasterMeanMask[[i]]),
