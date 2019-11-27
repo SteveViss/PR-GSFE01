@@ -1,0 +1,254 @@
+---
+title: "Spatiotemporal model with INLA assuming continuous time"
+author: Guillaume Blanchet & Steve Vissault
+date: November 21th, 2019
+output:
+  html_document:
+    highlight: tango
+    toc: true
+    toc_float: true
+---
+
+```{r, echo=FALSE, message=FALSE, results='hide', purl=FALSE}
+knitr::opts_chunk$set(cache=F,fig.width=5,fig.height=5,dpi=125)
+```
+
+# Introduction
+
+This document was written to explain how to build univariate spatiotemporal model with discrete time using INLA.
+
+Note that INLA can be used with a range of data type because many different likelihood and link functions have been implemented in INLA. The different likelihood functions already implemented in INLA can be found by typing `INLA::inla.list.models("likelihood")` while the link functions can be found by typing `INLA::inla.list.models("link")`.
+
+To illustrate how these models are constructed, sugar maple data from Eastern North America will be used.
+
+# Load R package for the analysis
+
+```{r, message = FALSE, warning=FALSE}
+library(INLA)
+library(raster)
+library(sf)
+```
+
+# Data
+
+```{r}
+sugar <- readRDS("assets/data/tree.rds")
+climate <- readRDS("assets/data/climate_Present.rds")
+region <- readRDS("assets/data/region.rds")
+```
+
+## Organize environmental data
+
+```{r}
+# Extract climate value for samples
+climateSugar <- extract(climate, st_coordinates(sugar))
+climateScale <- scale(climateSugar[,1:2])
+
+# Order sugar using the year
+sugarOrd <- sugar[order(sugar$yr),]
+
+# Year information
+year <- sugarOrd$yr - 1969 # The earliest year is 1970
+
+# Number of years
+nyear <- length(unique(year))
+```
+
+## Step 1 - Building the mesh
+
+The first step that needs to be carried out to construct a spatiotemporal model is to build a Delaunay triangulation, a mesh, that will serve as a basis to construct the spatial component of the model through an SPDE approach. 
+Properly choosing the structure of the mesh is essential for the model estimation to be carried out properly. Detailed explanation on the dos and don'ts of constructing a mesh is presented in section 1.3 of the  [R-INLA tutorial on SPDE models](http://inla.r-inla-download.org/r-inla.org/tutorials/spde/html/). For a quick overview, take a look at the *mesh* practical. 
+For our illustration, let's use the following mesh.
+
+### Spatial mesh
+```{r}
+MeshSpace <- inla.mesh.2d(boundary = region, max.edge = 1,
+                          min.angle = 20,
+                          cutoff = 0.5,
+                          offset = c(0.5,0.5),
+                          crs = crs(region))
+```
+
+```{r, fig.width = 3, fig.height=3}
+par(mar = c(1,1,1,1))
+
+plot(MeshSpace, main = "", asp = 1)
+
+# Number of edges in the mesh
+MeshSpace$n
+```
+
+### Temporal mesh
+
+```{r}
+yearSeq <- seq(min(year) + 5, max(year) - 5, length=5)
+MeshTime <- inla.mesh.1d(yearSeq)
+```
+
+## Step 2 - Define the stochastic partial differential equation object
+
+This is important to define the structure of the field on which the spatial contrain is imposed. In some ways, this serves as our "model variogram". Recall that in INLA, it is the Matérn model variogram that is used. In this respect, in addition of the mesh, we have to define the scaling parameter (`alpha`), the prior range (`prior.range`) and the prior variance (`prior.sigma`).
+
+- `alpha`: This value needs to range between 0 and 2
+- `prior.range`: This is a vector of length 2 specifying the range (first) and the uncertainty around this range (second). Note that the uncertainty around the range needs to be smaller that the range itself.
+- `prior.sigma`: This is a vector of length 2 specifying the sill (first) and the uncertainty around this sill (second). Note that the uncertainty around the sill needs to be smaller that the range itself.
+
+```{r}
+SPDE <- inla.spde2.pcmatern(mesh=MeshSpace,
+                            alpha=2,
+                            prior.range=c(0.5, 0.01),
+                            prior.sigma=c(1, 0.01))
+```
+
+### Step 3 - Priors and hyperparameters for temporal autocorrelation
+
+```{r}
+hSpec <- list(theta=list(prior='pccor1', param=c(0, 0.9)))
+precPrior <- list(prior='pc.prec', param=c(1, 0.01)) 
+```
+
+### Step 4 - Index matrix 
+
+Here, we construct an "index matrix" used to extract the values of the latent spatial field at the observation locations.
+
+```{r}
+Field <- inla.spde.make.index("field", n.spde=SPDE$n.spde,
+                              n.group = MeshTime$n)
+```
+
+### Step 5 - $A$ matrix
+
+We need to construct an $A$ matrix. Recall from the lecture that the $A$ matrix is sometimes referred to as the *observation matrix* and includes the parameters used to construct model. The discrete temporal groups are defined here. 
+
+```{r}
+# For estimation
+A <- inla.spde.make.A(MeshSpace,
+                      loc=st_coordinates(sugar),
+                      group = year,
+                      group.mesh = MeshTime)
+```
+
+**Important note** : The groups need to start at *1*. 
+
+### Step 6 - Organise the $A$ matrix into a list
+
+```{r}
+Alist <- as.list(rep(1,3))
+Alist[[1]] <- A
+```
+
+### Step 7 - Organise the effects (spatial autocorrelation structure and explanatory variables)
+
+```{r}
+effect<- list(Field,
+              bio1 =  climateScale[,1],
+              bio2 = climateScale[,2])
+```
+
+### Step 8 - Build `stack`
+
+Here, we build a `stack` that will be passed to the `inla` function. Note that this is a special version of `stack` especially designed for the INLA package.
+
+```{r}
+Stack <- inla.stack(data=list(tree = sugar$n_occ),
+                    A = Alist,
+                    effects = effect,
+                    tag="basis")
+```
+
+### Step 9 - Building the model (Finally !)
+
+```{r, warning = FALSE, eval = FALSE}
+form <- tree ~ 0 + bio1 + bio2 +
+        f(field, model=SPDE, group=field.group,
+          control.group=list(model='ar1', hyper=hSpec))
+
+model <- inla(form,
+              data = inla.stack.data(Stack),
+              family="nbinomial",
+              control.family =list(link="log", hyper=list(theta=precPrior)),
+              control.predictor=list(A=inla.stack.A(Stack),
+										                 compute=TRUE, link = 1),
+              control.compute=list(waic=TRUE))
+```
+
+```{r, warning = FALSE, eval = TRUE, echo = FALSE}
+load("model.RData") 
+```
+
+
+**Important note** : the argument `group` of the function `f()` refers to `group` defined in the object `Field`.  As such, the "name" given in this object needs to be the name of the "field".
+
+### Study the output
+
+```{r}
+summary(model)
+```
+
+A noteworthy difference between this results and the one obtained with the discrete time spatiotemporal model is the temporal autocorrelation parameter, which is much smaller here. Because we know that from one year to another there is a strong autocorrelation, we know that there is a strong autocorrelation across time. So, by having mesh points fairly spread out in time and because it is known that there is variability in the distribution of sugar maples through time, it is not overly surprising that there less temporal autocorrelation with this model.  
+
+### Plot prediction maps
+
+```{r}
+# Dimention of the raster
+rasterDim <- dim(climate)[1:2]
+
+# Define basis of the map
+mapBasis <- inla.mesh.projector(MeshSpace,
+                               dims = rasterDim,
+                               xlim = c(xmin(region), xmax(region)),
+                               ylim = c(ymin(region), ymax(region)),
+                               crs = crs(region))
+
+# Calculate prediction
+mapMean <- vector("list", length = 5)
+map.025 <- vector("list", length = 5)
+map.975 <- vector("list", length = 5)
+
+for(i in 1:5){
+  mapMean[[i]] <- inla.mesh.project(mapBasis, 
+                               model$summary.random$field$mean[1:SPDE$n.spde + (i - 1) * SPDE$n.spde])
+  map.025[[i]] <- inla.mesh.project(mapBasis, 
+                               model$summary.random$field$`0.025quant`[1:SPDE$n.spde + (i - 1) * SPDE$n.spde])
+  map.975[[i]] <- inla.mesh.project(mapBasis, 
+                               model$summary.random$field$`0.975quant`[1:SPDE$n.spde + (i - 1) * SPDE$n.spde])
+}
+  
+# Transform map into a raster
+rasterMean <- brick(climate, nl = 5)
+raster.025 <- brick(climate, nl = 5)
+raster.975 <- brick(climate, nl = 5)
+
+for(i in 1:5){
+  values(rasterMean)[,i] <- as.vector(t(mapMean[[i]]))
+  values(raster.025)[,i] <- as.vector(t(map.025[[i]]))
+  values(raster.975)[,i] <- as.vector(t(map.975[[i]]))
+}
+
+# Mask the region
+rasterMeanMask <- mask(rasterMean, region)
+raster.025Mask <- mask(raster.025, region)
+raster.975Mask <- mask(raster.975, region)
+
+# Plot the results
+par(mfrow = c(5,3), mar = c(1,1,3,1))
+for(i in 1:5){
+  plot(raster.025Mask[[i]], zlim = range(values(raster.025Mask[[i]]),
+                                values(rasterMeanMask[[i]]),
+                                values(raster.975Mask[[i]]), na.rm = TRUE),
+       main = "2.5%")
+  
+  plot(rasterMeanMask[[i]], zlim = range(values(raster.025Mask[[i]]),
+                                values(rasterMeanMask[[i]]),
+                                values(raster.975Mask[[i]]), na.rm = TRUE),
+       main = "Mean")
+  
+  plot(raster.975Mask[[i]], zlim = range(values(raster.025Mask[[i]]),
+                                values(rasterMeanMask[[i]]),
+                                values(raster.975Mask[[i]]), na.rm = TRUE),
+       main = "97.5%")
+}
+
+```
+
+Note that this code allows us to draw prediction maps only at the temporal mesh points.

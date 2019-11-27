@@ -1,5 +1,5 @@
 ---
-title: "Spatiotemporal model with INLA"
+title: "Spatiotemporal model with INLA assuming discrete time"
 author: Guillaume Blanchet & Steve Vissault
 date: November 21th, 2019
 output:

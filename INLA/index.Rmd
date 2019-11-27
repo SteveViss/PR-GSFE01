@@ -42,7 +42,11 @@ https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpace.html
 
 
 ### Spatio-temporal modelling with INLA
+#### Assuming discrete time
 https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpaceTime.html
+
+#### Assuming continuous time
+https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpaceTimeCont.html
 
 
 
