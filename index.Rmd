@@ -62,3 +62,5 @@ output:
 # **Day 5**. Spatio-temporal modelling with INLA
 
 ### `r icon::fa("tag")` [Practice](https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpaceTime.html)
+
+[Practice](https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpaceTimeCont.html)
