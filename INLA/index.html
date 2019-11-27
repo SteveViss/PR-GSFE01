@@ -37,12 +37,22 @@ https://steveviss.github.io/PR-GSFE01/INLA/index.html
 ### Building a mesh in INLA
 https://steveviss.github.io/PR-GSFE01/INLA/practiceMesh.html
 
+
+---
+class: clear, middle
+
+## <i class="fas  fa-tag "></i> More practices:
+
 ### Spatial modelling with INLA
 https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpace.html
 
 
 ### Spatio-temporal modelling with INLA
+#### Assuming discrete time
 https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpaceTime.html
+
+#### Assuming continuous time
+https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpaceTimeCont.html
 
 
 
@@ -429,7 +439,7 @@ resJAGS &lt;- coda.samples(JAGSmodel, params, n.iter=50000 )
 
 ```
 ##    user  system elapsed 
-##  16.903   4.197  21.107
+##  16.638   4.524  21.301
 ```
 ]
 
@@ -451,7 +461,7 @@ resINLA &lt;- inla(y~x,
 
 ```
 ##    user  system elapsed 
-##   0.740   0.528   1.356
+##   0.791   0.612   1.612
 ```
 
 ---

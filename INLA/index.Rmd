@@ -37,6 +37,12 @@ https://steveviss.github.io/PR-GSFE01/INLA/index.html
 ### Building a mesh in INLA
 https://steveviss.github.io/PR-GSFE01/INLA/practiceMesh.html
 
+
+---
+class: clear, middle
+
+## `r icon::fa("tag")` More practices:
+
 ### Spatial modelling with INLA
 https://steveviss.github.io/PR-GSFE01/INLA/practiceINLASpace.html
 
